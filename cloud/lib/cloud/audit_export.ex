@@ -122,25 +122,47 @@ defmodule Cloud.AuditExport do
   @doc """
   Builds the export (see `build/2`) and records it in the tenant's cloud
   audit chain as `"audit.exported"` with the period, the site ids and the
-  actor, never the data. Use this for every export that leaves the cloud.
+  actor, never the data. Use this for every json export that leaves the
+  cloud.
   """
   @spec export(String.t(), keyword()) :: {:ok, export()} | {:error, term()}
   def export(tenant_id, opts) do
     with {:ok, export} <- build(tenant_id, opts),
-         {:ok, _entry} <-
-           Audit.record(
-             tenant_id,
-             "audit.exported",
-             %{
-               from: export["period"]["from"],
-               to: export["period"]["to"],
-               site_ids: Enum.map(export["sites"], & &1["id"]),
-               format: @format
-             },
-             actor: Keyword.fetch!(opts, :actor)
-           ) do
+         {:ok, _entry} <- record_export(tenant_id, export, Keyword.fetch!(opts, :actor), @format) do
       {:ok, export}
     end
+  end
+
+  @doc """
+  Builds the export (see `build/2`), renders it as a PDF with
+  `Cloud.AuditExport.PDF` and, once the PDF exists, records the export in the
+  tenant's cloud audit chain like `export/2`, with format `"pdf"`. Options are
+  those of `build/2`, plus `:pdf` (options for `Cloud.AuditExport.PDF.render/2`).
+
+  Returns `{:ok, export, pdf}`, or the error of building or rendering, in
+  which case nothing is recorded.
+  """
+  @spec export_pdf(String.t(), keyword()) :: {:ok, export(), binary()} | {:error, term()}
+  def export_pdf(tenant_id, opts) do
+    with {:ok, export} <- build(tenant_id, opts),
+         {:ok, pdf} <- __MODULE__.PDF.render(to_render_model(export), opts[:pdf] || []),
+         {:ok, _entry} <- record_export(tenant_id, export, Keyword.fetch!(opts, :actor), "pdf") do
+      {:ok, export, pdf}
+    end
+  end
+
+  defp record_export(tenant_id, export, actor, format) do
+    Audit.record(
+      tenant_id,
+      "audit.exported",
+      %{
+        from: export["period"]["from"],
+        to: export["period"]["to"],
+        site_ids: Enum.map(export["sites"], & &1["id"]),
+        format: format
+      },
+      actor: actor
+    )
   end
 
   @doc "The export as pretty-printed json, `\"format\"` first."
@@ -175,14 +197,21 @@ defmodule Cloud.AuditExport do
 
     * `:title`, `:tenant`, `:period`, `:generated_at`, `:exported_by` and
       `:coverage`: strings
-    * `:verification`: one `%{chain, ok?, summary}` per chain, the cloud chain
-      first, `summary` a sentence such as `"Cloud audit chain: intact, 123
-      entries, head seq 122"`
+    * `:source_date_epoch`: the generation time as a unix timestamp, which
+      the PDF renderer uses as the document date so the same export always
+      renders to the same bytes
+    * `:verification`: one `%{chain, ok?, summary, head_hash}` per chain, the
+      cloud chain first, `summary` a sentence such as `"Cloud audit chain:
+      intact, 123 entries, head seq 122"` and `head_hash` the full hash of
+      the chain's head (nil without one)
     * `:sections`: `%{title, columns, rows}` tables of the records, the
-      cloud entries first, then one per gateway chain; every cell a string
+      cloud entries first, then one per gateway chain; the columns are seq,
+      time, actor, action, details and the start of the record's hash, and
+      every cell is a string
 
-  The PDF renderer (pending a library decision) renders exactly this model,
-  so a printed report and the json download always come from the same data.
+  `Cloud.AuditExport.PDF` renders exactly this model, and the `/audit` page
+  shows its sentences, so the page, the PDF and the json download always
+  come from the same data.
   """
   @spec to_render_model(export()) :: map()
   def to_render_model(export) do
@@ -192,6 +221,7 @@ defmodule Cloud.AuditExport do
       period:
         "#{display_time(export["period"]["from"])} to #{display_time(export["period"]["to"])}",
       generated_at: display_time(export["generated_at"]),
+      source_date_epoch: epoch(export["generated_at"]),
       exported_by: export["exported_by"]["email"],
       coverage: export["coverage"],
       verification:
@@ -417,11 +447,12 @@ defmodule Cloud.AuditExport do
   @spec explain_reason(String.t()) :: String.t()
   def explain_reason(reason), do: Map.get(@reasons, reason, reason)
 
-  defp cloud_summary(%{"status" => "intact", "entries" => 0}),
+  defp cloud_summary(%{"status" => "intact", "entries" => 0} = v),
     do: %{
       chain: "Cloud audit chain",
       ok?: true,
-      summary: "Cloud audit chain: intact, no entries yet"
+      summary: "Cloud audit chain: intact, no entries yet",
+      head_hash: head_hash(v["head"])
     }
 
   defp cloud_summary(%{"status" => "intact", "entries" => n, "head" => head}),
@@ -429,21 +460,24 @@ defmodule Cloud.AuditExport do
       chain: "Cloud audit chain",
       ok?: true,
       summary:
-        "Cloud audit chain: intact, #{n} #{plural(n, "entry", "entries")}, head seq #{head["seq"]}"
+        "Cloud audit chain: intact, #{n} #{plural(n, "entry", "entries")}, head seq #{head["seq"]}",
+      head_hash: head_hash(head)
     }
 
-  defp cloud_summary(%{"break" => %{"seq" => seq, "reason" => reason}}),
+  defp cloud_summary(%{"break" => %{"seq" => seq, "reason" => reason}} = v),
     do: %{
       chain: "Cloud audit chain",
       ok?: false,
-      summary: "Cloud audit chain: broken at seq #{seq}: #{explain_reason(reason)} (#{reason})"
+      summary: "Cloud audit chain: broken at seq #{seq}: #{explain_reason(reason)} (#{reason})",
+      head_hash: head_hash(v["head"])
     }
 
   defp gateway_summary(%{"status" => "no_chain", "site_name" => name}),
     do: %{
       chain: "Gateway chain of #{name}",
       ok?: true,
-      summary: "Gateway chain of #{name}: no audit chain anchored yet"
+      summary: "Gateway chain of #{name}: no audit chain anchored yet",
+      head_hash: nil
     }
 
   defp gateway_summary(%{"status" => "intact", "site_name" => name} = v) do
@@ -454,7 +488,8 @@ defmodule Cloud.AuditExport do
       ok?: true,
       summary:
         "Gateway chain of #{name}: intact, #{v["records"]} #{plural(v["records"], "record", "records")}" <>
-          head <> resets(v["chain_resets"])
+          head <> resets(v["chain_resets"]),
+      head_hash: head_hash(v["anchored_head"])
     }
   end
 
@@ -466,7 +501,8 @@ defmodule Cloud.AuditExport do
          ok?: false,
          summary:
            "Gateway chain of #{name}: broken at seq #{seq}: #{explain_reason(reason)} (#{reason})" <>
-             resets(v["chain_resets"])
+             resets(v["chain_resets"]),
+         head_hash: head_hash(v["anchored_head"])
        }
 
   defp resets(0), do: ""
@@ -475,10 +511,18 @@ defmodule Cloud.AuditExport do
   defp plural(1, one, _many), do: one
   defp plural(_n, _one, many), do: many
 
+  @columns ["Seq", "Time (UTC)", "Actor", "Action", "Details", "Hash"]
+
+  # the fields every cloud entry has, shown in their own columns
+  @cloud_fields ~w(action at actor_id)
+  # the gateway entry fields shown in their own columns
+  @gateway_fields ~w(type at)
+  @details_max 400
+
   defp cloud_section(segment) do
     %{
       title: "Cloud audit entries",
-      columns: ["Seq", "Time (UTC)", "Actor", "Action", "Hash"],
+      columns: @columns,
       rows:
         Enum.map(segment["records"], fn r ->
           [
@@ -486,6 +530,7 @@ defmodule Cloud.AuditExport do
             display_time(r["at"]),
             r["actor_email"] || if(r["actor_id"], do: r["actor_id"], else: "system"),
             to_string(r["action"]),
+            details(Map.drop(r["entry"] || %{}, @cloud_fields)),
             short_hash(r["hash"])
           ]
         end)
@@ -495,7 +540,7 @@ defmodule Cloud.AuditExport do
   defp gateway_section(segment) do
     %{
       title: "Gateway audit: #{segment["site_name"]}",
-      columns: ["Seq", "Time (UTC)", "Type", "Hash"],
+      columns: @columns,
       rows:
         Enum.map(segment["records"], fn r ->
           entry = r["record"]["entry"] || %{}
@@ -503,12 +548,46 @@ defmodule Cloud.AuditExport do
           [
             Integer.to_string(r["seq"]),
             display_time(entry["at"]),
+            "gateway",
             to_string(entry["type"] || ""),
+            details(Map.drop(entry, @gateway_fields)),
             short_hash(r["hash"])
           ]
         end)
     }
   end
+
+  # the remaining fields of an entry as `key: value` pairs, sorted by key,
+  # values other than strings as compact json; long details are shortened
+  # (the json export has them in full)
+  defp details(fields) when is_map(fields) do
+    text =
+      fields
+      |> Enum.sort_by(fn {key, _} -> to_string(key) end)
+      |> Enum.map_join(", ", fn {key, value} -> "#{key}: #{detail_value(value)}" end)
+
+    if String.length(text) > @details_max,
+      do: String.slice(text, 0, @details_max) <> " [shortened]",
+      else: text
+  end
+
+  defp details(_fields), do: ""
+
+  defp detail_value(value) when is_binary(value), do: value
+  defp detail_value(nil), do: "null"
+  defp detail_value(value), do: Jason.encode!(value)
+
+  defp head_hash(%{"hash" => hash}) when is_binary(hash), do: hash
+  defp head_hash(_head), do: nil
+
+  defp epoch(iso) when is_binary(iso) do
+    case DateTime.from_iso8601(iso) do
+      {:ok, at, _} -> DateTime.to_unix(at)
+      _ -> 0
+    end
+  end
+
+  defp epoch(_iso), do: 0
 
   defp short_hash(hash) when is_binary(hash), do: String.slice(hash, 0, 12)
   defp short_hash(_hash), do: ""
