@@ -120,3 +120,82 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
 - **Why:** keep product UI mishka-only (D4) and keep agent instructions consistent with it.
 - **Revisit:** make ash_admin `only: :dev` once the router no longer needs it at compile time
   outside dev.
+
+## 2026-10-31 — phase 1 (core)
+
+### D13. Schedule semantics
+- **Windows:** windows are local wall-clock times in the site's IANA zone. A recurring window with
+  `ends <= starts` crosses midnight. `ends == starts` is invalid, so "all day" means two windows.
+  Occurrences are half-open `[start, end)`.
+- **Precedence:** active advisory lock > active break-glass > active window > locked. `mode` does
+  not affect the schedule; the gateway decides whether to block or only log.
+- **DST is fail-closed, giving the shortest real opening:**
+  - a repeated (ambiguous) local start takes the later instant;
+  - a repeated local end takes the earlier instant;
+  - a skipped local time resolves to the transition instant;
+  - an occurrence that becomes empty is skipped. Example: a window fully inside Sydney's repeated
+    02:00–03:00 hour never opens.
+  - Property tests prove that a window is never open when a naive wall-clock reading says closed.
+    Away from transitions the two agree exactly.
+- **Advisory locks** lock the whole site. The cloud only creates them for sites whose `tool_ids`
+  include the matched tool.
+- **`explain/2`** returns the reason as well as the state, for the dashboard. When several
+  candidates apply:
+  - several active locks: the first in policy order wins;
+  - several active windows: the one ending last wins.
+- **Why:** fail closed everywhere the brief allows it. The rare 2–3am DST-night window losing its
+  repeated hour is an acceptable cost.
+
+### D14. Policy wire format is strict
+- `Policy.from_map/1` accepts only the exact form `to_map/1` emits and rejects unknown keys.
+- Datetimes are UTC with whole seconds and a trailing `Z`; local times are whole minutes.
+- A sub-second lock expiry rounds up; a sub-second break-glass end rounds down.
+- **Why:** an older gateway must never silently drop a new restricting field. It rejects the
+  policy and keeps enforcing the last good one.
+
+### D15. Signed command details
+- **Signed message:** canonical JSON of the envelope (`Breakline.CanonicalJSON`). It is not RFC 8785:
+  floats are rejected and keys are sorted by utf-8 bytes, which only differs for characters
+  outside the BMP.
+- **Key rotation:** `key_id` sits inside the signed envelope.
+- **Single spellings:** nonce and signature must be the canonical base64url spelling. Datetimes
+  must be the exact UTC form. `expires_at` must be after `issued_at`.
+- **Check order:** shape, key, signature, site, not-yet-valid (5 min skew), expired, ttl
+  (max 24h), version, nonce.
+  - An exact replay is therefore rejected as `:stale_version`.
+  - The nonce cache only matters if the stored version is lost.
+- **First version:** a fresh verifier starts at version 0, so the first policy is version 1.
+- **Expiry** governs acceptance only. An accepted policy stays enforced after its command expires.
+
+### D16. Audit chain details
+- `hash = sha256(prev_hash_bytes <> canonical_json(entry + seq))`. The genesis `prev_hash` is 32
+  zero bytes and `"seq"` is reserved.
+- `verify_chain/2` detects edit, insert, delete and reorder inside the records it is given.
+- Tail truncation, appended valid records and full re-hashing are only detected with
+  `expected_head`, so the head must be anchored somewhere else (threat model T9).
+
+### D17. Catalog curation
+- **Contents:** 8 tools, sourced from a vendored LOLRMM snapshot of 14 slugs
+  (`core/priv/catalog/lolrmm_snapshot.json`, Apache-2.0 with a NOTICE) plus vendor docs.
+- **Curated list:** `core/priv/catalog/tools.json`. A provenance test checks that every LOLRMM
+  domain and port exists in the snapshot.
+- **Patterns:**
+  - exact names;
+  - `*.suffix`, which needs at least one label and never matches the bare suffix;
+  - a mid-label `*`, which never crosses a dot.
+  - `*.tld` is rejected. No two tools' patterns overlap.
+- **Excluded on purpose** (each reason is recorded in tools.json):
+  - `*.connectwise.com`: it covers PSA, Automate and portals.
+  - `*.n-able.com` and `n-able.com`: they cover every N-able product. N-able-hosted N-central servers
+    are added per site as `site_hosts`.
+  - `*.system-monitor.com`: shared with N-sight.
+  - Cove backup domains: blocking them would stop backups.
+  - N-sight RMM domains: a separate product, not in the catalog.
+- **TeamViewer ports:** 5938 tcp/udp and 80 come from TeamViewer's ports page, verified 2026-10-31.
+- **KEV keys:** matched after trim, whitespace collapse and downcase. Single-product vendors
+  (AnyDesk, TeamViewer, Splashtop, NinjaOne) use product `*`. The keys for take_control, datto_rmm
+  and ninjaone are best guesses, because CISA has never listed them.
+- **Known gaps:**
+  - Datto RMM has only 3 domains. Datto's `*-ips.centrastage.net` A records could fill this in
+    phase 2.
+  - Shared ports (80/443) must only be dropped towards a tool's own IPs.
