@@ -76,7 +76,7 @@ defmodule CloudWeb.AuthLiveTest do
 
       assert conn.method == "POST"
       assert conn.request_path == "/auth/user/password/sign_in_with_token"
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
     end
   end
 

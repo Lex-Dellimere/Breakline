@@ -14,6 +14,17 @@ defmodule CloudWeb.Router do
     plug :set_scope, scope: Cloud.Accounts.Scope, default_scope?: true
   end
 
+  # a file download for a signed-in browser session: the session cookie signs the
+  # user in, the response is json
+  pipeline :browser_download do
+    plug :accepts, ["json"]
+    plug :fetch_session
+    plug :fetch_flash
+    plug :put_secure_browser_headers
+    plug :load_from_session
+    plug :set_scope, scope: Cloud.Accounts.Scope, default_scope?: true
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
     plug :load_from_bearer
@@ -36,13 +47,22 @@ defmodule CloudWeb.Router do
       #
       # If an authenticated user must *not* be present:
       # on_mount {CloudWeb.LiveUserAuth, :live_no_user}
+      live "/dashboard", DashboardLive.Index, :index
       live "/sites", SitesLive.Index, :index
       live "/sites/:id", SitesLive.Show, :show
+      live "/sites/:id/timeline", SitesLive.Timeline, :index
+      live "/audit", AuditLive.Index, :index
       live "/advisories", AdvisoriesLive.Index, :index
       live "/requests", RequestsLive.Index, :index
       live "/account/security", AccountLive.Security, :show
       live "/settings/notifications", SettingsLive.Notifications, :index
     end
+  end
+
+  scope "/", CloudWeb do
+    pipe_through :browser_download
+
+    get "/audit/export.json", AuditExportController, :show
   end
 
   scope "/", CloudWeb do

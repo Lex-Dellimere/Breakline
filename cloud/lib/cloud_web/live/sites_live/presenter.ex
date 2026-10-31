@@ -108,6 +108,25 @@ defmodule CloudWeb.SitesLive.Presenter do
     end
   end
 
+  @doc """
+  A start and end as one local range in the site's time zone, for example
+  `"Mon 03 Nov 22:00–23:30"` on one day or `"Mon 03 Nov 22:00 – Tue 04 Nov
+  02:00"` across midnight.
+  """
+  @spec local_range(DateTime.t(), DateTime.t(), String.t()) :: String.t()
+  def local_range(starts_at, ends_at, time_zone) do
+    with %DateTime{} = s <- local(starts_at, time_zone),
+         %DateTime{} = e <- local(ends_at, time_zone) do
+      if DateTime.to_date(s) == DateTime.to_date(e),
+        do: Calendar.strftime(s, "%a %d %b %H:%M") <> "–" <> Calendar.strftime(e, "%H:%M"),
+        else:
+          Calendar.strftime(s, "%a %d %b %H:%M") <>
+            " – " <> Calendar.strftime(e, "%a %d %b %H:%M")
+    else
+      _ -> ""
+    end
+  end
+
   defp local(%DateTime{} = dt, time_zone) do
     case DateTime.shift_zone(dt, time_zone, Tz.TimeZoneDatabase) do
       {:ok, local} -> local

@@ -64,7 +64,7 @@ defmodule CloudWeb.SignInSecondFactorTest do
         follow_trigger_action(form(view, "#user-password-sign-in-with-password-with-token"), conn)
 
       assert conn.request_path == "/auth/user/password/sign_in_with_token"
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
       assert get_session(conn, "user_token")
     end
 
@@ -92,7 +92,7 @@ defmodule CloudWeb.SignInSecondFactorTest do
       conn =
         follow_trigger_action(form(view, "#user-password-sign-in-with-password-with-token"), conn)
 
-      assert redirected_to(conn) == ~p"/"
+      assert redirected_to(conn) == ~p"/dashboard"
     end
 
     test "the plain password route never creates a session", %{conn: conn} do
@@ -127,7 +127,7 @@ defmodule CloudWeb.SignInSecondFactorTest do
       follow_trigger_action(form(view, "#user-password-sign-in-with-password-with-token"), conn)
 
     assert conn.request_path == "/auth/user/webauthn/sign_in_with_token"
-    assert redirected_to(conn) == ~p"/"
+    assert redirected_to(conn) == ~p"/dashboard"
     assert get_session(conn, "user_token")
   end
 

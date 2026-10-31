@@ -40,7 +40,11 @@ defmodule CloudWeb.Layouts do
       <%!-- below lg the page links get their own row that scrolls sideways, so the
            header never pushes the page wider than the screen --%>
       <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
-        <.link href={~p"/"} class="flex shrink-0 items-center gap-2 text-base font-semibold">
+        <.link
+          id="brand"
+          href={if(@current_user, do: ~p"/dashboard", else: ~p"/")}
+          class="flex shrink-0 items-center gap-2 text-base font-semibold"
+        >
           <.icon name="hero-shield-check" class="size-6 text-blue-600 dark:text-blue-400" />
           <span>Breakline</span>
         </.link>
@@ -49,8 +53,17 @@ defmodule CloudWeb.Layouts do
           :if={@current_user}
           id="main-nav"
           aria-label="Main"
-          class="order-last -mx-1 flex w-full items-center gap-1 overflow-x-auto whitespace-nowrap lg:order-none lg:mx-0 lg:w-auto"
+          class="order-last -mx-1 flex w-full items-center gap-1 overflow-x-auto whitespace-nowrap lg:order-none lg:mx-0 lg:w-auto lg:min-w-0 lg:flex-1"
         >
+          <.button_link
+            id="nav-dashboard"
+            navigate={~p"/dashboard"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Dashboard
+          </.button_link>
           <.button_link
             id="nav-sites"
             navigate={~p"/sites"}
@@ -77,6 +90,15 @@ defmodule CloudWeb.Layouts do
             size="small"
           >
             Advisories
+          </.button_link>
+          <.button_link
+            id="nav-audit"
+            navigate={~p"/audit"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Audit
           </.button_link>
           <.button_link
             id="nav-notifications"

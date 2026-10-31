@@ -35,7 +35,7 @@ defmodule CloudWeb.LiveUserAuth do
 
       :live_no_user ->
         if socket.assigns[:current_user] do
-          {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}
+          {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/dashboard")}
         else
           {:cont, assign(socket, :current_user, nil)}
         end

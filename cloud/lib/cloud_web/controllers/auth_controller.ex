@@ -47,7 +47,7 @@ defmodule CloudWeb.AuthController do
   defp success_message(_activity), do: "You are now signed in"
 
   defp sign_in(conn, activity, user, token) do
-    return_to = get_session(conn, :return_to) || ~p"/"
+    return_to = get_session(conn, :return_to) || ~p"/dashboard"
 
     message = success_message(activity)
 

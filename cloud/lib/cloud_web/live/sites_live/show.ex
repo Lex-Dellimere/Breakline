@@ -22,6 +22,9 @@ defmodule CloudWeb.SitesLive.Show do
   send a link (emailed to the contact), and revoke links
   (`Cloud.Sites.RequestLink`).
 
+  The full history (gateway events, audit entries, policy versions and
+  notifications) is on the site's timeline page (`CloudWeb.SitesLive.Timeline`).
+
   The site is only shown to members of its tenant; any other id redirects to
   `/sites` as not found.
   """
@@ -342,9 +345,19 @@ defmodule CloudWeb.SitesLive.Show do
           <h1 id="site-name" class="text-2xl font-semibold tracking-tight">{@site.name}</h1>
           <p class="text-sm text-zinc-500">{@site.time_zone}</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <.state_badge id="site-state" status={@status} />
           <.connected_badge id="site-connected" connected={@connected} />
+          <.button_link
+            id="site-timeline-link"
+            navigate={~p"/sites/#{@site.id}/timeline"}
+            variant="bordered"
+            color="natural"
+            size="small"
+            icon="hero-clock"
+          >
+            Timeline
+          </.button_link>
         </div>
       </div>
 

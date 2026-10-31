@@ -16,6 +16,25 @@ defmodule CloudWeb.SitesLive.Data do
     |> Enum.uniq()
   end
 
+  @doc """
+  The tenants the user is a member of (every membership is an admin or an
+  approver), by name.
+  """
+  @spec tenants(User.t()) :: [Accounts.Tenant.t()]
+  def tenants(%User{} = user) do
+    Accounts.list_memberships!(actor: user, query: [filter: [user_id: user.id], load: [:tenant]])
+    |> Enum.map(& &1.tenant)
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.sort_by(&{String.downcase(&1.name), &1.id})
+  end
+
+  @doc "The tenant's sites the user can see, by name."
+  @spec tenant_sites(User.t(), String.t()) :: [Sites.Site.t()]
+  def tenant_sites(%User{} = user, tenant_id) do
+    Sites.list_sites!(actor: user, tenant: tenant_id)
+    |> Enum.sort_by(&{String.downcase(&1.name), &1.id})
+  end
+
   @doc "Every site the user can see, by name."
   @spec list_sites(User.t()) :: [Sites.Site.t()]
   def list_sites(%User{} = user) do
