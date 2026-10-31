@@ -1,33 +1,43 @@
 <Layouts.app flash={@flash} current_user={assigns[:current_user]}>
-  <section class="space-y-6 py-8">
-    <.badge color="primary" variant="bordered" rounded="full" size="small">
-      control plane
-    </.badge>
-    <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-      Remote access stays closed until you open it.
-    </h1>
-    <p class="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-      Breakline is a client-owned gateway in front of your MSP's remote-access channel.
-      The channel opens only inside a booked window or after a client approver says yes.
-    </p>
-    <div class="flex flex-wrap gap-3">
-      <%= if assigns[:current_user] do %>
-        <.button_link href={~p"/sign-out"} variant="bordered" color="natural">
-          Sign out
-        </.button_link>
-      <% else %>
-        <.button_link
-          href={~p"/register"}
-          variant="default"
-          color="primary"
-          icon="hero-arrow-right"
-        >
-          Create an account
-        </.button_link>
-        <.button_link href={~p"/sign-in"} variant="bordered" color="natural">
-          Sign in
-        </.button_link>
-      <% end %>
+  <section id="hero" class="relative isolate pt-8 pb-24 sm:pb-28">
+    <%!-- decorative only (exception to D4): squares crawl along the floor and
+         up the walls behind the hero, driven by assets/js/landing_crawl.js --%>
+    <canvas
+      id="landing-crawl"
+      data-crawl="hero"
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-x-0 -top-12 -z-10 block h-[calc(100%+3rem)] w-full select-none text-zinc-400 [--crawl-accent:var(--color-primary-light)] dark:text-zinc-700 dark:[--crawl-accent:var(--color-primary-dark)]"
+    ></canvas>
+    <div id="hero-copy" class="space-y-6">
+      <.badge color="primary" variant="bordered" rounded="full" size="small">
+        control plane
+      </.badge>
+      <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+        Remote access stays closed until you open it.
+      </h1>
+      <p class="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
+        Breakline is a client-owned gateway in front of your MSP's remote-access channel.
+        The channel opens only inside a booked window or after a client approver says yes.
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <%= if assigns[:current_user] do %>
+          <.button_link href={~p"/sign-out"} variant="bordered" color="natural">
+            Sign out
+          </.button_link>
+        <% else %>
+          <.button_link
+            href={~p"/register"}
+            variant="default"
+            color="primary"
+            icon="hero-arrow-right"
+          >
+            Create an account
+          </.button_link>
+          <.button_link href={~p"/sign-in"} variant="bordered" color="natural">
+            Sign in
+          </.button_link>
+        <% end %>
+      </div>
     </div>
   </section>
 
