@@ -84,7 +84,14 @@ defmodule Cloud.Advisories.Feed do
         constraints one_of: @names
       end
 
-      run fn input, _context -> Cloud.Advisories.Poller.poll(input.arguments.feed) end
+      run fn input, _context ->
+        feed = input.arguments.feed
+
+        case Cloud.Advisories.Poller.poll(feed) do
+          {:ok, summary} -> {:ok, summary}
+          {:error, reason} -> {:error, "poll of #{feed} failed: #{inspect(reason)}"}
+        end
+      end
     end
   end
 
