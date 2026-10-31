@@ -50,6 +50,9 @@ optimise for a working, demo-able slice, not completeness.
   machine belongs to another project's container: never use it.
 - cloud: `cd cloud && mix setup && mix phx.server`, then http://localhost:4010 (4000 is taken).
   Dev only: ash_admin at `/admin`, live_debugger on port 4017.
+- Gateways connect to a separate mTLS-only endpoint on 127.0.0.1:4011. The full cloud + gateway
+  demo (dev PKI, pinned gateway cert, open/lock from the browser, `dig`) is "End-to-end demo" in
+  `cloud/README.md`.
 - Tests: `mix test` in `core/`, `gateway/` and `cloud/`.
 - `nft` is not installed on the dev host. Firewall code is tested through the fake impl and golden
   `nft -j` json; real nftables runs come later in a netns or VM.

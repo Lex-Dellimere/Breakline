@@ -280,3 +280,77 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   and a new chain starts with a reset entry.
 - **Events are in-memory only;** the audit chain is the durable record.
 - **Dev inbox:** a polled `tmp/dev/inbox` stands in for the uplink until phase 3.
+
+## 2026-11-01 — phase 3 (cloud, uplink, first end-to-end)
+
+### D23. Cloud data model and tenancy
+- **Resources:** Ash resources for tenants, memberships (`:admin` / `:approver`), sites, windows,
+  advisory locks, break-glass, MSP contacts, append-only policy versions, gateway events and
+  gateway audit records.
+- **Tenant isolation:**
+  - Tenant-scoped resources use attribute multitenancy plus a `TenantMember` policy check.
+  - Composite `(id, tenant_id)` foreign keys stop a record pointing into another tenant.
+  - `Site` is `global?`, so trusted server code can find it by gateway certificate. Actor reads
+    without a tenant return nothing (tested).
+- **Trusted paths:** they use `authorize?: false` explicitly. Policy publishing and the gateway
+  channel are the only ones.
+- **Tenant default:** `advisory_mode` is `:auto_lock`.
+
+### D24. Publishing and delivery
+- **Publishing:**
+  - Every policy-changing action publishes inside its own transaction: lock the site row, bump
+    `policy_version`, build `Breakline.Policy`, store exactly `to_map` output, broadcast after
+    commit. "Approved but not published" can't happen. 12 concurrent publishes give versions
+    1..12.
+  - A new site doesn't publish; its first policy-changing action makes version 1.
+  - One-off windows that ended more than a day ago are left out, so policies don't grow forever.
+- **Delivery:**
+  - Delivery always re-signs the latest version as a fresh command (10 min ttl, new nonce).
+  - A gateway that was offline gets a valid command for the current version on join.
+- **`Cloud.Signer` behaviour:** the file signer in dev uses the same key format as the gateway.
+  Production replaces it with a KMS/HSM-backed signer.
+
+### D25. Gateway endpoint and identity
+- **Endpoint:** a separate Phoenix endpoint (`CloudWeb.GatewayEndpoint`, port 4011), https only,
+  with `verify_peer` and `fail_if_no_peer_cert`. It serves only the gateway socket: no router,
+  sessions or static files. Browsers never see a client-certificate prompt.
+- **Client certificate:** Bandit delivers it as `connect_info.peer_data.ssl_cert`. TLS options
+  live under `thousand_island_options: [transport_options: ...]`.
+- **Gateway identity:** a gateway is identified by the sha256 fingerprint of its certificate DER,
+  pinned on the site. The CN is informational. An unpinned fingerprint is refused, and a gateway
+  can only join its own site's topic.
+- **Dev PKI:** made with the openssl CLI (EC P-256, SHA-256), under git-ignored `priv/keys/`.
+- **Hosting implication:** production hosting must terminate TLS in the app for port 4011. A
+  TLS-terminating proxy in front would break mTLS. Decide at deploy time.
+
+### D26. Uplink protocol and gateway audit anchoring
+- **Channel:** `gateway:<site_id>`. Join carries last_version and the audit chain id and head.
+  The reply carries server time, heartbeat interval, the cloud's audit ack and, when the gateway
+  is behind, a signed policy.
+- **Gateway pushes:**
+  - `policy_result`.
+  - `heartbeat` (every 30 s, plus straight after a pushed policy or any state change, so the UI
+    is never a cycle behind).
+  - `events` (at most 500, with ids for dedupe, at-least-once).
+  - `audit` (at most 200).
+- **Audit anchoring (T9):**
+  - The cloud verifies each audit batch with `AuditLog.verify_segment/2` after its anchored head,
+    stores it and anchors the new head.
+  - A new chain id (a gateway chain reset) is recorded once as an `audit_chain_reset` event.
+  - Gaps and forgeries get `chain_mismatch`.
+  - A repeated `chain_mismatch` at the same seq makes the gateway back off (2 s doubling to
+    5 min) instead of looping.
+  - Verified end to end: gateway head, uplink ack and cloud anchor agree.
+- **Uplink resilience:**
+  - A crash loop cools off for 5 minutes, then the uplink restarts. It never touches the firewall
+    or the enforcer, and never stays down until reboot.
+  - Reconnect backoff is 1 s to 60 s with jitter.
+
+### D27. Demo UI
+- **Pages:** `/sites` and `/sites/:id`, mishka components only, scoped to the user's memberships.
+  They show live state with a readable reason, gateway presence, published vs applied version and
+  live events.
+- **Demo actions** (open 15/30/60 min, lock now, unlock) need only a password session until
+  phase 4 adds passkey approval (T5). The panel says so.
+- **Demo password:** `mix cloud.dev.demo_password` sets the seeded demo user's password from
+  `DEMO_PASSWORD` (dev only).

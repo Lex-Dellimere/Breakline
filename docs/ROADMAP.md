@@ -7,8 +7,8 @@ Each phase starts with a proposed plan and needs approval before work begins.
 | 0 | repo, docs, dev db, scaffold core / gateway / cloud (ash + mishka-only ui) | done 2026-10-31 |
 | 1 | core: `Policy`, `Schedule.state_at` with dst property tests, `Command` (ed25519), `AuditLog` hash chain + canonical json, `Catalog` from lolrmm snapshot + kev match keys | done 2026-10-31 |
 | 2 | gateway: `Firewall` behaviour + `FakeImpl` + `NftImpl` (golden json), `DNS` resolver, `Enforcer`, persistence, supervision | done 2026-10-31 |
-| 3 | cloud domain (tenant, site, approver, msp_contact, policy, event), `Signer`, gateway channel + `Uplink` (slipstream, mtls). **first end-to-end demo** | next |
-| 4 | flows: msp magic-link window request → approver passkey approval → signed push; break-glass; kev/acsc polling via ash_oban; teams/slack/sms link-only notifications | |
+| 3 | cloud domain (tenant, site, approver, msp_contact, policy, event), `Signer`, gateway channel + `Uplink` (slipstream, mtls). **first end-to-end demo** | done 2026-11-01 |
+| 4 | flows: msp magic-link window request → approver passkey approval → signed push; break-glass; kev/acsc polling via ash_oban; teams/slack/sms link-only notifications | next |
 | 5 | dashboard (site state + why, windows, timeline), audit export json + pdf with chain verification | |
 | 6 | real nftables runs, pilot box, then nerves firmware (custom x86_64 system with nic drivers) | |
 
