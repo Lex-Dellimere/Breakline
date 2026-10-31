@@ -53,7 +53,8 @@ optimise for a working, demo-able slice, not completeness.
 - Tests: `mix test` in `core/`, `gateway/` and `cloud/`.
 - `nft` is not installed on the dev host. Firewall code is tested through the fake impl and golden
   `nft -j` json; real nftables runs come later in a netns or VM.
-- Binding :53 needs root, so the dev gateway resolver listens on a high port.
+- Binding :53 needs root, so the dev gateway resolver listens on 127.0.0.1:5300. The local demo
+  (sign a policy into the dev inbox, then `dig`) is in `gateway/README.md`.
 
 ## Non-goals (v1)
 

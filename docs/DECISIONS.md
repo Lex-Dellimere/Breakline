@@ -199,3 +199,84 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   - Datto RMM has only 3 domains. Datto's `*-ips.centrastage.net` A records could fill this in
     phase 2.
   - Shared ports (80/443) must only be dropped towards a tool's own IPs.
+
+## 2026-10-31 — phase 2 (gateway)
+
+### D18. Firewall ruleset
+- **Table and transaction:** everything lives in `table inet breakline` and is applied as one
+  atomic `nft -j -f` transaction.
+- **Sets:**
+  - The resolved-ip sets `rmm4`/`rmm6` are never flushed. Each element carries its own timeout of
+    `clamp(dns ttl, 1h, 24h)`.
+  - The static sets (`block*`, `doh*`) and both chains are rebuilt on every apply.
+- **Always on:**
+  - drop tcp/udp 853 (DoT/DoQ);
+  - drop tcp/udp 443 to known DoH resolver ips;
+  - redirect client :53 to the gateway resolver, on `lan_interfaces` only.
+- **While locked:** drop everything to `@rmm*` and `@block*`, plus the exclusive ports to any
+  destination.
+- **Enforce mode** drops with no conntrack match, so live sessions are cut when a lock starts.
+- **Monitor mode** (pilots):
+  - the same rules become `ct state new` + counter + `limit 30/minute burst 10` + log, with no
+    verdict;
+  - counters therefore count connections, not packets;
+  - logging is rate-limited, so a busy RMM session can't flood a pilot box's logs.
+- **Validation:** the golden rulesets load into real nftables 1.1.3 in a throwaway container
+  (`mix test --only nft_docker`). No traffic has been pushed through them yet (phase 6).
+
+### D19. Catalog port scope
+- `"any"` ports are dropped towards every destination while locked, which also stops direct P2P
+  sessions: anydesk 6568/7070, teamviewer 5938 tcp+udp, take_control 3377, screenconnect 8041.
+- Every other port is `"tool_ips"` and never dropped on its own.
+
+### D20. DNS resolver behaviour
+- **Order of checks:**
+  1. DoH hostnames and canaries always get NXDOMAIN.
+  2. Catalog names and exact site hostnames: NXDOMAIN plus a background shadow lookup (A and
+     AAAA) when locked and enforcing; forwarded and logged as a would-block in monitor mode;
+     forwarded when open.
+  3. Everything else is forwarded unchanged, then its CNAME chain is checked, so a vanity name
+     CNAMEd into a catalog domain is caught.
+  - Resolved ips from 2 and 3 feed the firewall's resolved-ip sets.
+- **NXDOMAIN carries no SOA,** so clients don't cache it and access returns as soon as a window
+  opens.
+- **Refused queries:** a query with zero or several questions gets FORMERR. Opcodes other than
+  QUERY get NOTIMP. Neither is forwarded, since that would bypass the checks.
+- **No snapshot from the enforcer** means the fail-closed default: locked, enforce, all catalog
+  tools.
+- **Ports:** dev listens on 127.0.0.1:5300 with upstreams 1.1.1.1/9.9.9.9. Production uses :53
+  and configured upstreams.
+
+### D21. DoH list is our own
+- `gateway/priv/doh/resolvers.json` covers 6 providers (Cloudflare, Google, Quad9,
+  OpenDNS/Cisco, AdGuard, NextDNS), each entry with the provider's own documentation URL.
+  NextDNS publishes no ips, so it is blocked by name only.
+- **Canaries** always get NXDOMAIN:
+  - `use-application-dns.net`, which tells Firefox to disable DoH;
+  - `mask.icloud.com` and `mask-h2.icloud.com`, which tell Apple to disable iCloud Private Relay.
+- The GPL-3.0 community lists are still deferred: the cloud would fetch and push them in
+  phase 4.
+
+### D22. Enforcer semantics
+- **Fail-closed states:**
+  - With no policy (fresh install, or a tampered `command.json`) the gateway is locked, in
+    `default_mode` (`:monitor` unless configured), with all catalog tools. A pilot box can't
+    cut off an MSP before it is configured.
+  - An unsynced clock (timedatectl) locks RMM. A missing timedatectl counts as unsynced unless
+    `assume_clock_synced` is set.
+- **Accepting a command:**
+  - Verify, then require type `"policy"`, a payload that parses, and envelope site and version
+    that match the payload.
+  - Persist `command.json` and then `verifier.json` before applying.
+  - A rejected command consumes neither its version nor its nonce.
+- **Boot:**
+  - Re-authenticate the persisted command (signature and site, not expiry).
+  - The version floor is `max(verifier.json, persisted command)`, so losing `verifier.json`
+    can't reopen replays.
+- **Evaluation** runs every 15 s, at the schedule's next change, on policy change, and whenever
+  the firewall server restarts. The firewall is touched only when the desired state changed.
+- **Gateway audit chain** (`audit.jsonl`) records `enforcer_started`, `state_changed`,
+  `policy_applied`, `command_rejected` and `audit_chain_reset`. A broken chain is moved aside
+  and a new chain starts with a reset entry.
+- **Events are in-memory only;** the audit chain is the durable record.
+- **Dev inbox:** a polled `tmp/dev/inbox` stands in for the uplink until phase 3.

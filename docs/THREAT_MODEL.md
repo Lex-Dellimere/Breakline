@@ -42,7 +42,7 @@ The client's ability to say no to remote access. Specifically:
 | # | threat | mitigation | residual risk |
 |---|---|---|---|
 | T1 | A1 uses the RMM during a locked period | dns NXDOMAIN for catalog domains; drop the resolved-ip set + static CIDRs + per-site self-hosted hosts; default state is locked | relays reached by IP without DNS; tools missing from the catalog |
-| T2 | A5 bypasses gateway DNS | DNAT all client :53 to the gateway; drop :853; block known DoH endpoints | unknown DoH servers, VPNs, P2P direct connections (e.g. AnyDesk direct on 7070). Consider port drops per tool when locked |
+| T2 | A5 bypasses gateway DNS | DNAT all client :53 to the gateway; drop :853; drop 443 to known DoH ips; NXDOMAIN for DoH names and the Firefox / iCloud Private Relay canaries; CNAME chains into catalog domains are blocked; tool-only ports dropped to any destination while locked (D19) | unknown DoH servers (NextDNS by name only), VPNs, a tool on a port shared with the web (443) talking to an ip we never resolved |
 | T3 | forged unlock command | Ed25519 envelope bound to site_id; the gateway holds only the public key | A3 (see T8) |
 | T4 | replay or rollback of an old "open" policy | strictly increasing version, expires_at, nonce cache, persisted last-applied version | gateway disk wiped and restored from an old image: re-provisioning must reset trust explicitly |
 | T5 | A2 phishes an approver into approving | approve and break-glass require a passkey (phishing-resistant, origin-bound); notifications carry a link only, never an approve button | TOTP fallback is phishable. Decide whether TOTP may approve, or only log in (phase 4) |
@@ -55,6 +55,8 @@ The client's ability to say no to remote access. Specifically:
 | T12 | false-positive advisory locks out the MSP | locks only close access; per-tenant auto-lock or ask; break-glass exists | MSP friction during real incidents is by design |
 | T13 | feed poisoning or parsing bugs | KEV is structured json with explicit match keys; ACSC is free text, so require CVE + product match and default to "ask" | a missed advisory (false negative): KEV lag vs ACSC |
 | T14 | A6 tampers with the gateway | out of scope for v1 pilots. Nerves read-only rootfs and secure boot are later work | physical access defeats it |
+| T15 | collateral blocking: a resolved RMM ip is a shared CDN address | ips are only learned from catalog names; monitor-mode pilots measure would-blocks before anyone enforces | while locked, unrelated sites on the same ip are blocked too. Review per tool with pilot data |
+| T16 | power loss mid-write on the gateway | atomic tmp + fsync + rename for state files; audit appends are fsynced; a torn audit line is detected at boot and the chain restarts with a reset entry | the data directory isn't fsynced after rename, so the very last write can be lost (the old state stays valid) |
 
 ## Explicitly out of scope (v1)
 
