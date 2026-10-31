@@ -25,6 +25,7 @@ defmodule Gateway.MixProject do
   defp deps do
     [
       {:breakline, path: "../core"},
+      {:slipstream, "~> 1.3"},
       {:stream_data, "~> 1.4", only: :test}
     ]
   end
