@@ -1,0 +1,4 @@
+%{
+  "stream_data": {:hex, :stream_data, "1.4.0", "026f929db613aabea6208012ae9b8970d3fd5f88b3bdf26831bc536f98c42036", [:mix], [], "hexpm", "2b0ee3a340dcce1c8cf6302a763ee757d1e01c54d6e16d9069062509d68b1dc9"},
+  "tz": {:hex, :tz, "0.28.4", "f5433914dcf8619d593979ec65bbe878158cad818bc2b53b44d9e4bda509753f", [:mix], [{:castore, "~> 0.1 or ~> 1.0", [hex: :castore, repo: "hexpm", optional: true]}, {:mint, "~> 1.6", [hex: :mint, repo: "hexpm", optional: true]}], "hexpm", "72fe8d526cf30fcc4e07cec4ceb583ba5f2d69c6334c9533419c836a6acd1c56"},
+}
