@@ -23,6 +23,7 @@ import { LiveSocket } from "phoenix_live_view";
 import { hooks as colocatedHooks } from "phoenix-colocated/cloud";
 import topbar from "../vendor/topbar";
 import MishkaComponents from "../vendor/mishka_components.js";
+import { mountCrawls } from "./landing_crawl";
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");
@@ -45,6 +46,9 @@ topbar.config({
 });
 window.addEventListener("phx:page-loading-start", (_info) => topbar.show(300));
 window.addEventListener("phx:page-loading-stop", (_info) => topbar.hide());
+// decorative landing page background (only renders where data-crawl exists)
+mountCrawls();
+
 // connect if there are any LiveViews on the page
 liveSocket.connect();
 // expose liveSocket on window for web console debug logs and latency simulation:
