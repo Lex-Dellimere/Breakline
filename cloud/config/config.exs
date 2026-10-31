@@ -64,7 +64,14 @@ config :spark,
 config :cloud,
   ecto_repos: [Cloud.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways, Cloud.Advisories, Cloud.Audit]
+  ash_domains: [
+    Cloud.Accounts,
+    Cloud.Sites,
+    Cloud.Gateways,
+    Cloud.Advisories,
+    Cloud.Audit,
+    Cloud.Notifications
+  ]
 
 # background jobs (oban, without oban pro). ash_oban adds the cron entries of the
 # resources' scheduled actions to the crontab at startup, see Cloud.Advisories.Feed.
@@ -74,7 +81,7 @@ config :ash_oban, pro?: false
 config :cloud, Oban,
   engine: Oban.Engines.Basic,
   notifier: Oban.Notifiers.Postgres,
-  queues: [default: 10, advisories: 1],
+  queues: [default: 10, advisories: 1, notifications: 5],
   lifeline: [rescue_after: {2, :hours}],
   pruner: [max_age: {7, :day}],
   repo: Cloud.Repo,
@@ -91,6 +98,12 @@ config :cloud, Cloud.Signer.File, path: Path.expand("../priv/keys/signer_ed25519
 # webauthn because the host is localhost). runtime.exs reads both from the environment
 # in prod
 config :cloud, :webauthn, rp_id: "localhost", rp_name: "Breakline"
+
+# notifications (Cloud.Notifications). sms goes to the dev adapter until a provider is
+# chosen; the dispatcher subscribes to every tenant's notifications topic
+config :cloud, Cloud.Notifications.SMS, adapter: Cloud.Notifications.SMS.Dev
+config :cloud, Cloud.Notifications.Dispatcher, start?: true
+config :cloud, :notifications_from, {"Breakline", "noreply@example.com"}
 
 # Configure the endpoint
 config :cloud, CloudWeb.Endpoint,

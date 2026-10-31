@@ -63,3 +63,9 @@ config :cloud, Cloud.Advisories.HTTP,
 
 # the dev-only "poll feeds now" button, so its test can click it
 config :cloud, advisories_poll_button?: true
+
+# notification webhooks go to Req.Test stubs, and tests start their own dispatcher
+config :cloud, Cloud.Notifications.Webhook,
+  req_options: [plug: {Req.Test, Cloud.Notifications.Webhook}]
+
+config :cloud, Cloud.Notifications.Dispatcher, start?: false

@@ -117,6 +117,12 @@ if config_env() == :prod do
   # want to use a different value for prod and you most likely don't want
   # to check this value into version control, so we use an environment
   # variable instead.
+  # the root secret notification targets (webhook urls) are encrypted with, see
+  # Cloud.Notifications.Vault. without it they are encrypted with SECRET_KEY_BASE
+  if key = System.get_env("NOTIFICATIONS_KEY") do
+    config :cloud, :notifications_key, key
+  end
+
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
