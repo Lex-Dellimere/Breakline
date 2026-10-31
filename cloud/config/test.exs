@@ -69,3 +69,6 @@ config :cloud, Cloud.Notifications.Webhook,
   req_options: [plug: {Req.Test, Cloud.Notifications.Webhook}]
 
 config :cloud, Cloud.Notifications.Dispatcher, start?: false
+
+# the pinned typst cli for audit pdfs, installed by mix cloud.typst.install (D38)
+config :cloud, :typst_path, Path.expand("../priv/bin/typst", __DIR__)

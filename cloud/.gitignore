@@ -35,3 +35,6 @@ cloud-*.tar
 npm-debug.log
 /assets/node_modules/
 
+
+# the typst binary, installed by mix cloud.typst.install
+/priv/bin/

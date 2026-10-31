@@ -88,3 +88,6 @@ config :swoosh, :api_client, false
 
 # a "poll feeds now" button on /advisories (CloudWeb.AdvisoriesLive.Index)
 config :cloud, advisories_poll_button?: true
+
+# the pinned typst cli for audit pdfs, installed by mix cloud.typst.install (D38)
+config :cloud, :typst_path, Path.expand("../priv/bin/typst", __DIR__)

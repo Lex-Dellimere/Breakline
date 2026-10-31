@@ -85,6 +85,13 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
+  # the pinned typst cli that renders audit pdfs (D38). without TYPST_PATH the
+  # release's own priv/bin/typst is used, installed by mix cloud.typst.install
+  # before the release is built
+  if typst_path = System.get_env("TYPST_PATH") do
+    config :cloud, :typst_path, typst_path
+  end
+
   # passkeys are bound to the rp id for good: changing it later invalidates every
   # registered credential. the origin is the full scheme://host[:port] browsers report
   config :cloud, :webauthn,
