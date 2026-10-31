@@ -24,9 +24,13 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
       udp dport in the exclusive ports. There is no conntrack state match before these,
       so established sessions are cut as soon as the lock starts.
 
-  Every drop rule has a counter. In `:monitor` mode a drop rule becomes a counter and
-  `log prefix "breakline would-block <reason> "` with no verdict, so the packet
-  continues to the accept policy.
+  Every drop rule has a counter. In `:enforce` mode there is no conntrack match, so
+  every packet is counted and dropped. In `:monitor` (pilot) mode a drop rule has no
+  verdict, so the packet continues to the accept policy. Instead it matches only
+  `ct state new`, counts that packet (so the counter totals connections, and udp flows
+  through conntrack), and logs it with `log prefix "breakline would-block <reason> "`
+  behind `limit rate 30/minute burst 10 packets`, so a busy pilot site does not flood
+  the kernel log.
 
   The output is deterministic: the same `Gateway.Firewall.Desired` always gives an
   equal term, and `JSON.encode!/1` of it always gives the same bytes.
@@ -37,6 +41,8 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
   @family "inet"
   @table "breakline"
   @log_prefix "breakline would-block"
+  @log_rate 30
+  @log_burst 10
 
   # numeric values of the named priorities: dstnat is -100, filter is 0.
   @prio_dstnat -100
@@ -182,7 +188,13 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
     do: matches ++ [counter(), %{"drop" => nil}]
 
   defp drop(%Desired{mode: :monitor}, reason, matches) do
-    matches ++ [counter(), %{"log" => %{"prefix" => "#{@log_prefix} #{reason} "}}]
+    matches ++
+      [
+        %{"match" => %{"op" => "in", "left" => %{"ct" => %{"key" => "state"}}, "right" => "new"}},
+        counter(),
+        %{"limit" => %{"rate" => @log_rate, "per" => "minute", "burst" => @log_burst}},
+        %{"log" => %{"prefix" => "#{@log_prefix} #{reason} "}}
+      ]
   end
 
   defp element(text) do

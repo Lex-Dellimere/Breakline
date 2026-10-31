@@ -180,17 +180,25 @@ defmodule Gateway.Firewall.NftImplTest do
       end
     end
 
-    test "every forward rule counts, enforce drops and monitor only logs" do
-      for d <- random_desired(300), rule <- forward_rules(Ruleset.build(d)) do
-        tail = Enum.take(rule, -2)
+    test "every forward rule counts, enforce drops and monitor only logs new connections" do
+      ct_new = %{
+        "match" => %{"op" => "in", "left" => %{"ct" => %{"key" => "state"}}, "right" => "new"}
+      }
 
+      for d <- random_desired(300), rule <- forward_rules(Ruleset.build(d)) do
         case d.mode do
           :enforce ->
-            assert tail == [%{"counter" => nil}, %{"drop" => nil}]
+            assert Enum.take(rule, -2) == [%{"counter" => nil}, %{"drop" => nil}]
+            # no conntrack match, so established sessions are cut.
+            refute JSON.encode!(rule) =~ ~s("ct")
 
           :monitor ->
-            assert [%{"counter" => nil}, %{"log" => %{"prefix" => "breakline would-block " <> _}}] =
-                     tail
+            assert [
+                     ^ct_new,
+                     %{"counter" => nil},
+                     %{"limit" => %{"rate" => 30, "per" => "minute", "burst" => 10}},
+                     %{"log" => %{"prefix" => "breakline would-block " <> _}}
+                   ] = Enum.take(rule, -4)
 
             refute Enum.any?(rule, &Map.has_key?(&1, "drop"))
         end

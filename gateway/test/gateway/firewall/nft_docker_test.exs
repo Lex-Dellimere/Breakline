@@ -93,6 +93,23 @@ defmodule Gateway.Firewall.NftDockerTest do
 
       assert %{"type" => "filter", "hook" => "forward", "prio" => -10, "policy" => "accept"} =
                chains["forward"]
+
+      # nft lists the rules back with the same ct, limit and verdict statements.
+      for rule <- objects(listing, "rule"), rule["chain"] == "forward" do
+        keys = Enum.flat_map(rule["expr"], &Map.keys/1)
+
+        if name == "monitor_locked" do
+          ct_new = %{"op" => "in", "left" => %{"ct" => %{"key" => "state"}}, "right" => "new"}
+          assert %{"match" => ct_new} in rule["expr"]
+
+          assert %{"limit" => %{"rate" => 30, "per" => "minute", "burst" => 10}} in rule["expr"]
+          assert "log" in keys
+          refute "drop" in keys
+        else
+          refute Enum.any?(rule["expr"], &match?(%{"match" => %{"left" => %{"ct" => _}}}, &1))
+          assert "drop" in keys
+        end
+      end
     end
   end
 

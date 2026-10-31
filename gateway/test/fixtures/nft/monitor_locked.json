@@ -176,7 +176,9 @@
                 "right": 853
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block dot "}}
           ],
           "family": "inet",
@@ -196,7 +198,9 @@
                 "right": 853
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block dot "}}
           ],
           "family": "inet",
@@ -223,7 +227,9 @@
                 "right": 443
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block doh "}}
           ],
           "family": "inet",
@@ -250,7 +256,9 @@
                 "right": 443
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block doh "}}
           ],
           "family": "inet",
@@ -277,7 +285,9 @@
                 "right": 443
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block doh "}}
           ],
           "family": "inet",
@@ -304,7 +314,9 @@
                 "right": 443
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block doh "}}
           ],
           "family": "inet",
@@ -324,7 +336,9 @@
                 "right": "@rmm4"
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block rmm "}}
           ],
           "family": "inet",
@@ -344,7 +358,9 @@
                 "right": "@rmm6"
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block rmm "}}
           ],
           "family": "inet",
@@ -364,7 +380,9 @@
                 "right": "@block4"
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block block "}}
           ],
           "family": "inet",
@@ -384,7 +402,9 @@
                 "right": "@block6"
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block block "}}
           ],
           "family": "inet",
@@ -404,7 +424,9 @@
                 "right": {"set": [3377, 5938, 6568, 7070, 8041]}
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block port "}}
           ],
           "family": "inet",
@@ -424,7 +446,9 @@
                 "right": {"set": [5938]}
               }
             },
+            {"match": {"left": {"ct": {"key": "state"}}, "op": "in", "right": "new"}},
             {"counter": null},
+            {"limit": {"burst": 10, "per": "minute", "rate": 30}},
             {"log": {"prefix": "breakline would-block port "}}
           ],
           "family": "inet",
