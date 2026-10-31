@@ -10,6 +10,8 @@ defmodule Cloud.Accounts do
 
   alias Cloud.Accounts.StepUps
 
+  require Ash.Query
+
   admin do
     show? true
   end
@@ -48,6 +50,27 @@ defmodule Cloud.Accounts do
       define :mark_step_up_verified, action: :mark_verified
       define :mark_step_up_failed, action: :mark_failed
       define :consume_step_up, action: :consume
+    end
+  end
+
+  @doc """
+  The email addresses of the given user ids, as `%{id => email}`, read
+  without authorisation: users cannot read other users. Only for showing
+  who did something in records the caller was already allowed to read (the
+  actor of an audit entry, who published a policy).
+  """
+  @spec emails_by_id([String.t() | nil]) :: %{String.t() => String.t()}
+  def emails_by_id(ids) do
+    case ids |> Enum.reject(&is_nil/1) |> Enum.uniq() do
+      [] ->
+        %{}
+
+      ids ->
+        Cloud.Accounts.User
+        |> Ash.Query.filter(id in ^ids)
+        |> Ash.Query.select([:id, :email])
+        |> Ash.read!(authorize?: false)
+        |> Map.new(&{&1.id, to_string(&1.email)})
     end
   end
 
