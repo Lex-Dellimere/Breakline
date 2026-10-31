@@ -332,6 +332,21 @@ defmodule Gateway.DNSTest do
       refute_receive {:upstream_sent, _}, 50
     end
 
+    test "other opcodes get notimp and are never forwarded", %{port: port} do
+      packet =
+        :inet_dns.encode(
+          dns_rec(
+            header: dns_header(id: 13, opcode: :notify, rd: true),
+            qdlist: [dns_query(domain: ~c"relay-1.net.anydesk.com", type: :soa, class: :in)]
+          )
+        )
+
+      reply = raw_udp(port, packet)
+      assert <<13::16, _::binary>> = reply
+      assert rcode(reply) == 4
+      refute_receive {:upstream_sent, _}, 50
+    end
+
     test "idle tcp connections are closed", %{upstream: up} do
       dns = start_dns([up], name: :idle_dns, tcp_idle_ms: 100)
       port = Gateway.DNS.port(dns)

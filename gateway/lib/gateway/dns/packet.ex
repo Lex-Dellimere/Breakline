@@ -10,6 +10,7 @@ defmodule Gateway.DNS.Packet do
   @formerr 1
   @servfail 2
   @nxdomain 3
+  @notimp 4
 
   @doc "Returns the message id, or nil if the packet is shorter than a header."
   @spec id(binary()) :: non_neg_integer() | nil
@@ -37,6 +38,10 @@ defmodule Gateway.DNS.Packet do
   @doc "Builds an NXDOMAIN reply for a query packet."
   @spec nxdomain(binary()) :: binary()
   def nxdomain(query), do: reply(query, @nxdomain)
+
+  @doc "Builds a NOTIMP reply for a query packet."
+  @spec notimp(binary()) :: binary()
+  def notimp(query), do: reply(query, @notimp)
 
   @doc """
   Builds a reply with the given rcode: same id and opcode, QR and RA set, RD and

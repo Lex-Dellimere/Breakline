@@ -20,7 +20,9 @@ defmodule Gateway.DNS.Resolver do
        locked and enforcing, and its A/AAAA records go to `on_resolved`
        either way.
 
-  A query with a different opcode is forwarded as is. A standard query with
+  A query with any other opcode gets NOTIMP: a client resolver has no reason to
+  send notify, update or status, and forwarding them unchecked would be a way
+  around the checks below. A standard query with
   zero or several questions gets FORMERR, because forwarding it would let a
   second question slip past the checks. Packets that do not decode get
   FORMERR. Packets shorter than a header, or with QR set, are dropped.
@@ -79,7 +81,7 @@ defmodule Gateway.DNS.Resolver do
     case {dns_header(header, :opcode), dns_rec(msg, :qdlist)} do
       {:query, [question]} -> decide(packet, msg, question, ctx)
       {:query, _} -> {:reply, Packet.formerr(packet)}
-      {_other, _} -> forward(packet, msg, ctx)
+      {_other, _} -> {:reply, Packet.notimp(packet)}
     end
   end
 
@@ -152,13 +154,6 @@ defmodule Gateway.DNS.Resolver do
 
       :error ->
         {:reply, Packet.servfail(packet)}
-    end
-  end
-
-  defp forward(packet, msg, ctx) do
-    case Upstream.query(packet, ctx.upstreams, ctx.timeout_ms) do
-      {:ok, result} -> {:reply, pick(result, msg, ctx)}
-      :error -> {:reply, Packet.servfail(packet)}
     end
   end
 
