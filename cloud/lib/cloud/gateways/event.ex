@@ -2,7 +2,10 @@ defmodule Cloud.Gateways.Event do
   @moduledoc """
   An event a site's gateway reported, for example a blocked lookup or a
   state change. `at` is when it happened on the gateway, `data` is the event
-  body as sent.
+  body as sent. `event_id` is the id the gateway gives each event (the uplink
+  delivers at least once), so a resent event is stored only once per site;
+  events the cloud records itself (a policy result, an audit chain reset)
+  have none.
 
   Created by the gateway channel (trusted, `authorize?: false`); members of
   the tenant can read them.
@@ -31,7 +34,7 @@ defmodule Cloud.Gateways.Event do
 
     create :create do
       primary? true
-      accept [:site_id, :type, :at, :data]
+      accept [:site_id, :event_id, :type, :at, :data]
     end
   end
 
@@ -55,6 +58,11 @@ defmodule Cloud.Gateways.Event do
       constraints min_length: 1, max_length: 100
     end
 
+    attribute :event_id, :string do
+      public? true
+      constraints min_length: 1, max_length: 64
+    end
+
     attribute :at, :utc_datetime_usec do
       allow_nil? false
       public? true
@@ -72,5 +80,9 @@ defmodule Cloud.Gateways.Event do
   relationships do
     belongs_to :tenant, Cloud.Accounts.Tenant, allow_nil?: false
     belongs_to :site, Cloud.Sites.Site, allow_nil?: false, public?: true
+  end
+
+  identities do
+    identity :unique_site_event_id, [:site_id, :event_id]
   end
 end
