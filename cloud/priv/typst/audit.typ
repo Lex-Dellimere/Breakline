@@ -117,7 +117,7 @@
   } else {
     set text(size: 8pt)
     table(
-      columns: (auto, 6.8em, 1.3fr, 1.1fr, 2.2fr, auto),
+      columns: (auto, 6.8em, 1fr, 1fr, 2.6fr, auto),
       inset: (x: 4pt, y: 3.5pt),
       stroke: (x, y) => (bottom: 0.4pt + rule, top: if y == 0 { 0.8pt + ink } else { none }),
       fill: (x, y) => if y == 0 { luma(238) } else if calc.even(y) { luma(250) } else { none },
