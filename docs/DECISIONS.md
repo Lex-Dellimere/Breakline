@@ -406,9 +406,37 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   - 30 token lookups per ip per 10 min.
 - **Approving** a request needs a step-up. Rejecting needs none.
 - **Break-glass** is capped at 4 hours in the resource and needs a step-up. Revoking needs none.
-- **Known residual:** the token sits in the URL, so it reaches browser history and the request log line.
+- **Known residual:** the token sits in the URL, so it reaches browser history (the request log line was fixed in D37).
 
 ### D33. Landing page animation (exception to D4)
 - **What:** the landing page hero has one decorative `<canvas data-crawl aria-hidden=true>` animated by `assets/js/landing_crawl.js`, imported from app.js. It isn't a LiveView hook because `/` is a controller page.
 - **Constraints:** non-interactive, landing page only, theme colours, a still frame under `prefers-reduced-motion`, and paused when hidden or off-screen. All text, buttons and layout stay mishka components.
 - **Why:** user request (roadmap idea 4.2).
+
+## 2026-11-01 — phase 5 (dashboard, timeline, audit export)
+
+### D34. Dashboard and timeline
+- **Home:** `/dashboard` is the signed-in home: sign in, the brand link and a signed-in visit to an auth page land there. `/sites` stays.
+- **One tenant at a time:** `?tenant=<id>` picks one, the first by name is the default, like `/settings/notifications`. Counters are computed from the cards, so a heartbeat updates both. Offline means not joined right now (presence), independent of open or locked.
+- **Upcoming windows** come from the latest published policy, not the window rows, expanded with `Schedule.windows_between/3` for 7 days and shown in the site's zone. It shows what the gateway will enforce, with the same fail-closed DST rules. An active advisory lock gets a note, since it wins over every window.
+- **Timeline** is its own page (`/sites/:id/timeline`) so the site page stays short. It merges gateway events, cloud audit entries whose data has the site's `site_id` (minus `policy.published`, which the policy versions show with more detail), policy versions and notification deliveries (admins only, as the resource allows).
+- **Paging:** a cursor on `{time, kind, id}`, descending, applied per source in the query, so pages never skip or repeat items that share a timestamp. Audit entries, policy versions and deliveries are ordered by `inserted_at`, gateway events by the gateway's `at`.
+- **Actor emails** are read with `Cloud.Accounts.emails_by_id/1` (trusted), because users cannot read other users. Only ids taken from records the user was allowed to read are looked up. Every tenant-scoped read is as the user.
+
+### D35. Audit export format (`breakline-audit-export/1`)
+- **Top level:** `format`, `generated_at`, `tenant`, `period` (`[from, to)`, UTC), `exported_by` (id, email, role), `sites`, `coverage`, `verification`, `cloud_audit`, `gateway_audit`.
+- **Verification** always covers each whole chain: the cloud chain with `Cloud.Audit.verify/1` against its stored head, each site's current gateway chain with `AuditLog.verify_chain/2` from seq 0 against the anchored head, plus the number of recorded chain resets. The head is read before the records and later records are left out, so counts and head describe one chain.
+- **Records:** per chain, one contiguous run of seqs, from the first record whose `at` is at or after `from` to the last before `to`, with the chain head, the record just before the run (`previous_record`), `from_genesis` and `to_head`.
+- **Offline verification** (`Breakline.AuditExport`, `mix breakline.audit.verify` in core): a run is verified with `verify_segment/2` from its previous record, anchored at that record's own `prev_hash`, so the previous record's hash and every link after it are checked. A run that claims `to_head` must end exactly at the head; a run that ends earlier cannot check the head. It proves the file is a consistent piece of a chain ending at the stated head, not that the head is genuine (T9).
+- **Exports are audited:** the download records `audit.exported` with the period, site ids and actor, never the data. The `/audit` preview builds the same export but records nothing.
+- **Access:** admins and approvers of the tenant. A non-member gets a 403, a bad period a 400.
+- **Download:** `GET /audit/export.json` in its own `:browser_download` pipeline (session cookie, json accepted), pretty json with `format` first, `content-disposition: attachment; filename="breakline-audit-<slug>-<first day>-<last day>.json"`, `cache-control: no-store`.
+
+### D36. PDF report (pending)
+- **Pending a library decision.** No dependency is added yet.
+- **Plan:** a renderer turns `Cloud.AuditExport.to_render_model/1` (title, period, verification sentences, record tables, all plain strings) into a PDF at `/audit/export.pdf` with the same params. The `/audit` page already shows the button, disabled. The page's verification sentences come from the same model, so the page, the PDF and the json always agree.
+
+### D37. Request-link tokens stay out of the request log
+- **What:** `Plug.Telemetry` in `CloudWeb.Endpoint` takes `log: {CloudWeb.Endpoint, :log_level, []}`. It returns false for `/request/*`, so Phoenix's endpoint lines (`GET /request/<token>`, `Sent 200`) are not logged for those paths. Verified against Phoenix 1.8's `Phoenix.Logger` dynamic log level.
+- **Still logged:** the router's `Processing with CloudWeb.RequestLive.Show` and LiveView's `MOUNT` lines, whose params are filtered (`filter_parameters` has `"token"`). A CaptureLog test at debug level checks the token never appears.
+- **Residual:** the token still reaches browser history and any proxy in front of the app (T6).

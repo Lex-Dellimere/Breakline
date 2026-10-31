@@ -119,6 +119,18 @@ Heartbeats arrive every 30 s, events and audit records every few seconds. The si
 `gateway_audit_head` is the head of the gateway's audit chain as the cloud verified and
 anchored it.
 
+### 6. Dashboard, timeline and audit export
+
+After sign in you land on http://localhost:4010/dashboard: counters, each site's live state and
+why, and its windows for the next 7 days. Each site page links to its timeline
+(`/sites/:id/timeline`). On http://localhost:4010/audit pick a period and sites, check the chain
+verification and download the json export; then re-check the file offline from `core/`:
+
+```sh
+cd core && mix breakline.audit.verify ~/Downloads/breakline-audit-demo-2026-10-25-2026-11-01.json
+echo $?   # 0 intact, 1 broken (the first break is printed), 2 not an export
+```
+
 To start over on the gateway side, stop it and `rm -rf gateway/tmp/dev_uplink`. Removing
 `gateway/priv/keys/site.json` takes the gateway back to the inbox-only dev setup.
 
