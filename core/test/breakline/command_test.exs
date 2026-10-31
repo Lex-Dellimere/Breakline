@@ -498,4 +498,67 @@ defmodule Breakline.CommandTest do
       end
     end
   end
+
+  describe "authenticate/2" do
+    test "accepts an expired, stale, already seen command and leaves no trace", %{keys: keys} do
+      wire = signed(keys, policy_version: 3)
+      {:ok, accepted, v} = Command.verify(wire, verifier(keys), @now)
+
+      # after acceptance verify refuses it, authenticate still checks its origin
+      assert {:error, :stale_version} = Command.verify(wire, v, @now)
+      assert {:ok, ^accepted} = Command.authenticate(wire, v)
+
+      # long after expiry
+      assert {:error, :expired} = Command.verify(wire, verifier(keys), DateTime.add(@now, 86_400))
+      assert {:ok, ^accepted} = Command.authenticate(wire, verifier(keys))
+      assert {:ok, ^accepted} = Command.authenticate(Command.encode_wire(wire), verifier(keys))
+    end
+
+    test "ignores time, version and nonce entirely", %{keys: keys} do
+      wire = signed(keys, issued_at: DateTime.add(@now, 30 * 86_400), ttl_seconds: 3600)
+      assert {:ok, %Command{}} = Command.authenticate(wire, verifier(keys, last_version: 99))
+    end
+
+    test "rejects shape, key, signature and site problems like verify", %{keys: keys} do
+      wire = signed(keys)
+
+      assert {:error, :malformed} = Command.authenticate(%{"envelope" => %{}}, verifier(keys))
+      assert {:error, :malformed} = Command.authenticate("not json", verifier(keys))
+      assert {:error, :malformed} = Command.authenticate([], verifier(keys))
+
+      assert {:error, :unknown_key} =
+               Command.authenticate(wire, verifier(Map.take(keys, ["k2"])))
+
+      tampered = put_env(wire, "policy_version", 2)
+      assert {:error, :bad_signature} = Command.authenticate(tampered, verifier(keys))
+
+      assert {:error, :wrong_site} =
+               Command.authenticate(signed(keys, site_id: "site-b"), verifier(keys))
+    end
+
+    property "agrees with the first four checks of verify", %{keys: keys} do
+      check all(
+              site <- member_of(["site-a", "site-b"]),
+              key_id <- member_of(["k1", "k2"]),
+              trusted <- member_of([["k1"], ["k2"], ["k1", "k2"]]),
+              tamper? <- boolean()
+            ) do
+        wire = signed(keys, [site_id: site], key_id)
+        wire = if tamper?, do: put_env(wire, "policy_version", 5), else: wire
+        v = verifier(Map.take(keys, trusted))
+
+        case Command.verify(wire, v, @now) do
+          {:ok, c, _} ->
+            assert {:ok, ^c} = Command.authenticate(wire, v)
+
+          {:error, reason}
+          when reason in [:malformed, :unknown_key, :bad_signature, :wrong_site] ->
+            assert {:error, ^reason} = Command.authenticate(wire, v)
+
+          {:error, _later} ->
+            assert {:ok, _} = Command.authenticate(wire, v)
+        end
+      end
+    end
+  end
 end

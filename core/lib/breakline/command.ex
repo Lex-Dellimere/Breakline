@@ -189,10 +189,7 @@ defmodule Breakline.Command do
   end
 
   def verify(wire, %Verifier{} = verifier, %DateTime{} = now) when is_map(wire) do
-    with {:ok, command, envelope, signature} <- parse(wire),
-         {:ok, public_key} <- lookup_key(verifier, command.key_id),
-         :ok <- check_signature(envelope, signature, public_key),
-         :ok <- check_site(command, verifier),
+    with {:ok, command} <- authenticate(wire, verifier),
          :ok <- check_not_yet_valid(command, verifier, now),
          :ok <- check_expired(command, now),
          :ok <- check_ttl(command, verifier),
@@ -210,6 +207,34 @@ defmodule Breakline.Command do
   end
 
   def verify(_wire, %Verifier{}, %DateTime{}), do: {:error, :malformed}
+
+  @doc """
+  Checks that a command (wire map or JSON bytes) is well formed, signed by a key in
+  `verifier.public_keys` and addressed to `verifier.site_id`.
+
+  These are the first four checks of `verify/3` (`:malformed`, `:unknown_key`,
+  `:bad_signature`, `:wrong_site`), with no time, version or nonce checks and no
+  verifier update. It is for re-checking a command the gateway accepted earlier and
+  persisted, for example at boot after the command has expired: expiry governs
+  acceptance only, so an accepted policy keeps being enforced. Never use it to accept
+  a new command.
+  """
+  @spec authenticate(wire() | binary(), Verifier.t()) ::
+          {:ok, t()} | {:error, :malformed | :unknown_key | :bad_signature | :wrong_site}
+  def authenticate(json, %Verifier{} = verifier) when is_binary(json) do
+    with {:ok, wire} <- decode_wire(json), do: authenticate(wire, verifier)
+  end
+
+  def authenticate(wire, %Verifier{} = verifier) when is_map(wire) do
+    with {:ok, command, envelope, signature} <- parse(wire),
+         {:ok, public_key} <- lookup_key(verifier, command.key_id),
+         :ok <- check_signature(envelope, signature, public_key),
+         :ok <- check_site(command, verifier) do
+      {:ok, command}
+    end
+  end
+
+  def authenticate(_wire, %Verifier{}), do: {:error, :malformed}
 
   # building
 
