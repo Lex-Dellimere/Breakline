@@ -54,6 +54,15 @@ defmodule CloudWeb.Layouts do
             >
               Sites
             </.button_link>
+            <.button_link
+              id="nav-advisories"
+              navigate={~p"/advisories"}
+              variant="transparent"
+              color="natural"
+              size="small"
+            >
+              Advisories
+            </.button_link>
             <span class="hidden text-sm text-zinc-600 sm:inline dark:text-zinc-400">
               {@current_user.email}
             </span>

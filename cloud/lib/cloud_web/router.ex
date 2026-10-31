@@ -38,6 +38,7 @@ defmodule CloudWeb.Router do
       # on_mount {CloudWeb.LiveUserAuth, :live_no_user}
       live "/sites", SitesLive.Index, :index
       live "/sites/:id", SitesLive.Show, :show
+      live "/advisories", AdvisoriesLive.Index, :index
     end
   end
 

@@ -1,5 +1,7 @@
 defmodule Cloud.Advisories.PollerTest do
-  use Cloud.DataCase, async: true
+  # feeds and advisories are global rows with unique names and ids; concurrent sandbox
+  # transactions inserting the same ones block on each other, so these run serially
+  use Cloud.DataCase, async: false
 
   # failed polls log a warning
   @moduletag :capture_log

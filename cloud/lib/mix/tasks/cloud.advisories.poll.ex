@@ -34,7 +34,9 @@ defmodule Mix.Tasks.Cloud.Advisories.Poll do
 
   defp feed!(name) do
     Enum.find(Cloud.Advisories.feeds(), &(Atom.to_string(&1) == name)) ||
-      Mix.raise("unknown feed #{inspect(name)}, expected one of #{inspect(Cloud.Advisories.feeds())}")
+      Mix.raise(
+        "unknown feed #{inspect(name)}, expected one of #{inspect(Cloud.Advisories.feeds())}"
+      )
   end
 
   defp print({feed, {:ok, summary}}) do

@@ -60,3 +60,6 @@ config :cloud, Oban, testing: :manual
 # advisory feed requests go to Req.Test stubs, see test/support/advisory_feeds.ex
 config :cloud, Cloud.Advisories.HTTP,
   req_options: [plug: {Req.Test, Cloud.Advisories.HTTP}, retry: false]
+
+# the dev-only "poll feeds now" button, so its test can click it
+config :cloud, advisories_poll_button?: true

@@ -1,5 +1,7 @@
 defmodule Cloud.Advisories.JobsTest do
-  use Cloud.DataCase, async: true
+  # feeds and advisories are global rows with unique names and ids; concurrent sandbox
+  # transactions inserting the same ones block on each other, so these run serially
+  use Cloud.DataCase, async: false
   use Oban.Testing, repo: Cloud.Repo
 
   import Cloud.AdvisoryFeeds
