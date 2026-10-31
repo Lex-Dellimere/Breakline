@@ -191,4 +191,91 @@ defmodule CloudWeb.SitesLiveTest do
     assert render(view) =~ "Your role does not allow that"
     assert Sites.get_site!(ctx.site.id, authorize?: false).policy_version == 0
   end
+
+  describe "break-glass" do
+    test "opens after a passkey step-up, shows who and until when, and revokes", ctx do
+      {authenticator, _} = passkey!(ctx.approver)
+      conn = log_in_user(build_conn(), ctx.approver)
+      Phoenix.PubSub.subscribe(Cloud.PubSub, Cloud.Policies.topic(ctx.site.id))
+      site_id = ctx.site.id
+      {:ok, view, _html} = live(conn, ~p"/sites/#{site_id}")
+
+      refute has_element?(view, "#break-glass-active")
+      for m <- [15, 30, 60, 120, 240], do: assert(has_element?(view, "#break-glass-#{m}"))
+
+      view |> element("#break-glass-120") |> render_click()
+      assert has_element?(view, "#step-up-waiting")
+      refute_received {:policy_published, _, _}
+
+      answer(view, authenticator)
+      assert_receive {:policy_published, ^site_id, 1}
+      assert render(view) =~ "Break-glass open for 2 hours: published policy v1"
+      assert has_element?(view, "#break-glass-active")
+      assert has_element?(view, "#break-glass-by", to_string(ctx.approver.email))
+
+      [break_glass] = Sites.list_break_glasses!(tenant: ctx.tenant, authorize?: false)
+      assert_in_delta DateTime.diff(break_glass.until, DateTime.utc_now()), 7200, 10
+
+      # revoking closes access, so it needs no passkey
+      view |> element("#revoke-break-glass") |> render_click()
+      refute_push_event(view, "passkey:get", _)
+      assert_receive {:policy_published, ^site_id, 2}
+      refute has_element?(view, "#break-glass-active")
+    end
+
+    test "an unknown duration is refused before any prompt", ctx do
+      passkey!(ctx.admin)
+      {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{ctx.site.id}")
+
+      render_click(view, "break_glass", %{"minutes" => "600"})
+      assert render(view) =~ "Unknown duration"
+      refute_push_event(view, "passkey:get", _)
+    end
+  end
+
+  describe "msp request links" do
+    setup ctx do
+      contact =
+        Sites.create_msp_contact!(%{name: "Kim at the MSP", email: "kim-#{unique()}@msp.example"},
+          actor: ctx.admin,
+          tenant: ctx.tenant
+        )
+
+      %{contact: contact}
+    end
+
+    test "an admin sends a link by email and revokes it", ctx do
+      import Swoosh.TestAssertions
+
+      {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{ctx.site.id}")
+      assert has_element?(view, "#request-links")
+
+      view
+      |> form("#send-link-form", link: %{msp_contact_id: ctx.contact.id})
+      |> render_submit()
+
+      assert render(view) =~ "Request link emailed"
+      [link] = Sites.list_request_links!(actor: ctx.admin, tenant: ctx.tenant)
+      assert has_element?(view, "#request-link-status-#{link.id}", "active")
+
+      assert_email_sent(fn email ->
+        assert email.to == [{"Kim at the MSP", to_string(ctx.contact.email)}]
+        assert email.text_body =~ "/request/"
+      end)
+
+      view |> element("#revoke-link-#{link.id}") |> render_click()
+      assert has_element?(view, "#request-link-status-#{link.id}", "revoked")
+      refute has_element?(view, "#revoke-link-#{link.id}")
+    end
+
+    test "approvers see no link management", ctx do
+      conn = log_in_user(build_conn(), ctx.approver)
+      {:ok, view, _html} = live(conn, ~p"/sites/#{ctx.site.id}")
+      refute has_element?(view, "#request-links")
+
+      render_click(view, "send_link", %{"link" => %{"msp_contact_id" => ctx.contact.id}})
+      assert render(view) =~ "Your role does not allow that"
+      assert Sites.list_request_links!(tenant: ctx.tenant, authorize?: false) == []
+    end
+  end
 end
