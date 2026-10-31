@@ -45,6 +45,15 @@ defmodule CloudWeb.Layouts do
 
         <nav class="flex items-center gap-2">
           <%= if @current_user do %>
+            <.button_link
+              id="nav-sites"
+              navigate={~p"/sites"}
+              variant="transparent"
+              color="natural"
+              size="small"
+            >
+              Sites
+            </.button_link>
             <span class="hidden text-sm text-zinc-600 sm:inline dark:text-zinc-400">
               {@current_user.email}
             </span>

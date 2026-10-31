@@ -31,6 +31,19 @@ defmodule CloudWeb.ConnCase do
     end
   end
 
+  @doc """
+  Signs `user` in on `conn`: issues a stored token, as a password sign in
+  would, and puts it in the test session.
+  """
+  def log_in_user(conn, user) do
+    {:ok, token, _claims} = AshAuthentication.Jwt.token_for_user(user)
+    user = Ash.Resource.put_metadata(user, :token, token)
+
+    conn
+    |> Phoenix.ConnTest.init_test_session(%{})
+    |> AshAuthentication.Plug.Helpers.store_in_session(user)
+  end
+
   setup tags do
     Cloud.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}

@@ -36,6 +36,8 @@ defmodule CloudWeb.Router do
       #
       # If an authenticated user must *not* be present:
       # on_mount {CloudWeb.LiveUserAuth, :live_no_user}
+      live "/sites", SitesLive.Index, :index
+      live "/sites/:id", SitesLive.Show, :show
     end
   end
 
