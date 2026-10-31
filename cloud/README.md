@@ -72,6 +72,15 @@ only that one action, and locks it now without one.
 dig @127.0.0.1 -p 5300 sis.n-able.com      # after Open: status NOERROR, within a second
 ```
 
+**Open now (break-glass)** in the same panel opens the site for 15 minutes to 4 hours after a
+passkey prompt; the active break-glass is shown at the top with a Revoke button (no prompt).
+
+To try the MSP side, use **MSP request links** on the site page (admins): pick the seeded
+contact and **Send link**. The email lands in the dev mailbox at
+http://localhost:4010/dev/mailbox; open its link in a private window (no sign in), request a
+window, then approve or reject it under **Requests** (approving asks for your passkey and
+publishes).
+
 Locking also works from a shell (opening does not: it needs the passkey ceremony):
 
 ```sh
