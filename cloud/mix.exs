@@ -58,6 +58,7 @@ defmodule Cloud.MixProject do
   defp deps do
     [
       {:ash_ai, "~> 1.0"},
+      {:breakline, path: "../core"},
       {:bcrypt_elixir, "~> 3.0"},
       {:picosat_elixir, "~> 0.2"},
       {:sourceror, "~> 1.8", only: [:dev, :test]},
