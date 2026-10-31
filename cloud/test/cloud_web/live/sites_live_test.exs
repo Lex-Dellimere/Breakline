@@ -5,7 +5,7 @@ defmodule CloudWeb.SitesLiveTest do
   import Phoenix.LiveViewTest
   import Cloud.Fixtures
 
-  alias Cloud.{Gateways, Sites}
+  alias Cloud.{Gateways, Sites, SoftAuthenticator}
 
   setup %{conn: conn} do
     %{tenant: tenant, admin: admin} = org = org!()
@@ -61,7 +61,13 @@ defmodule CloudWeb.SitesLiveTest do
     assert has_element?(view, "#site-state", "Locked")
     assert has_element?(view, "#site-reason", "Locked: gateway clock not synced")
     assert has_element?(view, "#site-connected", "Offline")
-    assert has_element?(view, "#demo-actions", "passkey approval arrives in phase 4")
+    assert has_element?(view, "#access", "Access")
+    refute render(view) =~ "phase 4"
+    # the admin has no passkey yet: no open or unlock buttons, a link to add one
+    refute has_element?(view, "#open-30")
+    refute has_element?(view, "#unlock")
+    assert has_element?(view, "#lock-now")
+    assert has_element?(view, ~s(#passkey-needed a[href="/account/security"]))
     assert has_element?(view, "#no-events")
   end
 
@@ -79,11 +85,7 @@ defmodule CloudWeb.SitesLiveTest do
     {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{ctx.site.id}")
     assert has_element?(view, "#site-reason", "No heartbeat yet")
 
-    window =
-      Sites.create_approved_window!(recurring_attrs(ctx.site),
-        actor: ctx.admin,
-        tenant: ctx.tenant
-      )
+    window = book!(recurring_attrs(ctx.site), ctx.admin, ctx.tenant)
 
     heartbeat(ctx.site, %{
       "state" => "open",
@@ -118,26 +120,67 @@ defmodule CloudWeb.SitesLiveTest do
     assert has_element?(view, "#site-events", "boot.net.anydesk.com")
   end
 
-  test "demo actions publish a new policy", ctx do
+  # the hook cannot run in LiveViewTest: these tests answer its pushes with a
+  # software authenticator, which is what the browser and a passkey would send
+  defp answer(view, authenticator, overrides \\ []) do
+    assert_push_event(view, "passkey:get", options)
+    {authenticator, assertion} = SoftAuthenticator.assert(authenticator, options, overrides)
+    render_hook(view, "passkey_assertion", Map.put(assertion, "ref", "step-up"))
+    authenticator
+  end
+
+  test "open and unlock run after a passkey step-up, lock runs straight away", ctx do
+    {authenticator, _} = passkey!(ctx.admin)
     Phoenix.PubSub.subscribe(Cloud.PubSub, Cloud.Policies.topic(ctx.site.id))
     {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{ctx.site.id}")
     site_id = ctx.site.id
 
     view |> element("#open-30") |> render_click()
+    assert has_element?(view, "#step-up-waiting")
+    refute_received {:policy_published, _, _}
+
+    authenticator = answer(view, authenticator)
     assert_receive {:policy_published, ^site_id, 1}
     assert has_element?(view, "#site-versions", "v1")
+    assert render(view) =~ "Opened for 30 minutes: published policy v1"
+    refute has_element?(view, "#step-up-waiting")
+
+    [window] = Sites.list_windows!(authorize?: false, tenant: ctx.tenant)
+    assert NaiveDateTime.diff(window.ends_at, window.starts_at) in [1800, 1860]
 
     view |> element("#lock-now") |> render_click()
     assert_receive {:policy_published, ^site_id, 2}
 
     view |> element("#unlock") |> render_click()
+    _authenticator = answer(view, authenticator)
     assert_receive {:policy_published, ^site_id, 3}
-
     assert render(view) =~ "Manual locks lifted: published policy v3"
 
+    # nothing to lift: refused before any passkey prompt
     view |> element("#unlock") |> render_click()
     assert render(view) =~ "There is no manual lock to lift"
+    refute_push_event(view, "passkey:get", _)
     assert Sites.get_site!(site_id, authorize?: false).policy_version == 3
+  end
+
+  test "a bad assertion or a cancelled prompt opens nothing", ctx do
+    {authenticator, _} = passkey!(ctx.admin)
+    {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{ctx.site.id}")
+
+    view |> element("#open-15") |> render_click()
+    answer(view, authenticator, tamper_signature: true)
+    assert render(view) =~ "The passkey response did not verify"
+
+    view |> element("#open-60") |> render_click()
+    assert_push_event(view, "passkey:get", _options)
+    render_hook(view, "passkey_error", %{"ref" => "step-up", "name" => "NotAllowedError"})
+    assert render(view) =~ "The passkey prompt was cancelled or timed out"
+
+    # an assertion with nothing pending is ignored
+    render_hook(view, "passkey_assertion", %{"ref" => "step-up"})
+    assert render(view) =~ "There is no passkey approval waiting"
+
+    assert Sites.get_site!(ctx.site.id, authorize?: false).policy_version == 0
   end
 
   test "an approver cannot lock", ctx do

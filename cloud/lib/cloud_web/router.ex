@@ -39,6 +39,7 @@ defmodule CloudWeb.Router do
       live "/sites", SitesLive.Index, :index
       live "/sites/:id", SitesLive.Show, :show
       live "/advisories", AdvisoriesLive.Index, :index
+      live "/account/security", AccountLive.Security, :show
     end
   end
 
@@ -46,6 +47,17 @@ defmodule CloudWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    # strategy routes we never serve, matched before auth_routes forwards /auth:
+    # totp setup and verify run in our liveviews (a direct confirm_setup would store a
+    # secret behind them), and passkeys are only added through our own ceremony with
+    # its step-up (CloudWeb.AccountLive.Security). Cloud.Accounts.Passkey refuses the
+    # strategy's add-credential path at the resource as well
+    match :*, "/auth/user/totp/*rest", DisabledRouteController, :not_found
+    match :*, "/auth/user/webauthn/add_credential", DisabledRouteController, :not_found
+
+    match :*, "/auth/user/webauthn/add_credential_challenge", DisabledRouteController, :not_found
+
     auth_routes AuthController, Cloud.Accounts.User, path: "/auth"
 
     # all auth pages are our own mishka liveviews (CloudWeb.AuthLive.*);

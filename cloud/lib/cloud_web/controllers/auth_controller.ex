@@ -1,16 +1,55 @@
 defmodule CloudWeb.AuthController do
+  @moduledoc """
+  Finishes the strategy routes of `auth_routes`.
+
+  Only these activities create a session:
+
+  - `{:password, :sign_in_with_token}`: the token is released by
+    `CloudWeb.AuthLive.SignIn` only after the TOTP step, for users with TOTP
+  - `{:webauthn, :sign_in_with_token}`: a passkey sign in
+  - `{:password, :reset}` and `{:confirm_new_user, :confirm}`, for users
+    without TOTP; users with TOTP are sent to sign in instead, so a reset
+    link alone never skips the second factor
+
+  Anything else (for example the plain password `sign_in` route, which would
+  skip TOTP) is refused.
+  """
+
   use CloudWeb, :controller
   use AshAuthentication.Phoenix.Controller
 
-  def success(conn, activity, user, token) do
+  @session_activities [{:password, :sign_in_with_token}, {:webauthn, :sign_in_with_token}]
+  @link_activities [{:password, :reset}, {:confirm_new_user, :confirm}]
+
+  def success(conn, activity, user, token) when activity in @session_activities,
+    do: sign_in(conn, activity, user, token)
+
+  def success(conn, activity, user, token) when activity in @link_activities do
+    if Cloud.Accounts.Totp.enabled?(user) do
+      conn
+      |> put_flash(:info, success_message(activity) <> ". Sign in to continue.")
+      |> redirect(to: ~p"/sign-in")
+    else
+      sign_in(conn, activity, user, token)
+    end
+  end
+
+  def success(conn, _activity, _user, _token) do
+    conn
+    |> put_flash(:error, "Sign in from the sign in page")
+    |> redirect(to: ~p"/sign-in")
+  end
+
+  defp success_message({:confirm_new_user, :confirm}),
+    do: "Your email address has now been confirmed"
+
+  defp success_message({:password, :reset}), do: "Your password has successfully been reset"
+  defp success_message(_activity), do: "You are now signed in"
+
+  defp sign_in(conn, activity, user, token) do
     return_to = get_session(conn, :return_to) || ~p"/"
 
-    message =
-      case activity do
-        {:confirm_new_user, :confirm} -> "Your email address has now been confirmed"
-        {:password, :reset} -> "Your password has successfully been reset"
-        _ -> "You are now signed in"
-      end
+    message = success_message(activity)
 
     conn
     |> delete_session(:return_to)
@@ -48,8 +87,8 @@ defmodule CloudWeb.AuthController do
         {{:password, _}, _} ->
           "Incorrect email or password"
 
-        {{:magic_link, _}, _} ->
-          "Invalid or expired sign-in link"
+        {{:webauthn, _}, _} ->
+          "The passkey sign in did not work"
 
         _ ->
           "Authentication failed"

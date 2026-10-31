@@ -2,8 +2,14 @@ defmodule CloudWeb.SitesLive.Show do
   @moduledoc """
   One site: the gateway's live state and why, whether it is connected and
   when it was last seen, mode, next change, published vs applied policy
-  version, the newest gateway events (live), and a demo panel that opens or
-  locks the site through `Cloud.Access`.
+  version, the newest gateway events (live), and an access panel that opens,
+  locks and unlocks the site through `Cloud.Access`.
+
+  Opening and unlocking need a passkey step-up bound to that exact action
+  (`CloudWeb.StepUp`): the button starts the step-up, the
+  `CloudWeb.PasskeyCeremony` hook asks the authenticator, and once the
+  assertion verifies the action runs and consumes the step-up. Locking needs
+  nothing more. A user without a passkey is pointed at `/account/security`.
 
   The site is only shown to members of its tenant; any other id redirects to
   `/sites` as not found.
@@ -13,8 +19,9 @@ defmodule CloudWeb.SitesLive.Show do
 
   import CloudWeb.SitesLive.Components
 
+  alias Cloud.Accounts.Passkeys
   alias Cloud.Gateways
-  alias CloudWeb.GatewayPresence
+  alias CloudWeb.{GatewayPresence, StepUp}
   alias CloudWeb.SitesLive.{Data, Presenter}
 
   on_mount {CloudWeb.LiveUserAuth, :live_user_required}
@@ -42,7 +49,8 @@ defmodule CloudWeb.SitesLive.Show do
          |> assign(:windows, Data.windows(user, site))
          |> assign(:connected, GatewayPresence.connected?(site.id))
          |> assign(:events_empty?, events == [])
-         |> assign(:busy, nil)
+         |> assign(:step_up, nil)
+         |> assign(:has_passkey, Passkeys.any?(user))
          |> stream(:events, events, limit: @events)}
 
       {:error, :not_found} ->
@@ -53,17 +61,13 @@ defmodule CloudWeb.SitesLive.Show do
     end
   end
 
-  # demo actions
+  # access actions
 
   @impl true
   def handle_event("open", %{"minutes" => minutes}, socket) do
     case Integer.parse(minutes) do
       {m, ""} when m in [15, 30, 60] ->
-        site = socket.assigns.site
-
-        site.id
-        |> Cloud.Access.open_now(m, socket.assigns.current_user)
-        |> action_result(socket, "Opened for #{m} minutes")
+        {:noreply, start_step_up(socket, :open_window, {:open, m})}
 
       _ ->
         {:noreply, put_flash(socket, :error, "Unknown duration")}
@@ -72,13 +76,53 @@ defmodule CloudWeb.SitesLive.Show do
 
   def handle_event("lock", _params, socket) do
     socket.assigns.site.id
-    |> Cloud.Access.lock_now(socket.assigns.current_user, "locked from the demo panel")
+    |> Cloud.Access.lock_now(socket.assigns.current_user, "locked from the site page")
     |> action_result(socket, "Locked")
   end
 
   def handle_event("unlock", _params, socket) do
+    if Cloud.Access.manual_lock?(socket.assigns.site.id, socket.assigns.current_user) do
+      {:noreply, start_step_up(socket, :lift_lock, :unlock)}
+    else
+      {:noreply, put_flash(socket, :error, "There is no manual lock to lift")}
+    end
+  end
+
+  # the passkey ceremony hook
+
+  def handle_event("passkey_assertion", params, socket) do
+    case StepUp.verify(socket, params) do
+      {:ok, action, step_up_id, socket} -> run(action, step_up_id, socket)
+      {:error, socket} -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("passkey_error", params, socket) do
+    {:noreply, StepUp.cancel(socket, params)}
+  end
+
+  defp start_step_up(socket, purpose, action) do
+    site = socket.assigns.site
+
+    StepUp.start(
+      socket,
+      purpose,
+      site.id,
+      Cloud.Access.step_up_params(site.id, action),
+      [tenant: site.tenant_id],
+      action
+    )
+  end
+
+  defp run({:open, minutes}, step_up_id, socket) do
     socket.assigns.site.id
-    |> Cloud.Access.unlock(socket.assigns.current_user)
+    |> Cloud.Access.open_now(minutes, socket.assigns.current_user, step_up_id)
+    |> action_result(socket, "Opened for #{minutes} minutes")
+  end
+
+  defp run(:unlock, step_up_id, socket) do
+    socket.assigns.site.id
+    |> Cloud.Access.unlock(socket.assigns.current_user, step_up_id)
     |> action_result(socket, "Manual locks lifted")
   end
 
@@ -95,8 +139,10 @@ defmodule CloudWeb.SitesLive.Show do
   defp action_result({:error, :no_manual_lock}, socket, _message),
     do: {:noreply, put_flash(socket, :error, "There is no manual lock to lift")}
 
-  defp action_result({:error, _error}, socket, _message),
-    do: {:noreply, put_flash(socket, :error, "That did not work, see the server log")}
+  defp action_result({:error, error}, socket, _message) do
+    message = StepUp.action_error(error) || "That did not work, see the server log"
+    {:noreply, put_flash(socket, :error, message)}
+  end
 
   # live updates
 
@@ -225,30 +271,29 @@ defmodule CloudWeb.SitesLive.Show do
         </.card_content>
       </.card>
 
-      <.card id="demo-actions" variant="bordered" color="warning" rounded="large" padding="large">
-        <.card_title
-          title="Demo actions — passkey approval arrives in phase 4"
-          size="small"
-          font_weight="font-semibold"
-        />
+      <.card id="access" variant="bordered" color="natural" rounded="large" padding="large">
+        <.card_title title="Access" size="small" font_weight="font-semibold" />
         <.card_content>
           <p class="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-            Each button publishes a new signed policy, which the gateway applies within seconds.
+            Each action publishes a new signed policy, which the gateway applies within seconds.
+            Opening and unlocking ask for your passkey and approve only that one action.
           </p>
-          <div class="flex flex-wrap gap-2">
-            <.button
-              :for={m <- [15, 30, 60]}
-              id={"open-#{m}"}
-              phx-click="open"
-              phx-value-minutes={m}
-              phx-disable-with="Opening..."
-              color="success"
-              variant="default"
-              size="small"
-              icon="hero-lock-open"
-            >
-              Open {m} min
-            </.button>
+          <div class="flex flex-wrap items-center gap-2">
+            <%= if @has_passkey do %>
+              <.button
+                :for={m <- [15, 30, 60]}
+                id={"open-#{m}"}
+                phx-click="open"
+                phx-value-minutes={m}
+                disabled={@step_up != nil}
+                color="success"
+                variant="default"
+                size="small"
+                icon="hero-lock-open"
+              >
+                Open {m} min
+              </.button>
+            <% end %>
             <.button
               id="lock-now"
               phx-click="lock"
@@ -260,18 +305,38 @@ defmodule CloudWeb.SitesLive.Show do
             >
               Lock now
             </.button>
-            <.button
-              id="unlock"
-              phx-click="unlock"
-              phx-disable-with="Unlocking..."
-              color="natural"
-              variant="bordered"
-              size="small"
-              icon="hero-arrow-uturn-left"
-            >
-              Unlock
-            </.button>
+            <%= if @has_passkey do %>
+              <.button
+                id="unlock"
+                phx-click="unlock"
+                disabled={@step_up != nil}
+                color="natural"
+                variant="bordered"
+                size="small"
+                icon="hero-arrow-uturn-left"
+              >
+                Unlock
+              </.button>
+            <% end %>
           </div>
+          <p :if={@step_up} id="step-up-waiting" class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <.icon name="hero-finger-print" class="size-4 align-text-bottom" />
+            Confirm with your passkey to continue.
+          </p>
+          <p
+            :if={!@has_passkey}
+            id="passkey-needed"
+            class="mt-3 text-sm text-zinc-600 dark:text-zinc-400"
+          >
+            Opening and unlocking need a passkey.
+            <.link
+              navigate={~p"/account/security"}
+              class="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Add one on the security page
+            </.link>
+          </p>
+          <CloudWeb.PasskeyCeremony.hook id="passkey-ceremony" />
         </.card_content>
       </.card>
 

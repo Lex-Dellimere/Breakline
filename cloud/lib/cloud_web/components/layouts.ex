@@ -63,6 +63,15 @@ defmodule CloudWeb.Layouts do
             >
               Advisories
             </.button_link>
+            <.button_link
+              id="nav-security"
+              navigate={~p"/account/security"}
+              variant="transparent"
+              color="natural"
+              size="small"
+            >
+              Security
+            </.button_link>
             <span class="hidden text-sm text-zinc-600 sm:inline dark:text-zinc-400">
               {@current_user.email}
             </span>

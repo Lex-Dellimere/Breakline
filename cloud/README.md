@@ -59,17 +59,22 @@ dig @127.0.0.1 -p 5300 sis.n-able.com      # status: NXDOMAIN
 
 ### 4. Open and lock from the cloud
 
-Sign in at http://localhost:4010 as `demo@breakline.test` with the demo password and open
-**Sites**, then **Parramatta clinic**. The demo panel opens the site for 15, 30 or 60
-minutes, locks it now, or lifts the manual locks. The same from a shell:
+Sign in at http://localhost:4010 as `demo@breakline.test` with the demo password. Opening
+access needs a passkey, so first open **Security** and add one (Touch ID, Windows Hello, a
+phone or a security key; WebAuthn works over plain http on `localhost` only, so use that
+host name, not `127.0.0.1`).
+
+Then open **Sites**, then **Parramatta clinic**. The **Access** panel opens the site for
+15, 30 or 60 minutes and lifts the manual locks, each after a passkey prompt that approves
+only that one action, and locks it now without one.
 
 ```sh
-elixir --sname probe --rpc-eval cloud@Nx '
-  require Ash.Query
-  user = Cloud.Accounts.User |> Ash.Query.filter(email == "demo@breakline.test") |> Ash.read_one!(authorize?: false)
-  Cloud.Access.open_now("<site_id>", 15, user) |> elem(0) |> IO.inspect()'
-dig @127.0.0.1 -p 5300 sis.n-able.com      # status: NOERROR, within a second
+dig @127.0.0.1 -p 5300 sis.n-able.com      # after Open: status NOERROR, within a second
+```
 
+Locking also works from a shell (opening does not: it needs the passkey ceremony):
+
+```sh
 elixir --sname probe --rpc-eval cloud@Nx '
   require Ash.Query
   user = Cloud.Accounts.User |> Ash.Query.filter(email == "demo@breakline.test") |> Ash.read_one!(authorize?: false)
@@ -77,7 +82,19 @@ elixir --sname probe --rpc-eval cloud@Nx '
 dig @127.0.0.1 -p 5300 sis.n-able.com      # status: NXDOMAIN again
 ```
 
-`Cloud.Access.unlock("<site_id>", user)` lifts the manual locks.
+**Security** can also turn on TOTP as a second sign-in factor. It shows the `otpauth://`
+link and the key as text (there is no QR code); paste or type them into an authenticator
+app. TOTP only signs in, it never approves.
+
+Every action is recorded in the tenant's audit chain:
+
+```sh
+psql -h 127.0.0.1 -p 5433 -U postgres cloud_dev -c \
+  "select seq, entry->>'action', entry->>'at' from audit_entries order by tenant_id, seq"
+elixir --sname probe --rpc-eval cloud@Nx '
+  {:ok, t} = Cloud.Accounts.get_tenant_by_slug("demo", authorize?: false)
+  IO.inspect Cloud.Audit.verify(t.id)'
+```
 
 ### 5. Look at what arrived
 
