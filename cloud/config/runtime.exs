@@ -85,6 +85,16 @@ if config_env() == :dev do
 end
 
 if config_env() == :prod do
+  # passkeys are bound to the rp id for good: changing it later invalidates every
+  # registered credential. the origin is the full scheme://host[:port] browsers report
+  config :cloud, :webauthn,
+    rp_id:
+      System.get_env("WEBAUTHN_RP_ID") || raise("environment variable WEBAUTHN_RP_ID is missing"),
+    rp_name: System.get_env("WEBAUTHN_RP_NAME", "Breakline"),
+    origin:
+      System.get_env("WEBAUTHN_ORIGIN") ||
+        raise("environment variable WEBAUTHN_ORIGIN is missing")
+
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """

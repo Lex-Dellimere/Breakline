@@ -103,11 +103,23 @@ defmodule Cloud.Sites.TenantIsolationTest do
 
   test "approvers can approve windows and open break-glass", %{a: a, window: window, site: site} do
     opts = [actor: a.approver, tenant: a.tenant]
-    assert {:ok, %{status: :approved}} = Sites.approve_window(window, opts)
+
+    assert {:ok, %{status: :approved}} =
+             Sites.approve_window(
+               window,
+               %{step_up_id: approve_step_up!(a.approver, window)},
+               opts
+             )
+
+    until = DateTime.add(DateTime.utc_now(), 600)
 
     assert {:ok, _} =
              Sites.create_break_glass(
-               %{site_id: site.id, until: DateTime.add(DateTime.utc_now(), 600)},
+               %{
+                 site_id: site.id,
+                 until: until,
+                 step_up_id: break_glass_step_up!(a.approver, site.id, until, a.tenant)
+               },
                opts
              )
   end

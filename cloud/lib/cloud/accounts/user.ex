@@ -1,4 +1,17 @@
 defmodule Cloud.Accounts.User do
+  @moduledoc """
+  A person who signs in to the cloud.
+
+  - Password sign in (`:password`), with an optional TOTP second factor
+    (`:totp`, see `Cloud.Accounts.Totp`). TOTP never approves anything.
+  - Passkeys (`:webauthn`, credentials in `Cloud.Accounts.Passkey`): sign in
+    without a password, and the only way to verify a step-up
+    (`Cloud.Accounts.StepUps`) for an action that opens access. Passkeys are
+    added from `/account/security` (`Cloud.Accounts.Passkeys`); the
+    strategy's own registration (which would create a passwordless user) is
+    off.
+  """
+
   use Ash.Resource,
     otp_app: :cloud,
     domain: Cloud.Accounts,
@@ -45,6 +58,33 @@ defmodule Cloud.Accounts.User do
       end
 
       remember_me :remember_me
+
+      # passkeys sign in and approve. the strategy's register (a new passwordless user)
+      # and verify (a session-wide second factor) are off: approvals use our own
+      # per-action step-up, see Cloud.Accounts.StepUps
+      webauthn :webauthn do
+        credential_resource Cloud.Accounts.Passkey
+        credentials_relationship_name :passkeys
+        rp_id Cloud.Secrets
+        rp_name Cloud.Secrets
+        origin Cloud.Secrets
+        identity_field :email
+        user_verification "required"
+        resident_key :preferred
+        registration_enabled? false
+        verify_enabled? false
+      end
+
+      # a second factor for password sign in only: no totp sign in on its own
+      totp :totp do
+        identity_field :email
+        issuer "Breakline"
+        sign_in_enabled? false
+        confirm_setup_enabled? true
+        # one period of clock drift between the phone and the server
+        grace_period 1
+        brute_force_strategy {:preparation, Cloud.Accounts.TotpRateLimit}
+      end
     end
   end
 
@@ -61,6 +101,45 @@ defmodule Cloud.Accounts.User do
       argument :subject, :string, allow_nil?: false
       get? true
       prepare AshAuthentication.Preparations.FilterBySubject
+    end
+
+    update :record_totp_result do
+      description "Trusted: counts a wrong totp code, or remembers when a code was accepted."
+      require_atomic? false
+      accept []
+      argument :accepted, :boolean, allow_nil?: false
+
+      change fn changeset, _context ->
+        now = DateTime.utc_now()
+
+        if Ash.Changeset.get_argument(changeset, :accepted) do
+          # codes from this period or earlier are refused from now on (replay)
+          Ash.Changeset.force_change_attributes(changeset,
+            last_totp_at: DateTime.truncate(now, :second),
+            totp_failed_attempts: 0,
+            totp_failed_at: nil
+          )
+        else
+          data = changeset.data
+          # failures only add up inside the window
+          failures =
+            if Cloud.Accounts.Totp.recent?(data.totp_failed_at),
+              do: (data.totp_failed_attempts || 0) + 1,
+              else: 1
+
+          Ash.Changeset.force_change_attributes(changeset,
+            totp_failed_attempts: failures,
+            totp_failed_at: now
+          )
+        end
+      end
+    end
+
+    update :disable_totp do
+      description "Trusted: turns totp off. Cloud.Accounts.Totp.disable/2 checks a code first."
+      accept []
+      change set_attribute(:totp_secret, nil)
+      change set_attribute(:last_totp_at, nil)
     end
 
     update :change_password do
@@ -253,6 +332,25 @@ defmodule Cloud.Accounts.User do
     end
 
     attribute :confirmed_at, :utc_datetime_usec
+
+    attribute :totp_secret, :binary do
+      sensitive? true
+    end
+
+    attribute :last_totp_at, :datetime do
+      sensitive? true
+    end
+
+    attribute :totp_failed_attempts, :integer do
+      allow_nil? false
+      default 0
+    end
+
+    attribute :totp_failed_at, :utc_datetime_usec
+  end
+
+  relationships do
+    has_many :passkeys, Cloud.Accounts.Passkey
   end
 
   identities do

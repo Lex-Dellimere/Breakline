@@ -31,7 +31,7 @@ defmodule Cloud.AccessTest do
 
   test "open_now books an approved one-off window and publishes", %{site: site} = ctx do
     assert {:ok, %{window: window, policy_version: version}} =
-             Access.open_now(site.id, 30, ctx.approver)
+             Access.open_now(site.id, 30, ctx.approver, open_step_up!(ctx.approver, site, 30))
 
     assert window.status == :approved
     assert window.kind == :one_off
@@ -45,7 +45,7 @@ defmodule Cloud.AccessTest do
   end
 
   test "lock_now locks over an open window and unlock lifts it", %{site: site} = ctx do
-    {:ok, _} = Access.open_now(site.id, 60, ctx.admin)
+    {:ok, _} = Access.open_now(site.id, 60, ctx.admin, open_step_up!(ctx.admin, site, 60))
 
     assert {:ok, %{lock: lock, policy_version: v2}} =
              Access.lock_now(site.id, ctx.admin, "suspicious login")
@@ -64,7 +64,10 @@ defmodule Cloud.AccessTest do
     {:ok, _} = Access.lock_now(site.id, ctx.admin, "second")
 
     Phoenix.PubSub.subscribe(Cloud.PubSub, Cloud.Policies.topic(site.id))
-    assert {:ok, %{locks: lifted, policy_version: v5}} = Access.unlock(site.id, ctx.admin)
+
+    assert {:ok, %{locks: lifted, policy_version: v5}} =
+             Access.unlock(site.id, ctx.admin, unlock_step_up!(ctx.admin, site))
+
     assert length(lifted) == 2
     assert Enum.all?(lifted, &(&1.lifted_at && &1.lifted_by_id == ctx.admin.id))
     # one publish for both lifts
@@ -75,17 +78,23 @@ defmodule Cloud.AccessTest do
     assert id == feed.id
     assert state_now(v5) == :locked
 
-    assert {:error, :no_manual_lock} = Access.unlock(site.id, ctx.admin)
+    assert {:error, :no_manual_lock} =
+             Access.unlock(site.id, ctx.admin, unlock_step_up!(ctx.admin, site))
   end
 
   test "roles are enforced", %{site: site} = ctx do
     stranger = user!()
 
-    assert {:error, %Ash.Error.Forbidden{}} = Access.open_now(site.id, 30, stranger)
+    assert {:error, %Ash.Error.Forbidden{}} =
+             Access.open_now(site.id, 30, stranger, open_step_up!(stranger, site, 30))
+
     assert {:error, %Ash.Error.Forbidden{}} = Access.lock_now(site.id, ctx.approver, "x")
 
     {:ok, _} = Access.lock_now(site.id, ctx.admin, "x")
-    assert {:error, %Ash.Error.Forbidden{}} = Access.unlock(site.id, ctx.approver)
+
+    assert {:error, %Ash.Error.Forbidden{}} =
+             Access.unlock(site.id, ctx.approver, unlock_step_up!(ctx.approver, site))
+
     assert Sites.get_site!(site.id, authorize?: false).policy_version == 1
 
     assert {:error, :not_found} = Access.lock_now(Ash.UUID.generate(), ctx.admin, "x")

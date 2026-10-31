@@ -40,6 +40,7 @@ defmodule Cloud.Sites do
     resource Cloud.Sites.Window do
       define :request_window, action: :request
       define :create_approved_window, action: :create_approved
+      define :open_window_now, action: :open_now
       define :list_windows, action: :read
       define :get_window, action: :read, get_by: [:id]
       define :approve_window, action: :approve

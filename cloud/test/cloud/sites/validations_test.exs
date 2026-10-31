@@ -134,7 +134,7 @@ defmodule Cloud.Sites.ValidationsTest do
       window =
         Sites.request_window!(recurring_attrs(ctx.site), actor: ctx.admin, tenant: ctx.tenant)
 
-      window = Sites.approve_window!(window, actor: ctx.approver, tenant: ctx.tenant)
+      window = approve!(window, ctx.approver)
       assert window.status == :approved
       assert window.approved_by_id == ctx.approver.id
       assert window.approved_at

@@ -67,7 +67,8 @@ defmodule Cloud.Policies do
   It locks the site row (`FOR UPDATE`), so concurrent publishes for one site
   serialise and get distinct, consecutive versions. Everything it reads sees
   the caller's uncommitted changes, which is how an action can publish the
-  window it just approved.
+  window it just approved. The version is recorded as `"policy.published"`
+  in the tenant's audit chain (`Cloud.Audit`) in the same transaction.
   """
   @spec publish_in_transaction(String.t(), keyword()) ::
           {:ok, PolicyVersion.t()} | {:error, term()}
@@ -98,6 +99,13 @@ defmodule Cloud.Policies do
              tenant: site.tenant_id,
              authorize?: false,
              return_notifications?: true
+           ),
+         {:ok, _entry} <-
+           Cloud.Audit.append(
+             site.tenant_id,
+             "policy.published",
+             %{site_id: site.id, version: version.version, reason: reason},
+             actor: opts[:published_by]
            ) do
       {:ok, version}
     end

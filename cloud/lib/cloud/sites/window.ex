@@ -14,7 +14,19 @@ defmodule Cloud.Sites.Window do
   Lifecycle: a window is `:requested` (by an MSP contact or an admin), then
   `:approved` or `:rejected` by an approver or admin, and may be `:cancelled`.
   Only approved windows are published. Approving, booking an approved window
-  directly and cancelling each publish a new policy version.
+  directly, opening now and cancelling each publish a new policy version.
+
+  Everything that opens access needs a passkey step-up bound to it
+  (`Cloud.Accounts.Changes.RequireStepUp`, threat model T5):
+
+  - `:approve`: purpose `:approve_window`, subject the window, params its
+    `id` and `site_id`
+  - `:create_approved`: purpose `:open_window`, subject the site, params the
+    window's shape fields
+  - `:open_now`: purpose `:open_window`, subject the site, params `site_id`
+    and `minutes`
+
+  Every action is recorded in the tenant's audit chain (`Cloud.Audit`).
   """
 
   use Ash.Resource,
@@ -23,6 +35,8 @@ defmodule Cloud.Sites.Window do
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer]
 
+  alias Cloud.Accounts.Changes.RequireStepUp
+  alias Cloud.Audit.Changes.Record
   alias Cloud.Checks.TenantMember
   alias Cloud.Sites.Changes.Publish
   alias Cloud.Sites.Validations.WindowShape
@@ -59,43 +73,87 @@ defmodule Cloud.Sites.Window do
 
     create :request do
       primary? true
+      transaction? true
       accept @shape_fields ++ [:requested_by_id]
       validate {WindowShape, []}
+      change {Record, action: "window.requested", fields: @shape_fields ++ [:requested_by_id]}
     end
 
     create :create_approved do
       description "Books a window that is approved straight away."
       accept @shape_fields
       transaction? true
+      argument :step_up_id, :uuid
+      validate {WindowShape, []}
+      change {RequireStepUp, purpose: :open_window, subject: :site_id, params: @shape_fields}
+      change set_attribute(:status, :approved)
+      change relate_actor(:approved_by, allow_nil?: true)
+      change set_attribute(:approved_at, &DateTime.utc_now/0)
+      change {Record, action: "window.approved", fields: @shape_fields, extra: %{booked: true}}
+      change {Publish, reason: "window booked"}
+    end
+
+    create :open_now do
+      description """
+      Opens the site now with an approved one-off window from the current minute
+      to the first whole minute at or after now plus `minutes`, in the site's time.
+      """
+
+      accept [:site_id]
+      transaction? true
+
+      argument :minutes, :integer do
+        allow_nil? false
+        constraints min: 1, max: 24 * 60
+      end
+
+      argument :step_up_id, :uuid
+
+      change {RequireStepUp,
+              purpose: :open_window, subject: :site_id, params: [:site_id, :minutes]}
+
+      change Cloud.Sites.Changes.OpenNowSpan
+      change set_attribute(:kind, :one_off)
       validate {WindowShape, []}
       change set_attribute(:status, :approved)
       change relate_actor(:approved_by, allow_nil?: true)
       change set_attribute(:approved_at, &DateTime.utc_now/0)
-      change {Publish, reason: "window booked"}
+
+      change {Record,
+              action: "access.open_now",
+              fields: [:site_id, :starts_at, :ends_at],
+              arguments: [:minutes]}
+
+      change {Publish, reason: "opened now"}
     end
 
     update :approve do
       require_atomic? false
       transaction? true
       accept []
+      argument :step_up_id, :uuid
 
       validate attribute_equals(:status, :requested),
         message: "only a requested window can be approved"
 
+      change {RequireStepUp, purpose: :approve_window, subject: :id, params: [:id, :site_id]}
       change set_attribute(:status, :approved)
       change relate_actor(:approved_by, allow_nil?: true)
       change set_attribute(:approved_at, &DateTime.utc_now/0)
+      change {Record, action: "window.approved", fields: [:site_id, :kind]}
       change {Publish, reason: "window approved"}
     end
 
     update :reject do
       require_atomic? false
+      transaction? true
       accept []
 
       validate attribute_equals(:status, :requested),
         message: "only a requested window can be rejected"
 
       change set_attribute(:status, :rejected)
+      change {Record, action: "window.rejected", fields: [:site_id]}
     end
 
     update :cancel do
@@ -107,6 +165,7 @@ defmodule Cloud.Sites.Window do
         message: "only a requested or approved window can be cancelled"
 
       change set_attribute(:status, :cancelled)
+      change {Record, action: "window.cancelled", fields: [:site_id]}
       change {Publish, reason: "window cancelled"}
     end
   end
@@ -120,7 +179,7 @@ defmodule Cloud.Sites.Window do
       authorize_if {TenantMember, role: :admin}
     end
 
-    policy action([:create_approved, :approve, :reject, :cancel]) do
+    policy action([:create_approved, :open_now, :approve, :reject, :cancel]) do
       authorize_if {TenantMember, role: [:admin, :approver]}
     end
   end

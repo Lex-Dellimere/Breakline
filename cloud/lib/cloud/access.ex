@@ -1,48 +1,67 @@
 defmodule Cloud.Access do
   @moduledoc """
-  One-step access controls for a site, as the demo UI offers them. Each runs
-  the underlying resource action as `user`, so the action's policies decide
-  whether the user may do it, and each publishes a new policy version.
+  One-step access controls for a site, as the site page offers them. Each
+  runs the underlying resource actions as `user`, so the actions' policies
+  decide whether the user may do it, and each publishes a new policy version.
 
-  - `open_now/3`: an approved one-off window starting now
+  - `open_now/4`: an approved one-off window starting now
   - `lock_now/3`: a manual advisory lock with no expiry
-  - `unlock/2`: lifts every active manual lock of the site
+  - `unlock/3`: lifts every active manual lock of the site
+
+  Opening and unlocking need a verified passkey step-up bound to exactly that
+  call (threat model T5), see `Cloud.Accounts.StepUps`:
+
+  | call | purpose | subject | params |
+  |---|---|---|---|
+  | `open_now/4` | `:open_window` | the site id | `%{site_id: id, minutes: m}` |
+  | `unlock/3` | `:lift_lock` | the site id | `%{site_id: id, scope: "manual"}` |
+
+  `step_up_params/2` builds these params. Locking closes access and needs no
+  step-up.
 
   Each returns `{:ok, %{policy_version: %Cloud.Sites.PolicyVersion{}, ...}}`.
   """
 
   require Ash.Query
 
-  alias Cloud.Accounts.User
+  alias Cloud.Accounts.{StepUps, User}
   alias Cloud.Sites
 
   @manual "manual"
+
+  @doc """
+  The step-up params for an access call on a site: `{:open, minutes}` or
+  `:unlock`. Pass them to `Cloud.Accounts.begin_step_up/5`.
+  """
+  @spec step_up_params(String.t(), {:open, pos_integer()} | :unlock) :: map()
+  def step_up_params(site_id, {:open, minutes}), do: %{site_id: site_id, minutes: minutes}
+  def step_up_params(site_id, :unlock), do: %{site_id: site_id, scope: @manual}
 
   @doc """
   Opens the site for `minutes` from now with an approved one-off window.
 
   The window is written in the site's local time and rounded outward to
   whole minutes: it starts at the current minute and ends at the first whole
-  minute at or after now plus `minutes`. Needs an admin or approver.
+  minute at or after now plus `minutes`. Needs an admin or approver and a
+  verified `:open_window` step-up for this site and these minutes.
   """
-  @spec open_now(String.t(), pos_integer(), User.t()) :: {:ok, map()} | {:error, term()}
-  def open_now(site_id, minutes, %User{} = user) when is_integer(minutes) and minutes > 0 do
-    with {:ok, site} <- fetch_site(site_id) do
-      {starts_at, ends_at} = local_span(DateTime.utc_now(), minutes, site.time_zone)
-
-      with {:ok, window} <-
-             Sites.create_approved_window(
-               %{site_id: site.id, kind: :one_off, starts_at: starts_at, ends_at: ends_at},
-               actor: user,
-               tenant: site.tenant_id
-             ) do
-        {:ok, %{window: window, policy_version: window.__metadata__.policy_version}}
-      end
+  @spec open_now(String.t(), pos_integer(), User.t(), String.t() | nil) ::
+          {:ok, map()} | {:error, term()}
+  def open_now(site_id, minutes, %User{} = user, step_up_id)
+      when is_integer(minutes) and minutes > 0 do
+    with {:ok, site} <- fetch_site(site_id),
+         {:ok, window} <-
+           Sites.open_window_now(
+             %{site_id: site.id, minutes: minutes, step_up_id: step_up_id},
+             actor: user,
+             tenant: site.tenant_id
+           ) do
+      {:ok, %{window: window, policy_version: window.__metadata__.policy_version}}
     end
   end
 
   @doc """
-  Locks the site with a manual advisory lock that holds until `unlock/2`.
+  Locks the site with a manual advisory lock that holds until `unlock/3`.
   Needs an admin.
   """
   @spec lock_now(String.t(), User.t(), String.t()) :: {:ok, map()} | {:error, term()}
@@ -52,28 +71,57 @@ defmodule Cloud.Access do
            Sites.create_advisory_lock(
              %{site_id: site.id, reason: reason, source: @manual},
              actor: user,
-             tenant: site.tenant_id
+             tenant: site.tenant_id,
+             context: %{audit_action: "access.lock_now"}
            ) do
       {:ok, %{lock: lock, policy_version: lock.__metadata__.policy_version}}
     end
   end
 
   @doc """
-  Lifts every active manual lock of the site and publishes once. Threat-feed
-  locks are left alone. Needs an admin. Returns
-  `{:error, :no_manual_lock}` when there is nothing to lift.
+  Whether the site has an active manual lock that `unlock/3` would lift, as
+  `user` can see it.
   """
-  @spec unlock(String.t(), User.t()) :: {:ok, map()} | {:error, term()}
-  def unlock(site_id, %User{} = user) do
+  @spec manual_lock?(String.t(), User.t()) :: boolean()
+  def manual_lock?(site_id, %User{} = user) do
+    with {:ok, site} <- fetch_site(site_id),
+         {:ok, [_ | _]} <- manual_locks(site, user) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  @doc """
+  Lifts every active manual lock of the site and publishes once. Threat-feed
+  locks are left alone. Needs an admin and a verified `:lift_lock` step-up
+  for the site (`step_up_params(site_id, :unlock)`), consumed once for all the
+  locks. Returns `{:error, :no_manual_lock}` when there is nothing to lift,
+  without spending the step-up.
+  """
+  @spec unlock(String.t(), User.t(), String.t() | nil) :: {:ok, map()} | {:error, term()}
+  def unlock(site_id, %User{} = user, step_up_id) do
     with {:ok, site} <- fetch_site(site_id) do
       result =
         Cloud.Repo.transaction(fn ->
           with {:ok, [_ | _] = locks} <- manual_locks(site, user),
-               {:ok, lifted} <- lift_all(locks, user, site),
+               {:ok, step_up} <- consume(step_up_id, user, site),
+               {:ok, lifted} <- lift_all(locks, user, site, step_up),
                {:ok, version} <-
                  Cloud.Policies.publish_in_transaction(site.id,
                    published_by: user,
                    reason: "manual lock lifted"
+                 ),
+               {:ok, _entry} <-
+                 Cloud.Audit.append(
+                   site.tenant_id,
+                   "access.unlock",
+                   %{
+                     site_id: site.id,
+                     lock_ids: Enum.map(lifted, & &1.id),
+                     step_up_id: step_up.id
+                   },
+                   actor: user
                  ) do
             %{locks: lifted, policy_version: version}
           else
@@ -90,27 +138,22 @@ defmodule Cloud.Access do
   end
 
   @doc false
-  # the local naive span [now floored to the minute, now + minutes ceiled to the minute)
-  @spec local_span(DateTime.t(), pos_integer(), String.t()) ::
-          {NaiveDateTime.t(), NaiveDateTime.t()}
-  def local_span(now, minutes, time_zone) do
-    to_local = fn utc ->
-      utc |> DateTime.shift_zone!(time_zone, Tz.TimeZoneDatabase) |> DateTime.to_naive()
+  # kept for callers of the old helper; see Cloud.Sites.Changes.OpenNowSpan
+  defdelegate local_span(now, minutes, time_zone), to: Cloud.Sites.Changes.OpenNowSpan
+
+  defp consume(step_up_id, user, site) do
+    case StepUps.consume(
+           step_up_id,
+           user,
+           :lift_lock,
+           site.id,
+           step_up_params(site.id, :unlock),
+           site.tenant_id
+         ) do
+      {:ok, step_up} -> {:ok, step_up}
+      {:error, reason} -> {:error, Ash.Error.to_error_class(StepUps.error(reason))}
     end
-
-    starts_at = now |> to_local.() |> floor_minute()
-    ends_local = now |> DateTime.add(minutes * 60, :second) |> to_local.()
-    floored = floor_minute(ends_local)
-
-    ends_at =
-      if NaiveDateTime.compare(floored, ends_local) == :eq,
-        do: floored,
-        else: NaiveDateTime.add(floored, 60, :second)
-
-    {starts_at, ends_at}
   end
-
-  defp floor_minute(naive), do: %{naive | second: 0, microsecond: {0, 0}}
 
   defp manual_locks(site, user) do
     Sites.list_advisory_locks(
@@ -120,12 +163,12 @@ defmodule Cloud.Access do
     )
   end
 
-  defp lift_all(locks, user, site) do
+  defp lift_all(locks, user, site, step_up) do
     Enum.reduce_while(locks, {:ok, []}, fn lock, {:ok, acc} ->
       case Sites.lift_advisory_lock(lock,
              actor: user,
              tenant: site.tenant_id,
-             context: %{skip_publish?: true}
+             context: %{skip_publish?: true, step_up: step_up}
            ) do
         {:ok, lifted} -> {:cont, {:ok, [lifted | acc]}}
         {:error, error} -> {:halt, {:error, error}}

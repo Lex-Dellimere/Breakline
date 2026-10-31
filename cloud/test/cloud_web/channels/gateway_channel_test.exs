@@ -91,7 +91,9 @@ defmodule CloudWeb.GatewayChannelTest do
 
     test "reply carries a signed policy newer than the gateway's", ctx do
       {:ok, _} = Access.lock_now(ctx.site.id, ctx.admin, "test")
-      {:ok, _} = Access.open_now(ctx.site.id, 30, ctx.admin)
+
+      {:ok, _} =
+        Access.open_now(ctx.site.id, 30, ctx.admin, open_step_up!(ctx.admin, ctx.site, 30))
 
       {reply, _channel} = join!(ctx, hello(%{"last_version" => 1}))
       assert %{"envelope" => _} = wire = reply["policy"]

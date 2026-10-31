@@ -14,6 +14,8 @@ defmodule Cloud.Sites.BreakGlass do
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer]
 
+  alias Cloud.Accounts.Changes.RequireStepUp
+  alias Cloud.Audit.Changes.Record
   alias Cloud.Checks.TenantMember
   alias Cloud.Sites.Changes.Publish
 
@@ -46,11 +48,14 @@ defmodule Cloud.Sites.BreakGlass do
       primary? true
       transaction? true
       accept [:site_id, :until]
+      argument :step_up_id, :uuid
 
       validate compare(:until, greater_than: &DateTime.utc_now/0),
         message: "must be in the future"
 
+      change {RequireStepUp, purpose: :break_glass, subject: :site_id, params: [:site_id, :until]}
       change relate_actor(:approved_by)
+      change {Record, action: "break_glass.created", fields: [:site_id, :until]}
       change {Publish, reason: "break-glass opened"}
     end
 
@@ -60,6 +65,7 @@ defmodule Cloud.Sites.BreakGlass do
       accept []
       validate attribute_equals(:revoked_at, nil), message: "is already revoked"
       change set_attribute(:revoked_at, &DateTime.utc_now/0)
+      change {Record, action: "break_glass.revoked", fields: [:site_id]}
       change {Publish, reason: "break-glass revoked"}
     end
   end

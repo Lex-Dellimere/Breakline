@@ -64,7 +64,7 @@ config :spark,
 config :cloud,
   ecto_repos: [Cloud.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways, Cloud.Advisories]
+  ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways, Cloud.Advisories, Cloud.Audit]
 
 # background jobs (oban, without oban pro). ash_oban adds the cron entries of the
 # resources' scheduled actions to the crontab at startup, see Cloud.Advisories.Feed.
@@ -85,6 +85,12 @@ config :cloud, Oban,
 config :cloud, :signer, Cloud.Signer.File
 
 config :cloud, Cloud.Signer.File, path: Path.expand("../priv/keys/signer_ed25519.json", __DIR__)
+
+# passkeys (webauthn). rp_id is the bare host the credentials are bound to; the origin
+# defaults to the endpoint url (http://localhost:4010 in dev, a secure context for
+# webauthn because the host is localhost). runtime.exs reads both from the environment
+# in prod
+config :cloud, :webauthn, rp_id: "localhost", rp_name: "Breakline"
 
 # Configure the endpoint
 config :cloud, CloudWeb.Endpoint,

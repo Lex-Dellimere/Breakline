@@ -95,7 +95,9 @@ else
         )
     end
 
-  # the nightly window: requested by the msp, approved by the demo admin (publishes)
+  # the nightly window: requested by the msp and marked approved by the demo admin.
+  # approving through the action needs a passkey step-up, which a seed script cannot
+  # do, so the approval is seeded and published below
   case Sites.list_windows!(
          Keyword.put(opts, :query, filter: [site_id: site.id, kind: :recurring])
        ) do
@@ -116,10 +118,14 @@ else
           opts
         )
 
-      Sites.approve_window!(window, opts)
+      Ash.Seed.update!(window, %{
+        status: :approved,
+        approved_by_id: user.id,
+        approved_at: DateTime.utc_now()
+      })
   end
 
-  # in case the window existed but nothing was ever published
+  # publishes the seeded window, or anything that existed but was never published
   site = Sites.get_site!(site.id, opts)
 
   if site.policy_version == 0 do

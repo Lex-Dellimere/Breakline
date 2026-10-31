@@ -64,24 +64,25 @@ defmodule Cloud.PoliciesTest do
       approver_opts = [actor: ctx.approver, tenant: ctx.tenant]
 
       approved = Sites.request_window!(recurring_attrs(site), opts)
-      approved = Sites.approve_window!(approved, approver_opts)
+      approved = approve!(approved, ctx.approver)
       _requested = Sites.request_window!(recurring_attrs(site, %{days: [6]}), opts)
 
       rejected = Sites.request_window!(recurring_attrs(site, %{days: [7]}), opts)
       Sites.reject_window!(rejected, approver_opts)
 
-      cancelled = Sites.create_approved_window!(one_off_attrs(site), approver_opts)
+      cancelled = book!(one_off_attrs(site), ctx.approver, ctx.tenant)
       Sites.cancel_window!(cancelled, approver_opts)
 
-      future = Sites.create_approved_window!(one_off_attrs(site), approver_opts)
+      future = book!(one_off_attrs(site), ctx.approver, ctx.tenant)
 
       long_ago =
-        Sites.create_approved_window!(
+        book!(
           one_off_attrs(site, %{
             starts_at: ~N[2020-01-01 09:00:00],
             ends_at: ~N[2020-01-01 10:00:00]
           }),
-          approver_opts
+          ctx.approver,
+          ctx.tenant
         )
 
       lock_open_ended =
@@ -99,7 +100,7 @@ defmodule Cloud.PoliciesTest do
       lifted =
         Sites.create_advisory_lock!(%{site_id: site.id, reason: "m", source: "manual"}, opts)
 
-      Sites.lift_advisory_lock!(lifted, opts)
+      lift!(lifted, ctx.admin)
 
       _expired =
         Sites.create_advisory_lock!(
@@ -107,8 +108,8 @@ defmodule Cloud.PoliciesTest do
           opts
         )
 
-      bg_older = Sites.create_break_glass!(%{site_id: site.id, until: later(3600)}, approver_opts)
-      bg_newer = Sites.create_break_glass!(%{site_id: site.id, until: later(1800)}, approver_opts)
+      bg_older = break_glass!(site, later(3600), ctx.approver)
+      bg_newer = break_glass!(site, later(1800), ctx.approver)
 
       Ash.Seed.seed!(Cloud.Sites.BreakGlass, %{
         tenant_id: ctx.tenant.id,
@@ -147,7 +148,7 @@ defmodule Cloud.PoliciesTest do
       assert Sites.get_site!(site.id, opts).policy_version == 0
       refute_received {:policy_published, _, _}
 
-      approved = Sites.approve_window!(window, actor: ctx.approver, tenant: ctx.tenant)
+      approved = approve!(window, ctx.approver)
       assert %{version: 1, reason: "window approved"} = approved.__metadata__.policy_version
       assert approved.__metadata__.policy_version.published_by_id == ctx.approver.id
       assert_receive {:policy_published, _, 1}
