@@ -5,7 +5,8 @@
       "name": "cloud",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd cloud && mix phx.server"],
-      "port": 4010
+      "port": 4010,
+      "autoPort": false
     }
   ]
 }
