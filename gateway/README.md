@@ -13,10 +13,35 @@ MSP's RMM channel closed unless the client's signed policy says it is open right
 3. `:enforcer` (rest_for_one): `Gateway.Store` (disk state), then `Gateway.Enforcer`
 4. `Gateway.DNS.Supervisor`: the resolver. Resolved RMM ips go to the firewall, events
    go to `Gateway.Events`
-5. `Gateway.Dev.Inbox`: dev only, stands in for the phase 3 uplink
+5. `Gateway.Dev.Inbox`: dev only, a polled directory of signed policies
+6. `:uplink`: `Gateway.Uplink`, only when `config :gateway, :uplink` is set
 
 A DNS crash never touches the firewall. When the firewall server restarts, the enforcer
-notices and applies the desired state again.
+notices and applies the desired state again. The uplink subtree is temporary: should the
+uplink crash more than 10 times a minute, it stays down and the gateway keeps enforcing.
+
+## Uplink
+
+`Gateway.Uplink` is the gateway's only link to the cloud. It dials out (a websocket to
+Phoenix Channels, `slipstream`, mutual TLS) and the gateway never listens for the
+cloud. It joins `gateway:<site_id>`, takes signed policies pushed by the cloud (handed
+to the Enforcer, answered with `policy_result`), and sends a heartbeat with the
+enforcer status, batches of events and the audit chain after the cloud's last ack.
+The protocol is in the module doc.
+
+Offline, nothing changes for enforcement: the uplink logs and reconnects with
+exponential backoff (1 s to 60 s, with jitter).
+
+Dev uses the inbox. To connect to a local cloud on port 4011, uncomment the
+`config :gateway, :uplink` block in `config/dev.exs`; it expects
+`priv/keys/gateway_cert.pem`, `gateway_key.pem` and `ca_cert.pem` (git-ignored). Then:
+
+```sh
+elixir --sname probe --rpc-eval breakline_gw@Nx 'IO.inspect Gateway.Uplink.status()'
+```
+
+shows `connected?`, `joined?`, `last_heartbeat_at`, `events_in_flight` and
+`audit_ack`.
 
 ## Dev demo
 
@@ -145,5 +170,9 @@ tree through `Gateway.Application.children/1`.
 - `BREAKLINE_DATA_DIR` (default `/data/breakline`)
 - `BREAKLINE_DEFAULT_MODE` (`monitor` or `enforce`)
 - `BREAKLINE_DNS_IP` (default `0.0.0.0`)
+- `BREAKLINE_UPLINK_URL` (optional, `wss://...`; without it there is no uplink), and
+  with it `BREAKLINE_UPLINK_CERT`, `BREAKLINE_UPLINK_KEY`, `BREAKLINE_UPLINK_CA` (pem
+  paths) and optionally `BREAKLINE_UPLINK_SERVER_NAME` (the name the server certificate
+  must carry, when it is not the url's host)
 
 In prod the firewall is `NftImpl` and DNS listens on port 53.

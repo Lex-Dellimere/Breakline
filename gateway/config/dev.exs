@@ -28,3 +28,16 @@ config :gateway,
 config :gateway, Gateway.DNS,
   ip: {127, 0, 0, 1},
   port: 5300
+
+# the uplink to a local cloud, off by default so dev keeps using the inbox. the cloud
+# listens on 4011 with mutual tls and the certificates are generated into priv/keys/
+# (git-ignored). uncomment to connect:
+#
+# keys_dir = Path.expand("../priv/keys", __DIR__)
+#
+# config :gateway, :uplink,
+#   url: "wss://localhost:4011/gateway/socket/websocket",
+#   certfile: Path.join(keys_dir, "gateway_cert.pem"),
+#   keyfile: Path.join(keys_dir, "gateway_key.pem"),
+#   cacertfile: Path.join(keys_dir, "ca_cert.pem"),
+#   server_name: "localhost"

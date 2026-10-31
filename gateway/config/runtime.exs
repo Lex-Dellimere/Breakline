@@ -9,6 +9,12 @@ import Config
 #   BREAKLINE_DATA_DIR          optional, default /data/breakline
 #   BREAKLINE_DEFAULT_MODE      optional, monitor (default) or enforce
 #   BREAKLINE_DNS_IP            optional, address the resolver binds, default 0.0.0.0
+#   BREAKLINE_UPLINK_URL        optional, "wss://host/gateway/socket/websocket"; without
+#                               it the gateway runs with no uplink
+#   BREAKLINE_UPLINK_CERT       required with the url, client certificate (pem)
+#   BREAKLINE_UPLINK_KEY        required with the url, client key (pem)
+#   BREAKLINE_UPLINK_CA         required with the url, ca of the cloud's server cert (pem)
+#   BREAKLINE_UPLINK_SERVER_NAME optional, name to verify when it is not the url's host
 if config_env() == :prod do
   fetch! = fn name ->
     System.get_env(name) || raise "environment variable #{name} is missing"
@@ -72,4 +78,25 @@ if config_env() == :prod do
   dns = if upstreams, do: Keyword.put(dns, :upstreams, upstreams), else: dns
 
   config :gateway, Gateway.DNS, dns
+
+  case System.get_env("BREAKLINE_UPLINK_URL") do
+    nil ->
+      :ok
+
+    url ->
+      uplink = [
+        url: url,
+        certfile: fetch!.("BREAKLINE_UPLINK_CERT"),
+        keyfile: fetch!.("BREAKLINE_UPLINK_KEY"),
+        cacertfile: fetch!.("BREAKLINE_UPLINK_CA")
+      ]
+
+      uplink =
+        case System.get_env("BREAKLINE_UPLINK_SERVER_NAME") do
+          nil -> uplink
+          name -> Keyword.put(uplink, :server_name, name)
+        end
+
+      config :gateway, :uplink, uplink
+  end
 end
