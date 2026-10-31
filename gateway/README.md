@@ -37,9 +37,13 @@ The protocol is in the module doc.
 Offline, nothing changes for enforcement: the uplink logs and reconnects with
 exponential backoff (1 s to 60 s, with jitter).
 
-Dev uses the inbox. To connect to a local cloud on port 4011, uncomment the
-`config :gateway, :uplink` block in `config/dev.exs`; it expects
-`priv/keys/gateway_cert.pem`, `gateway_key.pem` and `ca_cert.pem` (git-ignored). Then:
+Dev uses the inbox until the cloud's dev certificates exist. Running
+`mix cloud.dev.gateway_cert <site_id>` in `cloud/` writes `priv/keys/gateway_cert.pem`,
+`gateway_key.pem`, `ca_cert.pem`, `site.json` and `cloud_signer.public.json` here
+(all git-ignored). When all five are present, `config/dev.exs` turns the uplink on
+automatically (`wss://localhost:4011/gateway/socket/websocket`), takes the site id from
+`site.json`, trusts the cloud's signing key, and keeps its state in `tmp/dev_uplink/`.
+The full walkthrough is "End-to-end demo" in `cloud/README.md`. Then:
 
 ```sh
 elixir --sname probe --rpc-eval breakline_gw@Nx 'IO.inspect Gateway.Uplink.status()'

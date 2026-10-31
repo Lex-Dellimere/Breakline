@@ -447,6 +447,34 @@ defmodule Gateway.UplinkTest do
       assert eventually(fn -> Uplink.status().audit_ack == Store.audit_head() end)
     end
 
+    test "backs off when the cloud keeps refusing the same records" do
+      start_uplink(audit_retry_ms: 300)
+      join!()
+      assert_push @topic, "heartbeat", _
+      assert_push @topic, "audit", %{"records" => [%{"seq" => 0} | _]}, ref
+
+      capture_log(fn ->
+        # first refusal at seq 0 is a normal resync: resend at once
+        reply(Uplink, ref, {:error, %{"reason" => "chain_mismatch", "expected_seq" => 0}})
+        assert_push @topic, "audit", %{"records" => [%{"seq" => 0} | _]}, ref
+
+        # the same refusal again: no tight loop, wait audit_retry_ms first
+        reply(Uplink, ref, {:error, %{"reason" => "chain_mismatch", "expected_seq" => 0}})
+        refute_push @topic, "audit", _, 150
+        assert_push @topic, "audit", %{"records" => [%{"seq" => 0} | _]}, ref, 1_000
+
+        # a third refusal doubles the wait
+        reply(Uplink, ref, {:error, %{"reason" => "chain_mismatch", "expected_seq" => 0}})
+        refute_push @topic, "audit", _, 450
+        assert_push @topic, "audit", %{"records" => [%{"seq" => 0} | _]}, ref, 1_000
+
+        # an accepted batch clears the count
+        reply(Uplink, ref, {:ok, %{"head" => head_map(Store.audit_head())}})
+      end)
+
+      assert eventually(fn -> Uplink.status().audit_ack == Store.audit_head() end)
+    end
+
     test "starts after the ack from the join reply" do
       audit!(3)
       [r1] = Store.audit_records(1, 1)

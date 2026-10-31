@@ -58,6 +58,8 @@ defmodule Gateway.Uplink do
       registered `Gateway.Enforcer`, `Gateway.Store` and `Gateway.Events`
     * `:heartbeat_ms`, `:sync_ms`, `:reply_timeout_ms`, `:backoff_min_ms`,
       `:backoff_max_ms` - see above
+    * `:audit_retry_ms` - first wait (default 2 s) when the cloud refuses the same
+      audit records again; it doubles per refusal up to 5 minutes
     * `:test_mode?` - for `Slipstream.SocketTest`, opens no connection
     * `:name` - defaults to this module
 
@@ -120,6 +122,10 @@ defmodule Gateway.Uplink do
   def handle_info(:sync, socket) do
     socket = assign(socket, :sync_timer, nil)
     {:noreply, socket |> sync() |> schedule_sync()}
+  end
+
+  def handle_info(:audit_retry, socket) do
+    {:noreply, socket |> assign(:audit_hold, nil) |> sync_audit()}
   end
 
   def handle_info({:reply_timeout, ref}, socket) do
@@ -242,6 +248,8 @@ defmodule Gateway.Uplink do
           audit_ack: nil,
           audit_next: 0,
           audit_flight: nil,
+          audit_mismatch: nil,
+          audit_hold: nil,
           events: nil,
           last_error: nil
         )
@@ -432,7 +440,16 @@ defmodule Gateway.Uplink do
           %{batch | ref: nil, timer: nil}
       end
 
-    assign(socket, heartbeat_timer: nil, sync_timer: nil, audit_flight: nil, events: events)
+    # the mismatch count survives a reconnect so a refusal loop keeps backing off
+    cancel(socket.assigns[:audit_hold])
+
+    assign(socket,
+      heartbeat_timer: nil,
+      sync_timer: nil,
+      audit_flight: nil,
+      audit_hold: nil,
+      events: events
+    )
   end
 
   defp schedule_retry(socket, what) do
@@ -586,6 +603,7 @@ defmodule Gateway.Uplink do
   defp event_id, do: 16 |> :crypto.strong_rand_bytes() |> Base.encode16(case: :lower)
 
   defp sync_audit(%{assigns: %{audit_flight: flight}} = socket) when flight != nil, do: socket
+  defp sync_audit(%{assigns: %{audit_hold: hold}} = socket) when hold != nil, do: socket
 
   defp sync_audit(socket) do
     c = socket.assigns.c
@@ -704,19 +722,46 @@ defmodule Gateway.Uplink do
         if {seq, hash} != flight.last,
           do: Logger.warning("uplink: cloud audit head #{seq} is not the last record sent")
 
-        socket |> assign(audit_ack: {seq, hash}, audit_next: seq + 1) |> sync_audit()
+        socket
+        |> assign(audit_ack: {seq, hash}, audit_next: seq + 1, audit_mismatch: nil)
+        |> sync_audit()
 
       {:error, %{"reason" => "chain_mismatch", "expected_seq" => seq}}
       when is_integer(seq) and seq >= 0 ->
-        Logger.warning("uplink: audit chain mismatch, sending again from seq #{seq}")
-
         socket
         |> assign(audit_ack: ack_before(socket.assigns.c, seq), audit_next: seq)
-        |> sync_audit()
+        |> audit_mismatch(seq)
 
       other ->
         Logger.warning("uplink: unexpected audit reply: #{inspect(other)}")
         socket
+    end
+  end
+
+  # the first mismatch at a seq is a normal resync and resends at once. the cloud
+  # refusing the same seq again means our records are not what it expects, so back
+  # off (doubling, capped at 5 minutes) instead of resending in a tight loop
+  defp audit_mismatch(socket, seq) do
+    count =
+      case socket.assigns.audit_mismatch do
+        %{seq: ^seq, count: n} -> n + 1
+        _ -> 1
+      end
+
+    socket = assign(socket, :audit_mismatch, %{seq: seq, count: count})
+
+    if count == 1 do
+      Logger.warning("uplink: audit chain mismatch, sending again from seq #{seq}")
+      sync_audit(socket)
+    else
+      delay = min(socket.assigns.c.audit_retry_ms * Integer.pow(2, count - 2), 300_000)
+
+      Logger.error(
+        "uplink: cloud refused audit records at seq #{seq} #{count} times, " <>
+          "retrying in #{delay} ms"
+      )
+
+      assign(socket, :audit_hold, Process.send_after(self(), :audit_retry, delay))
     end
   end
 
@@ -766,6 +811,7 @@ defmodule Gateway.Uplink do
       reply_timeout_ms: Keyword.get(opts, :reply_timeout_ms, 30_000),
       backoff_min_ms: Keyword.get(opts, :backoff_min_ms, 1_000),
       backoff_max_ms: Keyword.get(opts, :backoff_max_ms, 60_000),
+      audit_retry_ms: Keyword.get(opts, :audit_retry_ms, 2_000),
       test_mode?: Keyword.get(opts, :test_mode?, false)
     }
 
@@ -783,7 +829,14 @@ defmodule Gateway.Uplink do
         {:error, ":server_name must be a non-empty string"}
 
       not Enum.all?(
-        [c.heartbeat_ms, c.sync_ms, c.reply_timeout_ms, c.backoff_min_ms, c.backoff_max_ms],
+        [
+          c.heartbeat_ms,
+          c.sync_ms,
+          c.reply_timeout_ms,
+          c.backoff_min_ms,
+          c.backoff_max_ms,
+          c.audit_retry_ms
+        ],
         &(is_integer(&1) and &1 > 0)
       ) ->
         {:error, "timings must be positive integers"}
