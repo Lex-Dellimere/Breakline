@@ -1,0 +1,19 @@
+Breakline RMM catalog data
+
+lolrmm_snapshot.json contains tool records from the LOLRMM project
+(Living Off the Land RMM) by magicsword-io and its contributors:
+
+  https://github.com/magicsword-io/LOLRMM
+  https://lolrmm.io
+
+LOLRMM is licensed under the Apache License, Version 2.0:
+
+  https://www.apache.org/licenses/LICENSE-2.0
+
+The records are stored unmodified apart from key order, including their
+References and Acknowledgement sections, which credit the researchers who
+contributed each entry.
+
+tools.json is Breakline's curated catalog. Domains marked "lolrmm:<slug>" are
+derived from the matching LOLRMM record; domains marked with a URL come from
+that vendor's own documentation.

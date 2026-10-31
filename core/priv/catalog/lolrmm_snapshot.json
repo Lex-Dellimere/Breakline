@@ -1,0 +1,2119 @@
+{
+  "fetched_at": "2026-10-31T16:38:16Z",
+  "license": "Apache-2.0",
+  "source": "https://lolrmm.io/api/tools/<slug>.json (github.com/magicsword-io/LOLRMM)",
+  "tools": {
+    "anydesk": {
+      "Acknowledgement": [
+        {
+          "Handle": "in/theosyn",
+          "Person": "Théo Letailleur"
+        },
+        {
+          "Handle": "@ali_alwashali",
+          "Person": "Ali Alwashali"
+        },
+        {
+          "Handle": "@nas_bench",
+          "Person": "Nasreddine Bencherchali"
+        },
+        {
+          "Handle": "@Securityinbits",
+          "Person": "Ayush Anand"
+        }
+      ],
+      "Artifacts": {
+        "Disk": [
+          {
+            "Description": "AnyDesk service log file. As well as ad.trace, we can determine the IP address of the other participant and its AnyDesk ID when a connection is established.",
+            "Example": [
+              "info 2022-08-23 10:20:11.969       gsvc   4628   3528    3                anynet.relay_conn - External address: 34.xx.xx.123:46798"
+            ],
+            "File": "%programdata%\\AnyDesk\\ad_svc.trace",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Incoming connection request log recording date/time, requesting AnyDesk ID, and acceptance or rejection. Approval values include User (interactive acceptance), Passwd (unattended-access password authentication), and Token (saved-login token authentication). Token authentication does not mean the plaintext password was stored.",
+            "Example": [
+              "Incoming 2022-08-23, 10:23 Passwd 547911884 547911884",
+              "Incoming 2022-09-28, 12:39 User 442226597 442226597",
+              "Incoming 2026-06-26, 15:42 Token (AnyDesk IDs omitted)"
+            ],
+            "File": "%programdata%\\AnyDesk\\connection_trace.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Incoming connection request log recording date/time, requesting AnyDesk ID, and acceptance or rejection. Approval values include User (interactive acceptance), Passwd (unattended-access password authentication), and Token (saved-login token authentication). Token authentication does not mean the plaintext password was stored.",
+            "Example": [
+              "Incoming 2022-08-23, 10:23 Passwd 547911884 547911884",
+              "Incoming 2022-09-28, 12:39 User 442226597 442226597"
+            ],
+            "File": "%APPDATA%\\AnyDesk\\connection_trace.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "AnyDesk user interface log file. In this log file, we can determine the IP address of the other participant and its AnyDesk ID. It is also possible to track events of file transfer. Below is the Client ID and external IP address of the remote participant.",
+            "Example": [
+              "info 2022-09-28 12:39:26.845       lsvc   9952   9944   21                anynet.any_socket - Client-ID: 442226597 (FPR: 8e28a2a25b30).",
+              "info 2022-09-28 12:39:26.845       lsvc   9952   9944   21                anynet.any_socket - Logged in from 12.xx.xx.21:59562 on relay 80e496c0."
+            ],
+            "File": "%APPDATA%\\AnyDesk\\ad.trace",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Plaintext file-manager transfer log observed in user-context runs under %APPDATA%\\AnyDesk; records transfer timestamps, filenames, sizes, and direction. Correlate with session logs to investigate file movement.",
+            "File": "*\\AppData\\Roaming\\AnyDesk\\file_transfer_trace.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Plaintext file-manager transfer log observed in installed/service-context runs under %PROGRAMDATA%\\AnyDesk; records transfer timestamps, filenames, sizes, and direction.",
+            "Example": [
+              "finish upload 'documents.zip' (~231.44 MiB)"
+            ],
+            "File": "*\\ProgramData\\AnyDesk\\file_transfer_trace.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "If the chat functionality is used, its entries will be printed in a text file in this folder.",
+            "File": "%APPDATA%\\AnyDesk\\chat\\*.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%APPDATA%\\AnyDesk\\user.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Password can be set to auto-validate the session. The password will be saved in a salted hash format.",
+            "File": "%PROGRAMDATA%\\AnyDesk\\service.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%APPDATA%\\AnyDesk\\service.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%APPDATA%\\AnyDesk\\system.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%PROGRAMDATA%\\AnyDesk\\system.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client service trace; the wildcard covers account-specific prefixes and MSI variants.",
+            "File": "*\\ProgramData\\AnyDesk\\ad_*\\ad_*_svc.trace",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client user-interface trace; the wildcard covers account-specific prefixes and MSI variants.",
+            "File": "*\\AppData\\Roaming\\AnyDesk\\ad_*\\ad_*.trace",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client chat log, with the account-specific prefix represented by a wildcard.",
+            "File": "*\\AppData\\Roaming\\AnyDesk\\ad_*\\chat\\*.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client user config.",
+            "File": "*\\AppData\\Roaming\\AnyDesk\\ad_*\\user.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client service config.",
+            "File": "*\\AppData\\Roaming\\AnyDesk\\ad_*\\service.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client service config.",
+            "File": "*\\ProgramData\\AnyDesk\\ad_*\\service.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client system config.",
+            "File": "*\\ProgramData\\AnyDesk\\ad_*\\system.conf",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\AnyDesk.lnk",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Custom client startup link.",
+            "File": "*\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\StartUp\\AnyDesk *.lnk",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\AnyDesk\\Uninstall AnyDesk.lnk",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Users\\*\\Videos\\AnyDesk\\*.anydesk",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Windows\\SysWOW64\\config\\systemprofile\\AppData\\Roaming\\AnyDesk\\*",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "~/Library/Application Support/AnyDesk/Logs/",
+            "OS": "Mac"
+          },
+          {
+            "Description": "N/A",
+            "File": "~/.config/AnyDesk/Logs/",
+            "OS": "Linux"
+          }
+        ],
+        "EventLog": [
+          {
+            "Description": "Service installation event as result of AnyDesk installation.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe\" --service",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "AnyDesk Service"
+          },
+          {
+            "Description": "Service installation event for custom per-org clients.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\Program Files (x86)\\AnyDesk-*\\AnyDesk-*.exe\" --service",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "AnyDesk * Service"
+          },
+          {
+            "Description": "Service installation event as result of AnyDesk installation.",
+            "EventID": 4697,
+            "ImagePath": "\"C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe\" --service",
+            "LogFile": "Security.evtx",
+            "ProviderName": "Microsoft-Security-Auditing",
+            "ServiceName": "AnyDesk Service"
+          }
+        ],
+        "Network": [
+          {
+            "Description": "During setup the boot.net.anydesk.com domain is requested over TCP 443.",
+            "Domains": [
+              "boot.net.anydesk.com"
+            ],
+            "Ports": [
+              443
+            ]
+          },
+          {
+            "Description": "Direct peer-to-peer connections use TCP 7070 by default; the listening port is configurable and direct connections can be disabled. Successful or failed direct attempts may expose the peer address in endpoint network telemetry. The address may belong to a VPN or NAT gateway and does not identify the operator.",
+            "Domains": [],
+            "Ports": [
+              7070
+            ]
+          },
+          {
+            "Description": "Relay-mediated sessions connect to AnyDesk servers over TCP 80, 443, or 6568. Network telemetry for the relay connection identifies the relay address; direct connections can separately expose the peer address.",
+            "Domains": [
+              "relay-*.net.anydesk.com"
+            ],
+            "Ports": [
+              80,
+              443,
+              6568
+            ]
+          },
+          {
+            "Description": "AnyDesk server connectivity; at least one of the documented TCP ports must be accessible.",
+            "Domains": [
+              "*.net.anydesk.com"
+            ],
+            "Ports": [
+              80,
+              443,
+              6568
+            ]
+          }
+        ],
+        "Other": [
+          {
+            "Type": "User-Agent",
+            "Value": "AnyDesk/*"
+          },
+          {
+            "Type": "NamedPipe",
+            "Value": "adprinterpipe"
+          }
+        ],
+        "Registry": [
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\Clients\\Media\\AnyDesk"
+          },
+          {
+            "Description": "Custom client media entry.",
+            "Path": "HKLM\\SOFTWARE\\Clients\\Media\\AnyDesk-*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\AnyDesk"
+          },
+          {
+            "Description": "Custom client service registry entry; CurrentControlSet represents the active control set.",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\AnyDesk-*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\Classes\\.anydesk\\shell\\open\\command"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\Classes\\AnyDesk\\shell\\open\\command"
+          },
+          {
+            "Description": "Custom client URL handler.",
+            "Path": "HKLM\\SOFTWARE\\Classes\\AnyDesk-*\\shell\\open\\command"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Print\\Printers\\AnyDesk Printer\\*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\DRIVERS\\DriverDatabase\\DeviceIds\\USBPRINT\\AnyDesk"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\DRIVERS\\DriverDatabase\\DeviceIds\\WSDPRINT\\AnyDesk"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\AnyDesk"
+          },
+          {
+            "Description": "Custom client uninstall entry.",
+            "Path": "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\AnyDesk-*"
+          }
+        ]
+      },
+      "Author": "Ali Alwashali, Nasreddine Bencherchali",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "E5ABE8D3CEA37B45F3D3896B49FB91920B4A4E9D",
+            "signer_name": "AnyDesk Software GmbH",
+            "src_file_company": "AnyDesk Software GmbH",
+            "src_file_path": "downloaded_files/anydesk/864e2c3675d05cd4816a42167b45ab66e3d5995fae7e1fd680223940061b9803",
+            "src_file_sha256": "864e2c3675d05cd4816a42167b45ab66e3d5995fae7e1fd680223940061b9803"
+          },
+          {
+            "certificate_thumbprint": "D056FB932C5A4821C328214E4F4988436650583A",
+            "signer_name": "AnyDesk Software GmbH"
+          }
+        ]
+      },
+      "Created": "2023-09-29",
+      "Description": "AnyDesk is a popular remote desktop software that enables users to access\nand control a computer or device from a remote location. It was developed with the\nprimary goal of facilitating remote work, technical support, and collaboration between\nindividuals and teams.\n",
+      "Details": {
+        "Capabilities": [
+          "File Transfer",
+          "File System Access",
+          "Remote Control",
+          "GUI Support",
+          "Command line Support"
+        ],
+        "Free": true,
+        "InstallationPaths": [
+          "C:\\Program Files (x86)\\AnyDesk\\*",
+          "C:\\Program Files (x86)\\AnyDesk\\AnyDesk.exe",
+          "C:\\Program Files\\AnyDesk\\*",
+          "C:\\Program Files (x86)\\AnyDesk-*\\*",
+          "C:\\Program Files (x86)\\AnyDesk-*\\AnyDesk-*.exe",
+          "C:\\Program Files\\AnyDesk-*\\AnyDesk-*.exe",
+          "/Applications/AnyDesk.app"
+        ],
+        "PEMetadata": [
+          {
+            "Description": "AnyDesk",
+            "Filename": "anydesk.exe",
+            "OriginalFileName": "AnyDesk.exe",
+            "Product": "AnyDesk"
+          }
+        ],
+        "Privileges": "User",
+        "SupportedOS": [
+          "Android",
+          "ChromeOS",
+          "IOS",
+          "Linux",
+          "Mac",
+          "Windows"
+        ],
+        "Verification": false,
+        "Vulnerabilities": [
+          "https://www.cvedetails.com/vulnerability-list/vendor_id-16953/product_id-40173/Anydesk-Anydesk.html",
+          "AnyPwn: pre-authentication heap overflow in AnyDesk for Linux 8.0.2 over TCP 7070 leading to root, fixed in 8.0.3 (no CVE)"
+        ],
+        "Website": "https://anydesk.com/en"
+      },
+      "Detections": [
+        {
+          "Description": "Anydesk Remote Access Software Service Installation",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/43277f26fc1c81fc98fc79147b711189e901b757/rules/windows/builtin/system/service_control_manager/win_system_service_install_anydesk.yml"
+        },
+        {
+          "Description": "N/A",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/43277f26fc1c81fc98fc79147b711189e901b757/rules/windows/file/file_event/file_event_win_anydesk_artefact.yml"
+        },
+        {
+          "Description": "N/A",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/43277f26fc1c81fc98fc79147b711189e901b757/rules/windows/process_creation/proc_creation_win_remote_access_tools_anydesk.yml"
+        },
+        {
+          "Description": "Remote Access Tool - AnyDesk Silent Installation",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/782f0f524e6f797ea114fe0d87b22cb4abaa6b7c/rules/windows/process_creation/proc_creation_win_remote_access_tools_anydesk_silent_install.yml"
+        },
+        {
+          "Description": "Detects potential registry activity of AnyDesk RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/anydesk_registry_sigma.yml"
+        },
+        {
+          "Description": "Detects potential network activity of AnyDesk RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/anydesk_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential files activity of AnyDesk RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/anydesk_files_sigma.yml"
+        },
+        {
+          "Description": "Detects potential process activity of AnyDesk RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/anydesk_processes_sigma.yml"
+        },
+        {
+          "Description": "Remote Access Tool - AnyDesk Piped Password Via CLI",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/ca24243a6e3f94353a54176f83c4c3b7f579224a/rules/windows/process_creation/proc_creation_win_remote_access_tools_anydesk_piped_password_via_cli.yml"
+        },
+        {
+          "Description": "Remote Access Tool - Anydesk Execution From Suspicious Folder",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/ca24243a6e3f94353a54176f83c4c3b7f579224a/rules/windows/process_creation/proc_creation_win_remote_access_tools_anydesk_susp_exec.yml"
+        }
+      ],
+      "LastModified": "2026-10-11",
+      "Name": "AnyDesk",
+      "References": [
+        "https://support.anydesk.com/docs/settings",
+        "https://support.anydesk.com/docs/advanced-options",
+        "https://support.anydesk.com/docs/unattended-access",
+        "https://support.anydesk.com/docs/command-line-interface-for-windows",
+        "https://support.anydesk.com/docs/change-of-installation-directory-for-windows-custom-clients",
+        "https://support.anydesk.com/docs/what-are-trace-files",
+        "https://support.anydesk.com/docs/firewall",
+        "https://www.synacktiv.com/publications/legitimate-rats-a-comprehensive-forensic-analysis-of-the-usual-suspects.html",
+        "https://github.com/mthcht/awesome-lists/tree/79ced75eebe53bcabf1235b3c17eb11788875482/Lists/RMM/anydesk",
+        "https://ruler-project.github.io/ruler-project/RULER/remote/AnyDesk/",
+        "https://newsletter.securityinbits.com/p/32-ransomware-groups-abuse-anydesk",
+        "https://github.com/magicsword-io/LOLRMM/issues/247",
+        "https://github.com/v12-security/pocs",
+        "https://thehackernews.com/2026/10/researchers-publish-working-exploit-for.html"
+      ]
+    },
+    "beanywhere": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "beanywhere.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "069C1914D45A50A709E2D71F36EC2F56CB202995",
+            "signer_name": "N-ABLE TECHNOLOGIES LTD",
+            "src_file_path": "downloaded_files/beanywhere/6a054444b16470b59c0ff13ada9e9cab8268631112507b6973d7e6d62f3b9fc4",
+            "src_file_sha256": "6a054444b16470b59c0ff13ada9e9cab8268631112507b6973d7e6d62f3b9fc4"
+          }
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "BeAnyWhere is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "basuptshelper.exe",
+          "basupsrvcupdate.exe",
+          "BASupApp.exe",
+          "BASupSysInf.exe",
+          "BASupAppSrvc.exe",
+          "TakeControl.exe",
+          "BASupAppElev.exe",
+          "basupsrvc.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.n-able.com/products/take-control"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of BeAnyWhere RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/beanywhere_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of BeAnyWhere RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/beanywhere_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2024-08-02",
+      "Name": "BeAnyWhere",
+      "References": [
+        "https://www.shouldiremoveit.com/beanywhere-support-service-40908-program.aspx"
+      ]
+    },
+    "centrastage-now-datto": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "*.rmm.datto.com",
+              "cc.centrastage.net",
+              "*.cc.centrastage.net"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "Created": "2024-08-02",
+      "Description": "CentraStage (Now Datto) is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "CagService.exe",
+          "AEMAgent.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://rmm.datto.com/help"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of CentraStage (Now Datto) RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/centrastage__now_datto__network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of CentraStage (Now Datto) RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/centrastage__now_datto__processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2024-08-02",
+      "Name": "CentraStage (Now Datto)",
+      "References": [
+        "https://rmm.datto.com/help/de/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"
+      ]
+    },
+    "connectwise-control": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "live.screenconnect.com",
+              "control.connectwise.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "MIIFkjCCBHqgAwIBAgIMFZy9YdRoNYJ6CJvQMA0GCSqGSIb3DQEBCwUAMG4xCzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMUQwQgYDVQQDEztHbG9iYWxTaWduIEV4dGVuZGVkIFZhbGlkYXRpb24gQ29kZVNpZ25pbmcgQ0EgLSBTSEEyNTYgLSBHMzAeFw0xOTAxMTEyMDAzNDFaFw0yMjA0MDcyMTU4NTVaMIHmMR0wGwYDVQQPDBRQcml2YXRlIE9yZ2FuaXphdGlvbjEVMBMGA1UEBRMMRjE2MDAwMDAwMzA4MRMwEQYLKwYBBAGCNzwCAQMTAlVTMRgwFgYLKwYBBAGCNzwCAQITB0Zsb3JpZGExCzAJBgNVBAYTAlVTMRAwDgYDVQQIEwdGbG9yaWRhMQ4wDAYDVQQHEwVUYW1wYTEYMBYGA1UECRMPNDExMCBHZW9yZ2UgUmQuMRowGAYDVQQKExFDb25uZWN0V2lzZSwgSW5jLjEaMBgGA1UEAxMRQ29ubmVjdFdpc2UsIEluYy4wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCwamu+xMZ1KHNjtyNMzlJIdUVxKRrfkxLE95RlT0UqNUTLQluB3ORJdZyqFH29xmM6ZKksq0FmB3MqiZTFcn8hsl5h44IoD6TP87XySHmKAT5RMnzL4Fw0AbS7w1xE7aRvPAOI6r2IBld3hPaR6zI79qy4NkULsZWHyBfTYxRW9YrTJgvtZv6L8S0BBzTqSQWZL83aEpmQT7duNU+Okvpo5NZA1sO9jFuGF2o4mqEWduwxnoWeVkF8ISTUVd/bT2Bl0Wle8yzWbQI8n7lf59SMyJGvUxtrf0BXI7bpq3QDbXiEa0wwej+dGMemrELXbBgUlbhgdE2DCVn0wFNLQCblAgMBAAGjggG1MIIBsTAOBgNVHQ8BAf8EBAMCB4AwgaAGCCsGAQUFBwEBBIGTMIGQME4GCCsGAQUFBzAChkJodHRwOi8vc2VjdXJlLmdsb2JhbHNpZ24uY29tL2NhY2VydC9nc2V4dGVuZGNvZGVzaWduc2hhMmczb2NzcC5jcnQwPgYIKwYBBQUHMAGGMmh0dHA6Ly9vY3NwMi5nbG9iYWxzaWduLmNvbS9nc2V4dGVuZGNvZGVzaWduc2hhMmczMFUGA1UdIAROMEwwQQYJKwYBBAGgMgECMDQwMgYIKwYBBQUHAgEWJmh0dHBzOi8vd3d3Lmdsb2JhbHNpZ24uY29tL3JlcG9zaXRvcnkvMAcGBWeBDAEDMAkGA1UdEwQCMAAwRQYDVR0fBD4wPDA6oDigNoY0aHR0cDovL2NybC5nbG9iYWxzaWduLmNvbS9nc2V4dGVuZGNvZGVzaWduc2hhMmczLmNybDATBgNVHSUEDDAKBggrBgEFBQcDAzAdBgNVHQ4EFgQUnK+sWt3Pg30GOFuEWDNm5DXMfXMwHwYDVR0jBBgwFoAU3CxYLCpvNS2feZWoSF3EbT5Tv7kwDQYJKoZIhvcNAQELBQADggEBAGQNB5koBqGLMM4Cd/l1ALVESVSs5AoueNHiJL9p9its1i0cGwdvrQwBDIylhLnxFdrj2m9xoB4nYy5aU7DcdzMha/TRaCSv1e1DhWqxNSAAoKacXjof425ZxAY/ZKlPrjyo7YjLgLTcMc3cVDEbgtAZshr1AgsW8/XJ3uRZ9FcgeCAnd0yy8IMuRtyrXq99oo+6r97kvTeXk6CakMRrJhc1uN9MSEHZLGSwVR33Az6C67Wt/rPO5i+jMDRF0PO/bVaNrwA7gxYqysrUHMzL/ra7Wwh44kkyYudSDGwLvWCYTAxrZNL7BjLPGjyOLn/C9dWekw+y0sKTkNp/7/eEDZQ=",
+            "certificate_thumbprint": "07290735CAC17E851C608F28C3C03F68B94DDC35",
+            "signer_name": "ConnectWise, Inc.",
+            "tbs_sha1": "",
+            "tbs_sha256": "2536E3C682B73B99B516CDEEE24FCB828C84CBDA003E3C3075CA771717B4CEBA"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "FF8BFAFA697459874FB9843B1EFDA5C91871A44C",
+            "signer_name": "Connectwise, LLC",
+            "tbs_sha1": "",
+            "tbs_sha256": "46135C0D0BC2714588E2E99AEB2BBC714F972F50D46C4C6D084F9D9CF9E485A4"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "DC69069188D5CBC5FE18B7D035C90061C8741E21",
+            "signer_name": "ConnectWise, LLC",
+            "tbs_sha1": "",
+            "tbs_sha256": "EE87E0B6968C49806887874C952D0F6C1DAABA50D699FE8C5524103D7A3A82D1"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "5C58CEA4608461C9A4188F480466123A9DD02431",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/connectwise_control/a5c8ede4d24165797dcfbabbb85f62c44a79b058381e68249bf418a01fc67a1d",
+            "src_file_sha256": "a5c8ede4d24165797dcfbabbb85f62c44a79b058381e68249bf418a01fc67a1d"
+          },
+          {
+            "certificate_der_base64": "MIIHXTCCBUWgAwIBAgIQCVjjqjaGaAXuPDXBVoiYIjANBgkqhkiG9w0BAQsFADBpMQswCQYDVQQGEwJVUzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRydXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExMB4XDTI1MDYyMzAwMDAwMFoXDTI4MDYyMjIzNTk1OVowZTELMAkGA1UEBhMCVVMxEDAOBgNVBAgTB0Zsb3JpZGExDjAMBgNVBAcTBVRhbXBhMRkwFwYDVQQKExBDb25uZWN0V2lzZSwgTExDMRkwFwYDVQQDExBDb25uZWN0V2lzZSwgTExDMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAkzFvRSIHGVCNMIo7nSV2o3sZOBVkDOdL0txI3ECVLep4eGEDKah9JATp4kDKoHOa8SQucnQATrTfLeGsu6p6fXyri4Hei7HGjL23pka5WQxJV/moHD1gNcpah2Zho6eX4fbdt4MZMUpFveI8X9MCJ+gBdU8OrM3RkfYW4Aim5PMkG4tloB2cucnoeS2WjfD4cDcjWDvA2sn+oIOmBtIDL7Zn7/CDaXL1vBnX6gunbN90+tVedmVIohZaT5jbEFcFMqTIQaqYebFa5ZX6D6GHVwIN2HSnh+SQ31Lffeq2nSs9PVGPDOEc7XMAYUBvlsmOm3FQOsha7JNsr84PheHQqmUQ5/nP4b2cozUGvITwuiKKUTirFw6npDOGqbMqIdgfldbrVXRIMF0nNe5uSG1n0+/iDPp6/FdPNfZU/flk9n8zlHNCqzjrr8/Xrpw4qZPVjTCjosiWTh2CSIYbrmMBr8lt3txSS6Y/zBk1akfRhfh2zDFcMB5TEza7RbAY+rZzQNefVjTcB8MDdtPWjref9BgqYCQ8VlbpWIwG3MTqw9VAuPdiWR/XeumdgzyVLZxhbb+CpmFviUogzIFT77HI5Zer2pMZcY+dy9SVRhdkS5eb697Njc6fwl9UKvr/7ZIcUpAv+nPkaSO8SwiaZy4dEuanRl7/HM6sE7z8A/iY+YkCAwEAAaOCAgMwggH/MB8GA1UdIwQYMBaAFGg34Ou2O/hfEYb7/mF7CIhl9E5CMB0GA1UdDgQWBBRyAA72Q4P+ySscNvl5zvvrp5Qg1jA+BgNVHSAENzA1MDMGBmeBDAEEATApMCcGCCsGAQUFBwIBFhtodHRwOi8vd3d3LmRpZ2ljZXJ0LmNvbS9DUFMwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMIG1BgNVHR8Ega0wgaowU6BRoE+GTWh0dHA6Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydFRydXN0ZWRHNENvZGVTaWduaW5nUlNBNDA5NlNIQTM4NDIwMjFDQTEuY3JsMFOgUaBPhk1odHRwOi8vY3JsNC5kaWdpY2VydC5jb20vRGlnaUNlcnRUcnVzdGVkRzRDb2RlU2lnbmluZ1JTQTQwOTZTSEEzODQyMDIxQ0ExLmNybDCBlAYIKwYBBQUHAQEEgYcwgYQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmRpZ2ljZXJ0LmNvbTBcBggrBgEFBQcwAoZQaHR0cDovL2NhY2VydHMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0VHJ1c3RlZEc0Q29kZVNpZ25pbmdSU0E0MDk2U0hBMzg0MjAyMUNBMS5jcnQwCQYDVR0TBAIwADANBgkqhkiG9w0BAQsFAAOCAgEA0x/U+DrlKqWY1SJ0c01Y4plwHgzLQwB++VIPJ+eyIT6CgZpSZNpZmPZlF1y3BEqZVSoRGknfdzE67lcmjBltQTVQZiI9qZEXeixWquAHzxAGkrB26m7AjWAeOLoC5A1G8zisxDqpKn1fyQUMHjQ4m3aYjJgPtGXndO9dhHbQJf8c4JBC7dovI9lgttx4cWsZafAkf2TRccbWpbZE0PRgRA4dyKgNNGW8pWcIDbobDB9tsFvmNJrdYX7ErN791rkdtH2S4TO7Yv0tunVc5uT91KdyjqwjI7w1TWvo0TkSxOxVgVD/EqZMTq/ZBB0B8ZIcyC6uwMvZslFLPjYwO6KMbkS9NscSMq1bJFGv1MtGp9mSa4oHwmzYKiK1RrCPh3qWfEW/uv+r6CaahAL8G5SC6WSDSWkH2D3v1E48hwqtie379CGq8OMpxvJ6KXbAxSxFUrEgQE07OtQsxr0JUjTragushhtOWIBi1PmeaJM0TzVnYCTLstww+BeKuAqAfZ1hfM69y6cukC2NVMNPvb7Lc+sb6Z73J+5d0Q/3nFSqR2X8P9TpaHL7ADe84FX3P2auMRCOg/x68vDY6qkgAPzSfuaj8eaxRrAXAC8pHzq7vD3RkvT4oGBrPwn3xZENqIs6x0pAi8v4hgyHbgazo8mF6QdPvQU1lXuvEU/hnR8O2s4=",
+            "certificate_thumbprint": "DD631BF0A610530A2C8C93B35609054E34FF5F70",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/connectwise_control/c218eb4c68fafc90f1f9dde973ea85184c5a7cb830af174285d8b9e6ce6e1d06",
+            "src_file_sha256": "c218eb4c68fafc90f1f9dde973ea85184c5a7cb830af174285d8b9e6ce6e1d06"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "11C81879E141A8407D461ADB14EF568A58022BEC",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/connectwise_control/ee0fd474de7eb1b844ec8359a4453bfb56263191643c03919bd05f439761c722",
+            "src_file_sha256": "ee0fd474de7eb1b844ec8359a4453bfb56263191643c03919bd05f439761c722"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "F307637A290C1BCDCCC4437A58DE17C0BDBFC830",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/connectwise_control/c79526ce6eed74a509c7192decb2ce8988578cdbe3400c68b66395f9c2941e40",
+            "src_file_sha256": "c79526ce6eed74a509c7192decb2ce8988578cdbe3400c68b66395f9c2941e40"
+          }
+        ],
+        "company_names": [],
+        "search_names": [],
+        "signer_names": [
+          "ConnectWise, Inc.",
+          "ConnectWise, LLC",
+          "Connectwise, LLC"
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "ConnectWise Control is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "connectwisechat-customer.exe",
+          "connectwisecontrol.client.exe",
+          "screenconnect.windowsclient.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.screenconnect.com/"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of ConnectWise Control RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/connectwise_control_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of ConnectWise Control RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/connectwise_control_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2025-12-14",
+      "Name": "ConnectWise Control",
+      "References": []
+    },
+    "n-able-advanced-monitoring-agent": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "remote.management",
+              "*.remote.management",
+              "*.logicnow.com",
+              "systemmonitor.us",
+              "*.systemmonitor.us",
+              "systemmonitor.eu.com",
+              "*.systemmonitor.eu.com",
+              "system-monitor.com",
+              "*.system-monitor.com",
+              "systemmonitor.us.cdn.cloudflare.net",
+              "cloudbackup.management",
+              "*.cloudbackup.management",
+              "systemmonitor.co.uk",
+              "*.systemmonitor.co.uk",
+              "*.n-able.com",
+              "beanywhere.com",
+              "*.beanywhere.com",
+              "*.swi-tc.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "069C1914D45A50A709E2D71F36EC2F56CB202995",
+            "signer_name": "N-ABLE TECHNOLOGIES LTD",
+            "src_file_company": "N-able Take Control",
+            "src_file_path": "downloaded_files/n-able_advanced_monitoring_agent/e38be606da565f0976f1e42e4939ef3aeffc55985787629062e4e1bbedfa10d7",
+            "src_file_sha256": "e38be606da565f0976f1e42e4939ef3aeffc55985787629062e4e1bbedfa10d7"
+          }
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "N-Able Advanced Monitoring Agent is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "Agent_*_RW.exe",
+          "BASEClient.exe",
+          "BASupApp.exe",
+          "BASupSrvc.exe",
+          "BASupSrvcCnfg.exe",
+          "BASupTSHelper.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.n-able.com/features/advanced-monitoring-agent"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of N-Able Advanced Monitoring Agent RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/n-able_advanced_monitoring_agent_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of N-Able Advanced Monitoring Agent RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/n-able_advanced_monitoring_agent_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2024-08-02",
+      "Name": "N-Able Advanced Monitoring Agent",
+      "References": [
+        "https://documentation.n-able.com/takecontrol/troubleshooting/Content/kb/Take-Control-Standalone-Ports-and-Domains-Firewall-and-AV-Exclusions.htm"
+      ]
+    },
+    "n-able-n-central": {
+      "Acknowledgement": [
+        {
+          "Handle": "",
+          "Person": "Liran Ravich"
+        }
+      ],
+      "Artifacts": {
+        "Disk": [
+          {
+            "Description": "Classic Windows agent executable",
+            "File": "C:\\Program Files (x86)\\N-able Technologies\\Windows Agent\\bin\\agent.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Modern MSP Agent executable",
+            "File": "C:\\Program Files (x86)\\Msp Agent\\msp-agent-core.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Modern MSP Agent installation directory; Linux process name is msp-agent-core",
+            "File": "/opt/msp-agent/*",
+            "OS": "Linux"
+          },
+          {
+            "Description": "Modern MSP Agent installation directory",
+            "File": "/Library/MspAgent/*",
+            "OS": "macOS"
+          }
+        ],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "N-central software distribution metadata",
+            "Domains": [
+              "sis.n-able.com"
+            ],
+            "Ports": [
+              "80",
+              "443",
+              "8443"
+            ]
+          },
+          {
+            "Description": "N-central software updates and release feeds",
+            "Domains": [
+              "update.n-able.com",
+              "releases.n-able.com",
+              "feeds.n-able.com"
+            ],
+            "Ports": [
+              "443"
+            ]
+          },
+          {
+            "Description": "Modern MSP Agent cloud configuration, components and event delivery; shared N-able services",
+            "Domains": [
+              "*.prd.cdo.system-monitor.com",
+              "eb.eu-west-1.prd.davinci.system-monitor.com",
+              "eb.us-west-2.prd.davinci.system-monitor.com",
+              "eb.ap-southeast-2.prd.davinci.system-monitor.com",
+              "eb.eu-central-1.prd.davinci.system-monitor.com"
+            ],
+            "Ports": [
+              "443"
+            ]
+          },
+          {
+            "Description": "Vendor-assigned AWS IoT endpoints; N-central firewall documentation lists TCP 8088 for modern agent communication",
+            "Domains": [
+              "a33d8yamkwy4nx-ats.iot.eu-west-1.amazonaws.com",
+              "a33d8yamkwy4nx-ats.iot.us-west-2.amazonaws.com",
+              "a33d8yamkwy4nx-ats.iot.eu-central-1.amazonaws.com",
+              "a33d8yamkwy4nx-ats.iot.ap-southeast-2.amazonaws.com"
+            ],
+            "Ports": [
+              "8088"
+            ]
+          },
+          {
+            "Description": "Optional Take Control remote access infrastructure, shared with other N-able products",
+            "Domains": [
+              "swi-rc.cdn-sw.net",
+              "comserver.global.mspa.n-able.com",
+              "comserver.us1.mspa.n-able.com",
+              "comserver.us2.mspa.n-able.com",
+              "comserver.eu1.mspa.n-able.com"
+            ],
+            "Ports": [
+              "443"
+            ]
+          },
+          {
+            "Description": "Classic agents connect to an operator-specific N-central server; addresses vary by deployment",
+            "Domains": [],
+            "Ports": [
+              "80",
+              "443"
+            ]
+          }
+        ],
+        "Other": [
+          {
+            "Type": "WindowsService",
+            "Value": "Windows Agent Service; Windows Agent Maintenance Service (classic agent)"
+          },
+          {
+            "Type": "WindowsService",
+            "Value": "MSPAgent (display name MSP Agent)"
+          },
+          {
+            "Type": "LinuxService",
+            "Value": "MspAgent.service (systemd)"
+          },
+          {
+            "Type": "macOSDaemon",
+            "Value": "MspAgent (package com.n-able.mspagent)"
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "Liran Ravich, Cribl",
+      "Category": "RMM",
+      "CodeSigning": null,
+      "Created": "2026-10-01",
+      "Description": "N-able N-central is a remote monitoring and management (RMM) platform used by MSPs and IT teams. The platform supports remote commands, scripts, software deployment, file transfer and remote control. Its classic agents operate alongside the newer MSP Agent on Windows, Linux and macOS; optional Take Control components provide remote access. CISA added CVE-2026-86218, a static code injection flaw in the N-central server, to its Known Exploited Vulnerabilities catalog on 2026-09-08.",
+      "Details": {
+        "Capabilities": [
+          "Remote command execution",
+          "Scripting",
+          "Software deployment",
+          "File transfer",
+          "Remote control"
+        ],
+        "Free": false,
+        "InstallationPaths": [
+          "C:\\Program Files (x86)\\N-able Technologies\\Windows Agent\\bin\\*",
+          "C:\\Program Files (x86)\\Msp Agent\\*",
+          "C:\\Program Files (x86)\\N-able Technologies\\Windows Agent\\bin\\agent.exe",
+          "AgentMaint.exe",
+          "AgentMonitor.exe",
+          "BASupTSHelper.exe",
+          "msp-agent-core.exe",
+          "/opt/msp-agent/*",
+          "/Library/MspAgent/*"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "Windows tasks can use LocalSystem, device or custom credentials",
+        "SupportedOS": [
+          "Windows",
+          "macOS",
+          "Linux"
+        ],
+        "Verification": "",
+        "Vulnerabilities": [
+          "CVE-2026-86218"
+        ],
+        "Website": "https://www.n-able.com/products/n-central"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of N-able N-central RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/n-able_n-central_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential files activity of N-able N-central RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/n-able_n-central_files_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of N-able N-central RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/n-able_n-central_processes_sigma.yml"
+        }
+      ],
+      "FileHashes": null,
+      "LastModified": "2026-10-05",
+      "Name": "N-able N-central",
+      "References": [
+        "https://documentation.n-able.com/N-central/userguide/Content/Modern-agent/modern-agent.htm",
+        "https://documentation.n-able.com/N-central/userguide/Content/ReleaseDocs/Install_Config/FirewallRequirements.htm",
+        "https://documentation.n-able.com/N-central/userguide/Content/AVDefender/AVDefender_GlobalExclusions.htm",
+        "https://documentation.n-able.com/N-central/userguide/Content/Deploying/agent_probe_services.htm",
+        "https://documentation.n-able.com/N-central/userguide/Content/User_Management/Selecting_device_credentials.htm",
+        "https://documentation.n-able.com/N-central/userguide/Content/Scheduled_Tasks/ScheduledTasks_AddScriptTask.html",
+        "https://documentation.n-able.com/N-central/userguide/Content/Scheduled_Tasks/ScheduledTasks_Add3rdPartySoftwareTask.html",
+        "https://documentation.n-able.com/N-central/userguide/Content/Devices/Direct%20Support/DS_Command_Line_Mac.htm",
+        "https://documentation.n-able.com/N-central/userguide/Content/Devices/Direct%20Support/DS_File_Transfer_Mac.htm",
+        "https://status.n-able.com/2026/09/06/n-central-2026-3-hotfix-4-cve-2026-86218/",
+        "https://www.cyber.gc.ca/en/alerts-advisories/n-able-security-advisory-av26-885"
+      ]
+    },
+    "n-able-remote-access-software": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "n-able.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "Created": "2024-08-02",
+      "Description": "N-ABLE Remote Access Software is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.n-able.com/features/remote-access"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of N-ABLE Remote Access Software RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/n-able_remote_access_software_network_sigma.yml"
+        }
+      ],
+      "LastModified": "2024-08-02",
+      "Name": "N-ABLE Remote Access Software",
+      "References": []
+    },
+    "ninjaone-formerly-ninjarmm": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "Created": "2024-08-02",
+      "Description": "NinjaOne (formerly NinjaRMM) is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "*ProgramData\\NinjaRMMAgent\\*"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.ninjaone.com/rmm/"
+      },
+      "Detections": [],
+      "LastModified": "2024-08-02",
+      "Name": "NinjaOne (formerly NinjaRMM)",
+      "References": []
+    },
+    "ninjarmm": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "*.ninjarmm.com",
+              "*.ninjaone.com",
+              "resources.ninjarmm.com",
+              "ninjaone.com",
+              "ninjarmm.net",
+              "*.ninjarmm.net",
+              "rmmservice.eu",
+              "*.rmmservice.eu",
+              "rmmservice.com.au",
+              "*.rmmservice.com.au",
+              "rmmservice.ca",
+              "*.rmmservice.ca",
+              "ninja-backup.com",
+              "*.ninja-backup.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "5F4F53C903859C0BDEFD456789D9C517F9F68C06",
+            "signer_name": "NinjaOne LLC",
+            "src_file_company": "NinjaRMM, LLC",
+            "src_file_path": "downloaded_files/ninjarmm/61e3d7e1235c0f6d5318721715ce5fb136c8e03783f0d3d75aa026c845958032",
+            "src_file_sha256": "61e3d7e1235c0f6d5318721715ce5fb136c8e03783f0d3d75aa026c845958032"
+          }
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "NinjaRMM is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "NinjaRMMAgent.exe",
+          "NinjaRMMAgentPatcher.exe",
+          "ninjarmm-cli.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.ninjaone.com/rmm/"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of NinjaRMM RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/ninjarmm_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of NinjaRMM RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/ninjarmm_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2026-06-16",
+      "Name": "NinjaRMM",
+      "References": [
+        "https://www.ninjaone.com/faq/"
+      ]
+    },
+    "screenconnect": {
+      "Acknowledgement": [
+        {
+          "Handle": "@Securityinbits",
+          "Person": "Ayush Anand"
+        }
+      ],
+      "Artifacts": {
+        "Disk": [
+          {
+            "Description": "ScreenConnect session database",
+            "File": "C:\\Program Files*\\ScreenConnect\\App_Data\\Session.db",
+            "OS": "Windows"
+          },
+          {
+            "Description": "ScreenConnect user configuration",
+            "File": "C:\\Program Files*\\ScreenConnect\\App_Data\\User.xml",
+            "OS": "Windows"
+          },
+          {
+            "Description": "ScreenConnect client user configuration",
+            "File": "C:\\ProgramData\\ScreenConnect Client*\\user.config",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Client configuration observed in the cited lab investigation. Contains the relay host (h=), port (p=) and RSA server key in the launch parameters; useful for recovering the configured destination offline, without proving a connection occurred.",
+            "File": "C:\\Program Files (x86)\\ScreenConnect Client (*)\\system.config",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Client UI configuration. The AccessShow* examples were observed set to false in abusive deployments, but their effect depends on client version; newer releases restrict hiding the banner and tray icon. Assess settings against the approved deployment and organization policy, not as proof of malicious activity.",
+            "Example": [
+              "AccessShowUnderControlBanner = false",
+              "AccessShowBalloonOnConnect = false",
+              "AccessShowSystemTrayIcon = false"
+            ],
+            "File": "C:\\Program Files*\\ScreenConnect Client*\\app.config",
+            "OS": "Windows"
+          },
+          {
+            "Description": "ScreenConnect working directory, with version-specific subdirectories. The cited lab observed RunFile staging beneath <version>\\Temp; Huntress observed execution directly beneath <version>. Legitimate administrators also deploy files here. Correlate file writes and execution with session logs and approved activity; the path alone proves neither human interaction nor malicious intent.",
+            "File": "C:\\Windows\\SystemTemp\\ScreenConnect\\*",
+            "OS": "Windows"
+          },
+          {
+            "Description": "ScreenConnect installer filename reported in Huntress's September 2026 Power BI phishing investigation (published October 7). The Downloads path generalizes the reported download destination; the filename can also occur in legitimate deployments. Observed URL pattern was <tenant>.screenconnect.com/Bin/ScreenConnect.ClientSetup.exe?e=Access&y=Guest&t=<token>.",
+            "File": "C:\\Users\\*\\Downloads\\ScreenConnect.ClientSetup*.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "MSI staging path reported by Huntress in the September 2026 investigation. SCAutoFix.ps1 downloaded a second client from /Bin/ScreenConnect.ClientSetup.msi?e=Access&y=Guest and replaced the first client. This is a case-specific artifact, not a default installation path.",
+            "File": "C:\\Temp\\ScreenConnect.ClientSetup.msi",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Direct-under-Users path generalized from C:\\Users\\ScreenConnect.ClientSetup (6).exe in Huntress's September 2026 investigation. The report mentions both this EXE name and the MSI staging path; neither is a universal ScreenConnect installer location.",
+            "File": "C:\\Users\\ScreenConnect.ClientSetup*.exe",
+            "OS": "Windows"
+          }
+        ],
+        "EventLog": [
+          {
+            "Description": "Service installation observed as LocalSystem with automatic startup in the cited lab. The service image path included launch parameters for session type (e=Access), relay host (h=) and port (p=). Distinct client thumbprints can identify multiple installations; compare with the approved inventory.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\Program Files (x86)\\ScreenConnect Client (<thumbprint>)\\ScreenConnect.ClientService.exe\" \"?e=Access&y=Guest&h=<relay>&p=<port>&...\"",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "ScreenConnect Client (<thumbprint>)"
+          },
+          {
+            "Description": "Host user connected. In the cited lab, the message included the session label, relay URL and instance fingerprint. Use as corroboration; absence of these application events does not exclude activity.",
+            "EventID": 100,
+            "LogFile": "Application.evtx",
+            "ProviderName": "ScreenConnect"
+          },
+          {
+            "Description": "Host user disconnected. Corroborates the end of that connection; it does not establish that all operator activity or spawned processes have stopped.",
+            "EventID": 101,
+            "LogFile": "Application.evtx",
+            "ProviderName": "ScreenConnect"
+          },
+          {
+            "Description": "Files transferred, with the action stated, e.g. \"Transferred files with action 'Run': ScreenConnect.ClientSetup (1).msi\".",
+            "EventID": 201,
+            "LogFile": "Application.evtx",
+            "ProviderName": "ScreenConnect"
+          }
+        ],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "control.connectwise.com",
+              "*.connectwise.com",
+              "*.screenconnect.com"
+            ],
+            "Ports": []
+          },
+          {
+            "Description": "Cloud relay pattern observed in the cited investigations on TCP 443. The installer download hostname can differ from the relay hostname; collect both. This pattern alone does not establish trial status or malicious use.",
+            "Domains": [
+              "instance-*-relay.screenconnect.com"
+            ],
+            "Ports": [
+              443
+            ]
+          },
+          {
+            "Description": "Default self-hosted relay port (configurable). The h= launch parameter or service ImagePath may contain a custom domain or IP address, so a ScreenConnect domain list alone can miss these deployments. Compare the destination with approved infrastructure.",
+            "Domains": [],
+            "Ports": [
+              8041
+            ]
+          }
+        ],
+        "Registry": [
+          {
+            "Description": "Service ImagePath value can contain the relay host and port in client launch parameters. It can reveal a configured destination without network telemetry; the cited lab observed the registry write before DNS, but that event ordering is not guaranteed.",
+            "Path": "HKLM\\System\\CurrentControlSet\\Services\\ScreenConnect Client (*)\\ImagePath"
+          },
+          {
+            "Description": "The cited case reported ScreenConnect.WindowsAuthenticationPackage.dll in the Authentication Packages value. Investigate that DLL entry against the approved deployment and loaded module provenance; this shared Windows registry location alone identifies neither ScreenConnect nor malicious activity.",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Authentication Packages"
+          },
+          {
+            "Description": "Credential provider registration pointing to ScreenConnect.WindowsCredentialProvider.dll. Display name may be \"SC FeedbackTool Credential Provider\" in malicious deployments.",
+            "Path": "HKLM\\SOFTWARE\\Classes\\CLSID\\{6FF59A85-BC37-4CD4-C175-070CC4814204}"
+          },
+          {
+            "Description": "SafeBoot Network entry allowing ScreenConnect client to start in Safe Mode with Networking.",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\SafeBoot\\Network\\ScreenConnect Client (*)"
+          }
+        ]
+      },
+      "Author": "Ali Alwashali, Nasreddine Bencherchali",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "5C58CEA4608461C9A4188F480466123A9DD02431",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/screenconnect/a5c8ede4d24165797dcfbabbb85f62c44a79b058381e68249bf418a01fc67a1d",
+            "src_file_sha256": "a5c8ede4d24165797dcfbabbb85f62c44a79b058381e68249bf418a01fc67a1d"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "DD631BF0A610530A2C8C93B35609054E34FF5F70",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/screenconnect/c218eb4c68fafc90f1f9dde973ea85184c5a7cb830af174285d8b9e6ce6e1d06",
+            "src_file_sha256": "c218eb4c68fafc90f1f9dde973ea85184c5a7cb830af174285d8b9e6ce6e1d06"
+          },
+          {
+            "certificate_der_base64": "MIIHXTCCBUWgAwIBAgIQCu6vlAAkcst3UlLSnQ3NYzANBgkqhkiG9w0BAQsFADBpMQswCQYDVQQGEwJVUzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRydXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExMB4XDTI1MDYyNzAwMDAwMFoXDTI2MDYyNjIzNTk1OVowZTELMAkGA1UEBhMCVVMxEDAOBgNVBAgTB0Zsb3JpZGExDjAMBgNVBAcTBVRhbXBhMRkwFwYDVQQKExBDb25uZWN0V2lzZSwgTExDMRkwFwYDVQQDExBDb25uZWN0V2lzZSwgTExDMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEApM4y2+TjFTwIauLNliXTwIOCJc715TLkQyqe3fFLC9nV+ipORYXuAih383Jxwk9mfZIKUGQ9i5VtD+U5bKxmjcPQ6yvi0AmSMtLbzXBYER6ishzBBTEgxzUVJo/1Jqz4rJEwwMvRVjoXQPwU4Mzi3LnBZtILPyurcO8FLEfNmWXVISzLFJEvs/gwosooBhY+AqPJr4tfahd3UDPVeSBAiH8VUon9uwAi6IjAhmQM1Aee5tP4b+Hu9EMhIpA6ypb+A4GpI6AavDeSOCPFkwblEn3O5QLdPEkUfiQWay2grATCL6Eqte74E4/SvfAet7EF1u1VhbcJQKMeMHnQI4XHnxGBpUvc2GK1KWUrFac2749mTGaoSHy1MkcHhyk3mnqNGedALpcwt3BwBsraEV9KDOsZfLKqRVuYv7NP/dNuwYoUUGSi5EzHTuXQUsJ3I86/1gSvMbvfkGdmWpL8UsqJEcyxJveVmGFlDWz0AyYrpmeZa1LGY8o9IwvHuXC/625LZD97dWNa5gYCxhobVJEHtmd1XhiNHu/H5DWLgY9FSR9CGSPgeRAwoPRkxwZSEhCgDkGlBPiOnMszhtGxUUW6x/k6yhxlpezlxL2rRJpxyxVmLyArbo2snG+6NUp9QQpng+fNPRCW507TSQ5+KItjUEcZEFKzFtZxjXwZoLXwzhcCAwEAAaOCAgMwggH/MB8GA1UdIwQYMBaAFGg34Ou2O/hfEYb7/mF7CIhl9E5CMB0GA1UdDgQWBBRTPUskEGV8ej7DCLhivpmNtPDwzDA+BgNVHSAENzA1MDMGBmeBDAEEATApMCcGCCsGAQUFBwIBFhtodHRwOi8vd3d3LmRpZ2ljZXJ0LmNvbS9DUFMwDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMIG1BgNVHR8Ega0wgaowU6BRoE+GTWh0dHA6Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydFRydXN0ZWRHNENvZGVTaWduaW5nUlNBNDA5NlNIQTM4NDIwMjFDQTEuY3JsMFOgUaBPhk1odHRwOi8vY3JsNC5kaWdpY2VydC5jb20vRGlnaUNlcnRUcnVzdGVkRzRDb2RlU2lnbmluZ1JTQTQwOTZTSEEzODQyMDIxQ0ExLmNybDCBlAYIKwYBBQUHAQEEgYcwgYQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmRpZ2ljZXJ0LmNvbTBcBggrBgEFBQcwAoZQaHR0cDovL2NhY2VydHMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0VHJ1c3RlZEc0Q29kZVNpZ25pbmdSU0E0MDk2U0hBMzg0MjAyMUNBMS5jcnQwCQYDVR0TBAIwADANBgkqhkiG9w0BAQsFAAOCAgEAShqxp1alskFFVGAaNDAgA7U4EquJxvalfWydQ1G1KE6bpEeuxauFX+YQzLlQABUt2wE/SvyjE5as2OcdmVR/q3TCOzYxneAhYL2WEppLzzLh0EGijdwRpFkMD1YRCt0AJgxDNLwf5F2xUJmiUiLNA6wK5ez5WfRUJiITfNmFNClhtAAZqHyWmZldYKZxnmXMDmYpOh5+fYXYGFUETCOFFa89TqOhUcY/Z568WcKACtYQD0ajddXa6My/9Tpme8FXxTGUTjiUuUjwxYAyvMqmhmKRhUAfpAY6RZckmxXHUOiMM8WH202leVZ4AKkUqKg3kqYnnseTA3u6p4tKPwvuSnjECNZM9A7RyoXvydTTQyCPsx95BGV0bQxRv2iQaQsVRB4/PWd2CK9ipwTt1uFQyvz/oie4RjQrZtI6mDZm31ihk72AltvfvdhyZbz2n9vWmSBu6R2cZ9CRCgQN5SQcHfIsysFDQuoXibuGuzuSESFZmOhU7UgVADFTWkDdZnq80fx4CcH36pM5KRktrdGue0MpIfT04dfv+oxusZtbwlTknMuRNrOFgty37wXkAmRrdLeAOtEn5AfFwoVjF0PO2W67qlE66kMgmWs2TgHjwU5ZiAwPd/U4/cy9V3jbvhONE93T5QDSzLPBQcLA81L1AYRIyqQasdU5ZGH2qjQqJxY=",
+            "certificate_thumbprint": "11C81879E141A8407D461ADB14EF568A58022BEC",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/screenconnect/ee0fd474de7eb1b844ec8359a4453bfb56263191643c03919bd05f439761c722",
+            "src_file_sha256": "ee0fd474de7eb1b844ec8359a4453bfb56263191643c03919bd05f439761c722"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "F307637A290C1BCDCCC4437A58DE17C0BDBFC830",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ScreenConnect Software",
+            "src_file_path": "downloaded_files/screenconnect/c79526ce6eed74a509c7192decb2ce8988578cdbe3400c68b66395f9c2941e40",
+            "src_file_sha256": "c79526ce6eed74a509c7192decb2ce8988578cdbe3400c68b66395f9c2941e40"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "109D463C280A1E2AF6E87807C6F3D3E4A80E5DBE",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_path": "downloaded_files/screenconnect/165f4ecf1727c7f57017fe460640e9b262657feb1af06d918f79917d100531fc",
+            "src_file_sha256": "165f4ecf1727c7f57017fe460640e9b262657feb1af06d918f79917d100531fc"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "6B7B5475445B4829EE42A588FB8B5378783FEEF3",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_path": "downloaded_files/screenconnect/c13b80b70198ced667351ff7f004e6ab5972503049b66a053d55b30f9ea4c0e9",
+            "src_file_sha256": "c13b80b70198ced667351ff7f004e6ab5972503049b66a053d55b30f9ea4c0e9"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "0F9CE6F3AA0A5C40790CEF493378990FDC766517",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": " ",
+            "src_file_path": "downloaded_files/screenconnect/46457d98fb1c53bbccb66c1015eb831355f30c8bf8e6f25cf3183aac2a5fd8ab",
+            "src_file_sha256": "46457d98fb1c53bbccb66c1015eb831355f30c8bf8e6f25cf3183aac2a5fd8ab"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "B9E53B87C889BDBFEE481D49A6DC48289A27CE91",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": " ",
+            "src_file_path": "downloaded_files/screenconnect/bc0b03a340d46c23a4a2f91ebd7ed4d0fcf92fc7c4323f522c86369ad483f68a",
+            "src_file_sha256": "bc0b03a340d46c23a4a2f91ebd7ed4d0fcf92fc7c4323f522c86369ad483f68a"
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "A913789BBC18D15773E26D320081E0BB1B0EC897",
+            "signer_name": "ConnectWise, LLC",
+            "src_file_company": "ConnectWise",
+            "src_file_path": "downloaded_files/screenconnect/0f39299c04c5c5f79a9a9400fd346adaf82c34b1d5ac38213fb42368f0267bfb",
+            "src_file_sha256": "0f39299c04c5c5f79a9a9400fd346adaf82c34b1d5ac38213fb42368f0267bfb"
+          }
+        ]
+      },
+      "Created": "2023-10-01",
+      "Description": "ScreenConnect is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [
+          "Command Line Support",
+          "File Transfer",
+          "Install Windows updates",
+          "Receive notification when user performs a predefined event",
+          "Remote Command Line",
+          "Remote Control",
+          "Sound Capture",
+          "Start / Stop services",
+          "View event logs"
+        ],
+        "Free": "14-Days Free Trial",
+        "InstallationPaths": [
+          "C:\\Program Files (x86)\\ScreenConnect Client (Random)\\ScreenConnect.ClientService.exe",
+          "Remote Workforce Client.exe",
+          "*\\*\\ScreenConnect.ClientService.exe",
+          "C:\\Program Files (x86)\\ScreenConnect Client (<string ID>)\\*",
+          "*\\ScreenConnect Client*\\*",
+          "*\\*\\ScreenConnect.WindowsClient.exe",
+          "screenconnect*.exe",
+          "screenconnect.windowsclient.exe",
+          "ConnectWiseControl*.exe",
+          "connectwise*.exe",
+          "screenconnect.clientservice.exe"
+        ],
+        "PEMetadata": [
+          {
+            "Description": "",
+            "Filename": "",
+            "OriginalFileName": ""
+          }
+        ],
+        "Privileges": "",
+        "SupportedOS": [
+          "Android",
+          "IOS",
+          "Linux",
+          "Mac",
+          "Windows"
+        ],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.connectwise.com"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential registry activity of ScreenConnect RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/screenconnect_registry_sigma.yml"
+        },
+        {
+          "Description": "Detects potential network activity of ScreenConnect RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/screenconnect_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential files activity of ScreenConnect RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/screenconnect_files_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of ScreenConnect RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/screenconnect_processes_sigma.yml"
+        },
+        {
+          "Description": "Remote Access Tool - ScreenConnect Execution",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/ca24243a6e3f94353a54176f83c4c3b7f579224a/rules/windows/process_creation/proc_creation_win_remote_access_tools_screenconnect.yml"
+        },
+        {
+          "Description": "Remote Access Tool - ScreenConnect Remote Command Execution - Hunting",
+          "Sigma": "https://github.com/SigmaHQ/sigma/blob/ca24243a6e3f94353a54176f83c4c3b7f579224a/rules-threat-hunting/windows/process_creation/proc_creation_win_remote_access_tools_screenconnect_child_proc.yml"
+        }
+      ],
+      "LastModified": "2026-10-09",
+      "Name": "ScreenConnect",
+      "References": [
+        "https://thedfirreport.com/2023/09/25/from-screenconnect-to-hive-ransomware-in-61-hours/",
+        "https://www.huntress.com/blog/w2-malvertising-to-kernel-mode-edr-kill",
+        "https://newsletter.securityinbits.com/p/screenconnect-rmm-abuse-the-cloud",
+        "https://f4n6.co.uk/a-feedback-tool-that-isnt-screenconnect-rmm-abuse-hidden-in-a-12-mb-batch-file/",
+        "https://www.screenconnect.com/blog/customization-update",
+        "https://alluresecurity.com/blog/signal-noise-brand-was-real-app-wasnt/",
+        "https://www.huntress.com/blog/screenconnect-power-bi"
+      ]
+    },
+    "splashtop": {
+      "Acknowledgement": [
+        {
+          "Handle": "in/theosyn",
+          "Person": "Théo Letailleur"
+        }
+      ],
+      "Artifacts": {
+        "Disk": [
+          {
+            "Description": "N/A",
+            "File": "C:\\windows\\System32\\winevt\\Logs\\Splashtop-Splashtop Streamer-Status%4Operational.evtx",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\windows\\System32\\winevt\\Logs\\Splashtop-Splashtop Streamer-Remote Session%4Operational.evtx",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%PROGRAMDATA%\\Splashtop\\Temp\\log\\FTCLog.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\log\\agent_log.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\log\\SPLog.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\log\\svcinfo.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\log\\sysinfo.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Splashtop Remote Service",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\SRService.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "SplashTop Remote Agent",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\SRAgent.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "Splashtop Updater",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Software Updater\\SSUAgent.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\SRUtility.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\SRFeature.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files (x86)\\Splashtop\\Splashtop Remote\\Server\\db\\SRAgent.sqlite3",
+            "OS": "Windows"
+          }
+        ],
+        "EventLog": [
+          {
+            "Description": "Service installation event as result of Splashtop Software Updater Service installation.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\\\Program Files (x86)\\\\Splashtop\\\\Splashtop Software Updater\\\\SSUService.exe\"",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "Splashtop Software Updater Service"
+          },
+          {
+            "Description": "Service installation event as result of Splashtop Remote Service installation.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\\\Program Files (x86)\\\\Splashtop\\\\Splashtop Remote\\\\Server\\\\SRService.exe\"",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "Splashtop® Remote Service"
+          },
+          {
+            "Description": "Service installation event as result of Splashtop Remote Service installation.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\\\Program Files (x86)\\\\Splashtop\\\\Splashtop Remote\\\\Server\\\\SRService.exe\"",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "SplashtopRemoteService"
+          }
+        ],
+        "Network": [
+          {
+            "Description": "N/A",
+            "Domains": [
+              "*.splashtop.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": [
+          {
+            "Description": "Splashtop Inc. registry key",
+            "Path": "KLM\\SOFTWARE\\WOW6432Node\\Splashtop Inc.\\*"
+          },
+          {
+            "Description": "Splashtop Software Updater uninstall key",
+            "Path": "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Splashtop Software Updater"
+          },
+          {
+            "Description": "Splashtop Remote Service registry key",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\SplashtopRemoteService"
+          },
+          {
+            "Description": "Splashtop Streamer Remote Session event log channel",
+            "Path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WINEVT\\Channels\\Splashtop-Splashtop Streamer-Remote Session/Operational"
+          },
+          {
+            "Description": "Splashtop Streamer Status event log channel",
+            "Path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WINEVT\\Channels\\Splashtop-Splashtop Streamer-Status/Operational"
+          },
+          {
+            "Description": "Splashtop Software Updater install reference count",
+            "Path": "HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Splashtop Software Updater\\InstallRefCount"
+          },
+          {
+            "Description": "Splashtop Remote Service safe boot configuration",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\SafeBoot\\Network\\SplashtopRemoteService"
+          },
+          {
+            "Description": "Default user Splashtop Inc. registry key",
+            "Path": "HKU\\.DEFAULT\\Software\\Splashtop Inc.\\*"
+          },
+          {
+            "Description": "User-specific Splashtop Inc. registry key",
+            "Path": "HKU\\SID\\Software\\Splashtop Inc.\\*"
+          },
+          {
+            "Description": "Splashtop PDF Remote Printer configuration",
+            "Path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Print\\Printers\\Splashtop PDF Remote Printer"
+          },
+          {
+            "Description": "Splashtop Remote Server client information",
+            "Path": "HKLM\\SOFTWARE\\WOW6432Node\\Splashtop Inc.\\Splashtop Remote Server\\ClientInfo\\*"
+          }
+        ]
+      },
+      "Author": "Nasreddine Bencherchali",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "D458B32F6946DBB682A9687076EB9209979BDF76",
+            "signer_name": "Splashtop Inc.",
+            "src_file_company": "Splashtop Inc.",
+            "src_file_path": "downloaded_files/splashtop/31333b18ca5cf8f09bc6a8464b34b17f415afee14b6eed877f48ebb7a7191d57",
+            "src_file_sha256": "31333b18ca5cf8f09bc6a8464b34b17f415afee14b6eed877f48ebb7a7191d57"
+          }
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "Splashtop is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "C:\\Program Files (x86)\\Splashtop\\*",
+          "*\\Splashtop\\Splashtop Remote\\Client for RMM\\*",
+          "strwinclt.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.splashtop.com/"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential registry activity of Splashtop RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop_registry_sigma.yml"
+        },
+        {
+          "Description": "Detects potential network activity of Splashtop RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential files activity of Splashtop RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop_files_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of Splashtop RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2024-08-02",
+      "Name": "Splashtop",
+      "References": [
+        "https://www.synacktiv.com/publications/legitimate-rats-a-comprehensive-forensic-analysis-of-the-usual-suspects.html"
+      ]
+    },
+    "splashtop-beta": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "splashtop.com"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "Created": "2024-08-02",
+      "Description": "Splashtop (Beta) is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "SRServer.exe",
+          "SplashtopSOS.exe",
+          "Splashtop_Streamer_Windows*.exe",
+          "SRManager.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.splashtop.com/"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of Splashtop (Beta) RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop__beta__network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of Splashtop (Beta) RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop__beta__processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2024-08-02",
+      "Name": "Splashtop (Beta)",
+      "References": []
+    },
+    "splashtop-remote": {
+      "Acknowledgement": [],
+      "Artifacts": {
+        "Disk": [],
+        "EventLog": [],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "splashtop.com",
+              "*.api.splashtop.com",
+              "*.relay.splashtop.com",
+              "*.api.splashtop.eu"
+            ],
+            "Ports": []
+          }
+        ],
+        "Registry": []
+      },
+      "Author": "",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "D458B32F6946DBB682A9687076EB9209979BDF76",
+            "signer_name": "Splashtop Inc.",
+            "tbs_sha1": "",
+            "tbs_sha256": "2E68D3458EA8DF79CAB66FF9E4EB68904491CB6EBF148AFBE49F7FB46761FC20"
+          },
+          {
+            "certificate_thumbprint": "N/A",
+            "signer_name": "Splashtop Inc.",
+            "tbs_sha1": "2978060ECCF9B8AB92257B03117DA21AEA5DA8A1",
+            "tbs_sha256": ""
+          },
+          {
+            "certificate_der_base64": "MIIFZDCCBEygAwIBAgIQMmca3nwN2HmqDvX6X5iD9jANBgkqhkiG9w0BAQUFADCBtDELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDlZlcmlTaWduLCBJbmMuMR8wHQYDVQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMTswOQYDVQQLEzJUZXJtcyBvZiB1c2UgYXQgaHR0cHM6Ly93d3cudmVyaXNpZ24uY29tL3JwYSAoYykxMDEuMCwGA1UEAxMlVmVyaVNpZ24gQ2xhc3MgMyBDb2RlIFNpZ25pbmcgMjAxMCBDQTAeFw0xMzA5MDkwMDAwMDBaFw0xNTEyMDkyMzU5NTlaMIGnMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTERMA8GA1UEBxMIU2FuIEpvc2UxFzAVBgNVBAoUDlNwbGFzaHRvcCBJbmMuMT4wPAYDVQQLEzVEaWdpdGFsIElEIENsYXNzIDMgLSBNaWNyb3NvZnQgU29mdHdhcmUgVmFsaWRhdGlvbiB2MjEXMBUGA1UEAxQOU3BsYXNodG9wIEluYy4wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC2OUDxZE19MrenyVYPW2LuMazHLvdcYJl/7NiyiaIjs50HZVx0jAHGRul90X4j1dbepw+Bxpt4YHMH1kbcZWRwhjENFx6DYjHcDPOgwlpicUHhAekC3KSGStpD3TG3Bp73rPp5+qcROg2WMgBa1b5D05Zzid0MOSrXR/GX6wOE+3xIpxUlgAP9GH694oUvEpJAnaDs9114dP1wAuOp/SSnfKu7oP20xRjFlMpG/+DUl7dNVR4NZiHdfobNVf7kaTWIcZmX+VmKyrrH9Ac8eJyebVGlgYJgp643ZFeoin9QOlloC3RECB2gycx6usYbb0YI4nZKcbIY2N7TduNExpuLAgMBAAGjggF7MIIBdzAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIHgDBABgNVHR8EOTA3MDWgM6Axhi9odHRwOi8vY3NjMy0yMDEwLWNybC52ZXJpc2lnbi5jb20vQ1NDMy0yMDEwLmNybDBEBgNVHSAEPTA7MDkGC2CGSAGG+EUBBxcDMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8vd3d3LnZlcmlzaWduLmNvbS9ycGEwEwYDVR0lBAwwCgYIKwYBBQUHAwMwcQYIKwYBBQUHAQEEZTBjMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC52ZXJpc2lnbi5jb20wOwYIKwYBBQUHMAKGL2h0dHA6Ly9jc2MzLTIwMTAtYWlhLnZlcmlzaWduLmNvbS9DU0MzLTIwMTAuY2VyMB8GA1UdIwQYMBaAFM+Zqep7JvRLyY6P1/AFJu/j0qedMBEGCWCGSAGG+EIBAQQEAwIEEDAWBgorBgEEAYI3AgEbBAgwBgEBAAEB/zANBgkqhkiG9w0BAQUFAAOCAQEA1Z2TFDB/koYpae0p3RbfgS7+3wVob/HonCpXYUa8CaHYGFFrpMSQQbBQsBpEX6tN0RSINw3fDfF+JIUbuUfvZmEf7HMfWX1WA5mhReFEFwXlaayJrsQst69nedeiCN5pFeQpZa4ElITpmDbNzWWjwcmbdh7kzYeSMXHv3y75EPBvDXr2RamXdhL5bQ6o89Jys3ThQjnWnmXORo3jxfWmMq//QYcWjYLNxBDCxtAZtX8UM+dv7usD+dWk/3UGzyX0TevrOtsZDwr3KmtilpuXzXZq4HNAlohcgHhUtjlT0gE6hXmh5SImc1gXrKeOq1G1k+xFugkZQyQ6XbkGf2hM7w==",
+            "certificate_thumbprint": "2D01A46E9147185A5771B5B96675A89659F98C1C",
+            "issuer": "CN=VeriSign Class 3 Code Signing 2010 CA",
+            "signer_name": "Splashtop Inc.",
+            "tbs_sha1": "2978060ECCF9B8AB92257B03117DA21AEA5DA8A1",
+            "tbs_sha256": "51ABFD3E018A65BA17A112836881266A247DB48816BB0F49C24DF2E31C64FF7B",
+            "valid_from": "2013-09-09T00:00:00+00:00",
+            "valid_to": "2015-12-09T23:59:59+00:00"
+          }
+        ],
+        "company_names": [],
+        "search_names": [
+          "3irjc74zj.exe",
+          "splashtop_streamer_windows.exe",
+          "splashtopsos.exe",
+          "sragent.exe",
+          "srserver.exe",
+          "srservice.exe"
+        ],
+        "signer_names": [
+          "Splashtop Inc."
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "Splashtop Remote is a remote monitoring and management (RMM) tool. More information will be added as it becomes available.",
+      "Details": {
+        "Capabilities": [],
+        "Free": "",
+        "InstallationPaths": [
+          "strwinclt.exe",
+          "Splashtop_Streamer_Windows*.exe",
+          "SplashtopSOS.exe",
+          "sragent.exe",
+          "srmanager.exe",
+          "srserver.exe",
+          "srservice.exe"
+        ],
+        "PEMetadata": {
+          "Description": "",
+          "Filename": "",
+          "OriginalFileName": ""
+        },
+        "Privileges": "",
+        "SupportedOS": [],
+        "Verification": "",
+        "Vulnerabilities": [],
+        "Website": "https://www.splashtop.com/"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential network activity of Splashtop Remote RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop_remote_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of Splashtop Remote RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/splashtop_remote_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2025-12-14",
+      "Name": "Splashtop Remote",
+      "References": [
+        "https://support-splashtopbusiness.splashtop.com/hc/en-us/articles/115001811966-What-are-the-Firewall-Exceptions-and-IP-addresses-of-Splashtop-servers-Services"
+      ]
+    },
+    "teamviewer": {
+      "Acknowledgement": [
+        {
+          "Handle": "in/theosyn",
+          "Person": "Théo Letailleur"
+        }
+      ],
+      "Artifacts": {
+        "Disk": [
+          {
+            "Description": "N/A",
+            "File": "C:\\Users\\<username>\\AppData\\Local\\Temp\\TeamViewer\\TV15Install.log",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "TeamViewer\\d\\d_Logfile\\.log",
+            "OS": "Windows",
+            "Type": "Regex"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files\\TeamViewer\\Connections_incoming.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files\\TeamViewer\\TVNetwork.log",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%LOCALAPPDATA%\\Temp\\TeamViewer\\TV15Install.log",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%APPDATA%\\\\TeamViewer\\\\TeamViewer\\d\\d_Logfile\\.log",
+            "OS": "Windows",
+            "Type": "Regex"
+          },
+          {
+            "Description": "N/A",
+            "File": "teamviewerqs.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "tv_w32.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "tv_w64.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "tv_x64.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "teamviewer.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "teamviewer_service.exe",
+            "OS": "Windows"
+          },
+          {
+            "Description": "SQlite 3 database storing cache about TeamViewer chat",
+            "File": "%LOCALAPPDATA%\\TeamViewer\\Database\\tvchatfilecache.db",
+            "OS": "Windows"
+          },
+          {
+            "Description": "SQlite 3 database storing TeamViewer print jobs",
+            "File": "%LOCALAPPDATA%\\TeamViewer\\RemotePrinting\\tvprint.db",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\TeamViewer.lnk",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Program Files*\\TeamViewer\\connections*.txt",
+            "OS": "Windows"
+          },
+          {
+            "Description": "N/A",
+            "File": "C:\\Users\\*\\AppData\\Roaming\\TeamViewer\\MRU\\RemoteSupport\\*tvc",
+            "OS": "Windows"
+          }
+        ],
+        "EventLog": [
+          {
+            "Description": "Service installation event as result of TeamViewer installation.",
+            "EventID": 7045,
+            "ImagePath": "\"C:\\\\Program Files\\\\TeamViewer\\\\TeamViewer_Service.exe\"",
+            "LogFile": "System.evtx",
+            "ProviderName": "Service Control Manager",
+            "ServiceName": "TeamViewer"
+          }
+        ],
+        "Network": [
+          {
+            "Description": "Known remote domains",
+            "Domains": [
+              "*.teamviewer.com"
+            ],
+            "Ports": []
+          },
+          {
+            "Description": "N/A",
+            "Domains": [
+              "router15.teamviewer.com"
+            ],
+            "Ports": [
+              443
+            ]
+          },
+          {
+            "Description": "N/A",
+            "Domains": [
+              "client.teamviewer.com"
+            ],
+            "Ports": [
+              443
+            ]
+          },
+          {
+            "Description": "N/A",
+            "Domains": [
+              "taf.teamviewer.com"
+            ],
+            "Ports": [
+              443
+            ]
+          }
+        ],
+        "Other": [
+          {
+            "Type": "Mutex",
+            "Value": "TeamViewer_LogMutex"
+          },
+          {
+            "Type": "Mutex",
+            "Value": "TeamViewerHooks_DynamicMemMutex"
+          },
+          {
+            "Type": "Mutex",
+            "Value": "TeamViewer3_Win32_Instance_Mutex"
+          }
+        ],
+        "Registry": [
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\TeamViewer\\*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\<SID>\\SOFTWARE\\TeamViewer\\*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SYSTEM\\CurrentControlSet\\Services\\TeamViewer\\*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\TeamViewer\\ConnectionHistory"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\TeamViewer\\*"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\MainWindowHandle"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\DesktopWallpaperSingleImage"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\DesktopWallpaperSingleImagePath"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\DesktopWallpaperSingleImagePosition"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\MinimizeToTray"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\MultiMedia\\AudioUserSelectedCapturingEndpoint"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\MultiMedia\\AudioSendingVolumeV2"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\MultiMedia\\AudioUserSelectedRenderingEndpoint"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKLM\\SOFTWARE\\TeamViewer\\ConnectionHistory"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\ClientWindow_Mode"
+          },
+          {
+            "Description": "N/A",
+            "Path": "HKU\\SID\\SOFTWARE\\TeamViewer\\ClientWindowPositions"
+          }
+        ]
+      },
+      "Author": "Nasreddine Bencherchali, Michael Haag",
+      "Category": "RMM",
+      "CodeSigning": {
+        "certificates": [
+          {
+            "certificate_thumbprint": "N/A",
+            "signer_name": "TeamViewer GmbH",
+            "tbs_sha1": "8A32858C446E0F681927B02BECA029F854B98D31",
+            "tbs_sha256": ""
+          },
+          {
+            "certificate_der_base64": "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",
+            "certificate_thumbprint": "777A41024CF413CCB49B3434565545C0D78D80E9",
+            "signer_name": "TeamViewer Germany GmbH",
+            "tbs_sha1": "",
+            "tbs_sha256": "290C3846B4E52E99DD2B7E5FA600BDB51972D7A3CFD37BA67AC1ED362CC1CA93"
+          },
+          {
+            "certificate_thumbprint": "N/A",
+            "signer_name": "TeamViewer Germany GmbH",
+            "tbs_sha1": "EA00EEBFABBB1D7DB243AFE1349D536A812B0EBF",
+            "tbs_sha256": ""
+          },
+          {
+            "certificate_der_base64": "MIIFODCCBCCgAwIBAgIQC0RlRsNlJb9fCE9ru7pwlzANBgkqhkiG9w0BAQUFADBvMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3d3cuZGlnaWNlcnQuY29tMS4wLAYDVQQDEyVEaWdpQ2VydCBBc3N1cmVkIElEIENvZGUgU2lnbmluZyBDQS0xMB4XDTE5MTIxOTAwMDAwMFoXDTIwMTIyMzEyMDAwMFowgYMxCzAJBgNVBAYTAkRFMRswGQYDVQQIDBJCYWRlbi1Xw7xydHRlbWJlcmcxEzARBgNVBAcMCkfDtnBwaW5nZW4xIDAeBgNVBAoTF1RlYW1WaWV3ZXIgR2VybWFueSBHbWJIMSAwHgYDVQQDExdUZWFtVmlld2VyIEdlcm1hbnkgR21iSDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMcqqJLw4L0qx5sjN0U+fU8WKvcmcaDU6x2B/x09HhGADDmKnQT6a2R5oILpyfP8txpNLh15CfLbqJzGpuwt3x70EfkwrzKOpMF9inF5d8NkBCrPmO/VufYkXFm7j2H36IcNby861sIkvpvuafXJfaesGACug9iHIFWSrKAh9HTLlu7cGogKdbcyEFxu6HD1WfGyItxoFMJwLlw+ONvmZjDIFwb73OSgDNLGXwahlso+dIwP4yaZDdIcNXjJyC8xB0i20rppLRBWssirx2Q3Ja8f09i8ZjG3YhCjjp75sefmiQuHP6omrf9UFvLEdkTIx/Mfh+h3Q6nqhXwC3Og4YtUCAwEAAaOCAbkwggG1MB8GA1UdIwQYMBaAFHtozimqwBe+SXrh5T/Wp/dFjzUyMB0GA1UdDgQWBBQemA9KE41CNOyylIvvnMNsgYdCDzAOBgNVHQ8BAf8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwMwbQYDVR0fBGYwZDAwoC6gLIYqaHR0cDovL2NybDMuZGlnaWNlcnQuY29tL2Fzc3VyZWQtY3MtZzEuY3JsMDCgLqAshipodHRwOi8vY3JsNC5kaWdpY2VydC5jb20vYXNzdXJlZC1jcy1nMS5jcmwwTAYDVR0gBEUwQzA3BglghkgBhv1sAwEwKjAoBggrBgEFBQcCARYcaHR0cHM6Ly93d3cuZGlnaWNlcnQuY29tL0NQUzAIBgZngQwBBAEwgYIGCCsGAQUFBwEBBHYwdDAkBggrBgEFBQcwAYYYaHR0cDovL29jc3AuZGlnaWNlcnQuY29tMEwGCCsGAQUFBzAChkBodHRwOi8vY2FjZXJ0cy5kaWdpY2VydC5jb20vRGlnaUNlcnRBc3N1cmVkSURDb2RlU2lnbmluZ0NBLTEuY3J0MAwGA1UdEwEB/wQCMAAwDQYJKoZIhvcNAQEFBQADggEBAJiUqjo3HgTXEslNHeWVo8FmL2NxojGVA1bV6QesGGtsvC/xR+rt00AncybotwYpLh2fJroBL+ou+1OM6L9ZSyttGT26PBEIijl8uXf0/Ve7LHrNGjhm5sCQQSjYpc9Af5qzEZzyiMAhbYBUvcQSHJbT4ljBnTPlIignpwF3A7AO8R1CU3nUuV20Q12pvlY3SY0ZROJKNhjWlzeistdvPrwywWwpS376fCJFFEtmkifiomeYqqP6I/TZw6T7upbstmSOFiO4GdPLiF81d5s3vkbdMjhdkrGM6YX//Ke1QUntO6JSBkM1d9G74b0BmI+rw2bAJkqshT7AWp1FtDXvkM0=",
+            "certificate_thumbprint": "05CDF79B0EFFFF361DAC0363ADAA75B066C49DE0",
+            "issuer": "CN=DigiCert Assured ID Code Signing CA-1",
+            "signer_name": "TeamViewer Germany GmbH",
+            "tbs_sha1": "EA00EEBFABBB1D7DB243AFE1349D536A812B0EBF",
+            "tbs_sha256": "DFD5337289D8F9FC748CCC9A7DC597EEEFEA7ABEA5AF736AFFD09CAC8145AADB",
+            "valid_from": "2019-12-19T00:00:00+00:00",
+            "valid_to": "2020-12-23T12:00:00+00:00"
+          },
+          {
+            "certificate_der_base64": "MIIFJzCCBA+gAwIBAgIQA0ceLIFxsWediYrBm9o3uzANBgkqhkiG9w0BAQUFADBvMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3d3cuZGlnaWNlcnQuY29tMS4wLAYDVQQDEyVEaWdpQ2VydCBBc3N1cmVkIElEIENvZGUgU2lnbmluZyBDQS0xMB4XDTE5MDIxMTAwMDAwMFoXDTE5MTIzMTEyMDAwMFowczELMAkGA1UEBhMCREUxGzAZBgNVBAgMEkJhZGVuLVfDvHJ0dGVtYmVyZzETMBEGA1UEBwwKR8O2cHBpbmdlbjEYMBYGA1UEChMPVGVhbVZpZXdlciBHbWJIMRgwFgYDVQQDEw9UZWFtVmlld2VyIEdtYkgwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDMsAyUaLQR03F43NaHWo/u7kk6EgFhWj4PdW/AapZjBt517W5jID9vknMInL0qzSrhUlE4gGuLvKehbq4xOhzzyF3jawPBHpHW8l15lzIY9aDZJkgE8uV0Q3d4zWBE0meWDmOuWem6P87yJmeHkFCjXENMUW2W250aNGJkZVj0bYriU9QOBm3mi5bvIk3pTTdtNFQYh7RXUKen/oVqDJoZAbCmjiAaQL5/QgV6+ydHV69kLRTrBaKh3cmzw0L+TWKCvYwyJbh2P89ARpRQfQu5Jo898BUwpAyatNjDxSgVzYHPUKt+y4obcTa2Zai4wnqWfpv4QBVNky9giqkqu2lVAgMBAAGjggG5MIIBtTAfBgNVHSMEGDAWgBR7aM4pqsAXvkl64eU/1qf3RY81MjAdBgNVHQ4EFgQUBabcs0VUnnel6U/ewh+SVWd44x4wDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoGCCsGAQUFBwMDMG0GA1UdHwRmMGQwMKAuoCyGKmh0dHA6Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9hc3N1cmVkLWNzLWcxLmNybDAwoC6gLIYqaHR0cDovL2NybDQuZGlnaWNlcnQuY29tL2Fzc3VyZWQtY3MtZzEuY3JsMEwGA1UdIARFMEMwNwYJYIZIAYb9bAMBMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8vd3d3LmRpZ2ljZXJ0LmNvbS9DUFMwCAYGZ4EMAQQBMIGCBggrBgEFBQcBAQR2MHQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmRpZ2ljZXJ0LmNvbTBMBggrBgEFBQcwAoZAaHR0cDovL2NhY2VydHMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0QXNzdXJlZElEQ29kZVNpZ25pbmdDQS0xLmNydDAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBBQUAA4IBAQB3u+UjW0mRt6JMEuFOmEH46nwYTx5FWnnnEg92qkDfw/fX1EAkcyfPjbwSAwg9V0It+DerJraqzMBHpCp7UZkWf9XLSikrg30OKnwGfS5xVLReK+RUmgfsVVmV2hwQcmFtEXUPcNcXJbJtd7QagyyrdXB5eKCnKlNvnTKB91TSBidOliTZlqixBs/SUu+ACzpugs06xsFUaGyY9YJVqbj4Y+4pVHO3i5hKEujTK2dbhiiKJDJdFmonx3FemtWMsnvhywpPv739NvcLy2+1kmPrY/RhKU0pfniXAXM725MbsDopGI906ZfU3V2x3EOpcrLVvbYIUA4+N2RURdV4erKR",
+            "certificate_thumbprint": "7709C8FE112562666C7AC973E43831BA9FADBB54",
+            "issuer": "CN=DigiCert Assured ID Code Signing CA-1",
+            "signer_name": "TeamViewer GmbH",
+            "tbs_sha1": "8A32858C446E0F681927B02BECA029F854B98D31",
+            "tbs_sha256": "454E97CEB89961E5C52E60CC9D4E231DE06BF61747113B90850819EE1EBE19E0",
+            "valid_from": "2019-02-11T00:00:00+00:00",
+            "valid_to": "2019-12-31T12:00:00+00:00"
+          }
+        ],
+        "company_names": [],
+        "search_names": [
+          "teamviewer_desktop.exe",
+          "teamviewer_service.exe"
+        ],
+        "signer_names": [
+          "TeamViewer Germany GmbH",
+          "TeamViewer GmbH"
+        ]
+      },
+      "Created": "2024-08-02",
+      "Description": "TeamViewer is a remote monitoring and management (RMM) tool.\n",
+      "Details": {
+        "Capabilities": [],
+        "Free": true,
+        "InstallationPaths": [
+          "C:\\Program Files\\TeamViewer\\",
+          "teamviewer_desktop.exe",
+          "teamviewer_service.exe",
+          "teamviewerhost"
+        ],
+        "PEMetadata": [
+          {
+            "Description": "",
+            "Filename": "TeamViewer.exe",
+            "OriginalFileName": "",
+            "Product": "TeamViewer"
+          }
+        ],
+        "Privileges": "user",
+        "SupportedOS": [
+          "Android",
+          "ChromeOS",
+          "IOS",
+          "Linux",
+          "Mac",
+          "Windows"
+        ],
+        "Verification": false,
+        "Vulnerabilities": [
+          "https://www.cvedetails.com/vulnerability-list/vendor_id-11100/product_id-19942/Teamviewer-Teamviewer.html"
+        ],
+        "Website": "https://www.teamviewer.com/en"
+      },
+      "Detections": [
+        {
+          "Description": "Detects potential registry activity of TeamViewer RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/teamviewer_registry_sigma.yml"
+        },
+        {
+          "Description": "Detects potential network activity of TeamViewer RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/teamviewer_network_sigma.yml"
+        },
+        {
+          "Description": "Detects potential files activity of TeamViewer RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/teamviewer_files_sigma.yml"
+        },
+        {
+          "Description": "Detects potential processes activity of TeamViewer RMM tool",
+          "Sigma": "https://github.com/magicsword-io/LOLRMM/blob/main/detections/sigma/teamviewer_processes_sigma.yml"
+        }
+      ],
+      "LastModified": "2025-12-14",
+      "Name": "TeamViewer",
+      "References": [
+        "https://community.teamviewer.com/English/kb/articles/4139-ports-used-by-teamviewer",
+        "https://arista.my.site.com/AristaCommunity/s/article/Security-Analysis-TeamViewer#",
+        "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-classic/troubleshooting/log-file-reading-incoming-connection/",
+        "https://www.synacktiv.com/publications/legitimate-rats-a-comprehensive-forensic-analysis-of-the-usual-suspects.html",
+        "https://github.com/Purp1eW0lf/Blue-Team-Notes"
+      ]
+    }
+  }
+}
