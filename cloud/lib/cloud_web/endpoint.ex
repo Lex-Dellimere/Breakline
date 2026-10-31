@@ -43,7 +43,10 @@ defmodule CloudWeb.Endpoint do
     cookie_key: "request_logger"
 
   plug Plug.RequestId
-  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+  # the request log line carries the path, and an msp request link's path is its token
+  # (threat model T6), so those requests are not logged here; the router still logs
+  # them with the token filtered (filter_parameters)
+  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint], log: {__MODULE__, :log_level, []}
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
@@ -54,4 +57,12 @@ defmodule CloudWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   plug CloudWeb.Router
+
+  @doc """
+  The level of the endpoint's request log lines for `conn`, or false for
+  none: `/request/<token>` paths are never logged, everything else at info.
+  """
+  @spec log_level(Plug.Conn.t()) :: Logger.level() | false
+  def log_level(%Plug.Conn{path_info: ["request" | _]}), do: false
+  def log_level(_conn), do: :info
 end
