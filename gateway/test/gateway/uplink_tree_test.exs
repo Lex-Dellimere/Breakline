@@ -3,6 +3,7 @@ defmodule Gateway.UplinkTreeTest do
   use ExUnit.Case, async: false
 
   import ExUnit.CaptureLog
+  import Slipstream.SocketTest
   import Gateway.TestSupport
 
   alias Gateway.Clock.Fake
@@ -56,62 +57,83 @@ defmodule Gateway.UplinkTreeTest do
     assert Uplink.status().running? == false
   end
 
-  test "an uplink crash loop never touches the firewall or the enforcer" do
+  test "an uplink crash loop cools off and comes back, never touching the rest" do
     uplink = [
       url: "wss://cloud.test/gateway/socket/websocket",
       certfile: "c.pem",
       keyfile: "c.key",
       cacertfile: "ca.pem",
-      test_mode?: true
+      test_mode?: true,
+      backoff_min_ms: 10,
+      backoff_max_ms: 40,
+      cool_off_ms: 300,
+      max_restarts: 3,
+      max_seconds: 60
     ]
 
     sup = start_tree(uplink: uplink)
     ids = sup |> Supervisor.which_children() |> Enum.map(&elem(&1, 0)) |> Enum.reverse()
     assert List.last(ids) == :uplink
-    assert Uplink.status().running?
+    assert %{running?: true, cool_offs: 0, cooling_off?: false} = Uplink.status()
 
     firewall = Process.whereis(Gateway.Firewall.Server)
     enforcer = Process.whereis(Enforcer)
+    subtree = Process.whereis(Gateway.UplinkSupervisor)
+    keeper = Process.whereis(Gateway.Uplink.Keeper)
 
-    # one crash: the uplink comes back
+    # one crash: the uplink's own supervisor restarts it at once
     first = Process.whereis(Uplink)
     Process.exit(first, :kill)
     assert eventually(fn -> (pid = Process.whereis(Uplink)) && pid != first end)
 
-    # a crash loop: the uplink subtree gives up and stays down
-    capture_log(fn ->
-      Enum.reduce_while(1..20, nil, fn _, previous ->
-        case eventually(fn -> next_uplink(sup, previous) end) do
-          :gone ->
-            {:halt, nil}
+    # a crash loop: the uplink supervisor gives up and the keeper cools off
+    log =
+      capture_log(fn ->
+        Enum.reduce_while(1..20, first, fn _, previous ->
+          case eventually(fn -> next_uplink(previous) end) do
+            :cooling_off ->
+              {:halt, nil}
 
-          pid ->
-            Process.exit(pid, :kill)
-            {:cont, pid}
-        end
+            pid ->
+              Process.exit(pid, :kill)
+              {:cont, pid}
+          end
+        end)
+
+        assert %{running?: false, cool_offs: 1, cooling_off?: true} = Uplink.status()
       end)
 
-      assert eventually(fn -> not subtree_alive?(sup) end)
-    end)
+    assert log =~ "uplink keeper: the uplink supervisor exited"
+    assert log =~ "cool-off 1, starting it again in 300 ms"
 
+    # nothing else moved
     assert Process.whereis(Gateway.Firewall.Server) == firewall
     assert Process.whereis(Enforcer) == enforcer
-    assert Process.alive?(sup)
+    assert Process.whereis(Gateway.UplinkSupervisor) == subtree
+    assert Process.whereis(Gateway.Uplink.Keeper) == keeper
     assert %{state: :locked} = Enforcer.status()
+
+    # after the cool-off the uplink is back, connects and joins again
+    assert eventually(fn -> Process.whereis(Uplink) end, 2000)
+    assert %{running?: true, cool_offs: 1, cooling_off?: false} = Uplink.status()
+
+    accept_connect(Uplink)
+    assert_join "gateway:test-site", %{"hello" => _}, {:ok, %{"heartbeat_ms" => 60_000}}
+    assert_push "gateway:test-site", "heartbeat", _
+    assert_push "gateway:test-site", "events", _
+    assert_push "gateway:test-site", "audit", _
+    assert %{joined?: true} = Uplink.status()
   end
 
-  # a restarted uplink (not the one just killed), or :gone once the subtree gave up
-  defp next_uplink(sup, previous) do
+  # a restarted uplink (not the one just killed), or :cooling_off once the keeper
+  # has given up on it for now
+  defp next_uplink(previous) do
     case Process.whereis(Uplink) do
-      pid when is_pid(pid) and pid != previous -> pid
-      _ -> if subtree_alive?(sup), do: nil, else: :gone
-    end
-  end
+      pid when is_pid(pid) and pid != previous ->
+        pid
 
-  defp subtree_alive?(sup) do
-    Enum.any?(Supervisor.which_children(sup), fn
-      {:uplink, pid, _, _} when is_pid(pid) -> true
-      _ -> false
-    end)
+      _ ->
+        if Gateway.Uplink.Keeper.info().cooling_off?, do: :cooling_off, else: nil
+    end
   end
 end

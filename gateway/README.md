@@ -14,11 +14,16 @@ MSP's RMM channel closed unless the client's signed policy says it is open right
 4. `Gateway.DNS.Supervisor`: the resolver. Resolved RMM ips go to the firewall, events
    go to `Gateway.Events`
 5. `Gateway.Dev.Inbox`: dev only, a polled directory of signed policies
-6. `:uplink`: `Gateway.Uplink`, only when `config :gateway, :uplink` is set
+6. `:uplink`: `Gateway.Uplink.Keeper`, which runs `Gateway.Uplink.Supervisor` with
+   `Gateway.Uplink` under it, only when `config :gateway, :uplink` is set
 
 A DNS crash never touches the firewall. When the firewall server restarts, the enforcer
-notices and applies the desired state again. The uplink subtree is temporary: should the
-uplink crash more than 10 times a minute, it stays down and the gateway keeps enforcing.
+notices and applies the desired state again. Should the uplink crash more than 10 times
+a minute, its supervisor gives up and the keeper starts it again after a cool-off
+(5 minutes, `cool_off_ms` in the uplink config). Each cool-off is logged at error level
+and counted in `Gateway.Uplink.status/0` (`cool_offs`). The keeper never crashes, so
+the crash loop never reaches the other subtrees, and the gateway keeps enforcing
+throughout.
 
 ## Uplink
 

@@ -12,17 +12,20 @@ defmodule Gateway.Application do
     4. dns - `Gateway.DNS`, whose resolved RMM addresses go to the firewall and whose
        events go to `Gateway.Events`
     5. inbox - `Gateway.Dev.Inbox`, only when `:inbox_dir` is configured (dev)
-    6. uplink - `Gateway.Uplink`, only when `config :gateway, :uplink` is set
+    6. uplink - `Gateway.Uplink.Keeper`, which runs `Gateway.Uplink.Supervisor` and
+       `Gateway.Uplink` under it, only when `config :gateway, :uplink` is set
 
   A crash in one subtree never restarts another: a DNS crash leaves the firewall
   server and its applied state alone, and a firewall restart is noticed by the
   enforcer, which applies the desired state again.
 
-  The uplink subtree is `:temporary` and restarts its child at most 10 times a
-  minute. Should the uplink keep crashing, its subtree gives up and stays down
-  (logged by the supervisor) instead of spending `Gateway.Supervisor`'s restart
-  intensity, so an uplink crash loop can never take the firewall or the enforcer
-  with it. The gateway keeps enforcing offline either way.
+  The uplink's own supervisor restarts it at most 10 times a minute. When the uplink
+  crashes more often, that supervisor gives up and the keeper starts it again after
+  a cool-off (5 minutes by default, `:cool_off_ms` in the uplink config). The keeper
+  traps the exit and never crashes itself, so an uplink crash loop never spends the
+  restart intensity of the subtrees above it and never touches the firewall or the
+  enforcer, and the uplink always comes back. The gateway keeps enforcing offline
+  either way.
 
   With `config :gateway, start_children: false` (the test config) the application
   starts an empty supervisor and tests start what they need, for example the whole
@@ -90,10 +93,15 @@ defmodule Gateway.Application do
         opts ->
           opts = Keyword.merge([site_id: Keyword.fetch!(env, :site_id), clock: clock], opts)
 
+          {keeper_opts, uplink_opts} =
+            Keyword.split(opts, [:cool_off_ms, :max_restarts, :max_seconds])
+
           [
-            :uplink
-            |> subtree([{Gateway.Uplink, opts}], :one_for_one, max_restarts: 10, max_seconds: 60)
-            |> Map.put(:restart, :temporary)
+            subtree(
+              :uplink,
+              [{Gateway.Uplink.Keeper, [uplink: uplink_opts] ++ keeper_opts}],
+              :one_for_one
+            )
           ]
       end
 
@@ -121,14 +129,13 @@ defmodule Gateway.Application do
     |> Gateway.Firewall.add_resolved()
   end
 
-  defp subtree(id, children, strategy, opts \\ []) do
+  defp subtree(id, children, strategy) do
     name = Module.concat(Gateway, Macro.camelize("#{id}_supervisor"))
-    opts = Keyword.merge([strategy: strategy, name: name], opts)
 
     %{
       id: id,
       type: :supervisor,
-      start: {Supervisor, :start_link, [children, opts]}
+      start: {Supervisor, :start_link, [children, [strategy: strategy, name: name]]}
     }
   end
 end

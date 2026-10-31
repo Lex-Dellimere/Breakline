@@ -87,7 +87,9 @@ defmodule Gateway.Uplink do
           audit_ack: {non_neg_integer(), String.t()} | nil,
           chain_id: String.t() | nil,
           attempt: non_neg_integer(),
-          last_error: term()
+          last_error: term(),
+          cool_offs: non_neg_integer(),
+          cooling_off?: boolean()
         }
 
   # every handle_info clause sits here, right after `use Slipstream`, whose own
@@ -150,10 +152,15 @@ defmodule Gateway.Uplink do
   `:last_heartbeat_at`, `:events_in_flight` (the size of the unacknowledged batch),
   `:audit_ack` (the cloud's last acknowledged `{seq, hash}`), and `:chain_id`,
   `:attempt`, `:last_error` and `:url`. When the uplink is not running, `:running?`
-  is false.
+  is false. `:cool_offs` and `:cooling_off?` come from `Gateway.Uplink.Keeper`: how
+  often a crash loop put the uplink in a cool-off, and whether it is in one now.
   """
   @spec status(GenServer.server()) :: status()
   def status(server \\ __MODULE__) do
+    server |> uplink_status() |> Map.merge(Gateway.Uplink.Keeper.info())
+  end
+
+  defp uplink_status(server) do
     GenServer.call(server, :status)
   catch
     :exit, _ ->
