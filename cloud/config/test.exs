@@ -3,6 +3,9 @@ import Config
 config :cloud, token_signing_secret: "8/Zz/W2sOMu8cB4c4G07qwVoMYdge9bV"
 config :bcrypt_elixir, log_rounds: 1
 
+# an in-memory key generated per test run, see test/support/signer_static.ex
+config :cloud, :signer, Cloud.Signer.Static
+
 config :ash,
   policies: [show_policy_breakdowns?: true],
   keyset_signing_secret: "f4+3P/mDK/Idz3edJRM4skrPQ38jTOwUoZJ6JY9usts",
