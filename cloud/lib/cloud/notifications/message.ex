@@ -57,7 +57,7 @@ defmodule Cloud.Notifications.Message do
 
   def build(%{type: :window_requested} = event) do
     %__MODULE__{
-      sentence: "MSP #{msp_name(event)} requested a window for #{site_name(event)}.",
+      sentence: "#{msp_name(event)} requested a window for #{site_name(event)}.",
       url: url("/requests"),
       link_label: "Review"
     }
@@ -209,7 +209,7 @@ defmodule Cloud.Notifications.Message do
 
   defp msp_name(%{msp_contact_id: id, tenant_id: tenant_id}) when is_binary(id) do
     case contact(id, tenant_id) do
-      nil -> "contact"
+      nil -> "Your MSP contact"
       name -> name
     end
   end
@@ -228,9 +228,9 @@ defmodule Cloud.Notifications.Message do
     end
   end
 
-  defp msp_name(%{msp_name: name}) when is_binary(name), do: plain(name, "contact")
-  defp msp_name(%{requested_by: name}) when is_binary(name), do: plain(name, "contact")
-  defp msp_name(_event), do: "contact"
+  defp msp_name(%{msp_name: name}) when is_binary(name), do: plain(name, "Your MSP contact")
+  defp msp_name(%{requested_by: name}) when is_binary(name), do: plain(name, "Your MSP contact")
+  defp msp_name(_event), do: "Your MSP contact"
 
   defp contact(id, tenant_id) do
     with {:ok, _} <- Ecto.UUID.cast(id),
@@ -240,7 +240,7 @@ defmodule Cloud.Notifications.Message do
              authorize?: false,
              query: [filter: [id: id]]
            ) do
-      plain(name, "contact")
+      plain(name, "Your MSP contact")
     else
       _ -> nil
     end

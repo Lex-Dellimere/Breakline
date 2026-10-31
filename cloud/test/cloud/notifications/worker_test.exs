@@ -104,7 +104,7 @@ defmodule Cloud.Notifications.WorkerTest do
       assert_received {:webhook, _, _, _, %{"text" => text}}
 
       assert text ==
-               "Breakline: MSP Acme requested a window for Parramatta clinic. Review: #{base()}/requests"
+               "Breakline: Acme requested a window for Parramatta clinic. Review: #{base()}/requests"
     end
   end
 
