@@ -1,0 +1,199 @@
+{
+  "comment": "Breakline curated RMM catalog. Domains sourced 'lolrmm:<slug>' come from lolrmm_snapshot.json (LOLRMM, Apache-2.0, see NOTICE); URL sources are vendor documentation. Ports are the tool's service ports and are meant to be combined with the tool's resolved IPs and CIDRs, never dropped on their own.",
+  "tools": {
+    "n_central": {
+      "name": "N-able N-central",
+      "vendor": "N-able",
+      "domains": [
+        {"pattern": "sis.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "update.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "releases.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "feeds.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "*.prd.cdo.system-monitor.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "eb.eu-west-1.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "eb.us-west-2.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "eb.ap-southeast-2.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "eb.eu-central-1.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.eu-west-1.amazonaws.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.us-west-2.amazonaws.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.eu-central-1.amazonaws.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.ap-southeast-2.amazonaws.com", "source": "lolrmm:n-able-n-central"}
+      ],
+      "ports": [
+        {"port": 80, "proto": "tcp", "source": "lolrmm:n-able-n-central"},
+        {"port": 443, "proto": "tcp", "source": "lolrmm:n-able-n-central"},
+        {"port": 8088, "proto": "tcp", "source": "lolrmm:n-able-n-central"},
+        {"port": 8443, "proto": "tcp", "source": "lolrmm:n-able-n-central"}
+      ],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "n-able", "product": "n-central"}
+      ],
+      "excluded": [
+        {"pattern": "*.n-able.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "covers every n-able service (n-sight, cove backup, edr, passportal, documentation, the customer portal) and would break the msp's unrelated n-able tools; the specific n-central hosts are listed instead and n-able-hosted n-central servers are added per site as hosts"},
+        {"pattern": "n-able.com", "source": "lolrmm:n-able-remote-access-software", "reason": "corporate website, not part of the remote-access channel"},
+        {"pattern": "*.system-monitor.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "shared by n-sight rmm and other n-able services; only the n-central agent hosts under prd.cdo and prd.davinci are kept"},
+        {"pattern": "system-monitor.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "remote.management", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "*.remote.management", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "*.logicnow.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "systemmonitor.us", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "*.systemmonitor.us", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "systemmonitor.eu.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "*.systemmonitor.eu.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "systemmonitor.co.uk", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "*.systemmonitor.co.uk", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "systemmonitor.us.cdn.cloudflare.net", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "n-sight rmm (advanced monitoring agent), a separate product not in the catalog"},
+        {"pattern": "cloudbackup.management", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "cove data protection (backup), not remote access; blocking it would stop the client's backups"},
+        {"pattern": "*.cloudbackup.management", "source": "lolrmm:n-able-advanced-monitoring-agent", "reason": "cove data protection (backup), not remote access; blocking it would stop the client's backups"}
+      ]
+    },
+    "take_control": {
+      "name": "N-able Take Control",
+      "vendor": "N-able",
+      "domains": [
+        {"pattern": "beanywhere.com", "source": "lolrmm:beanywhere"},
+        {"pattern": "*.beanywhere.com", "source": "lolrmm:n-able-advanced-monitoring-agent"},
+        {"pattern": "*.swi-tc.com", "source": "lolrmm:n-able-advanced-monitoring-agent"},
+        {"pattern": "swi-rc.cdn-sw.net", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "comserver.global.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "comserver.us1.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "comserver.us2.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "comserver.eu1.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
+        {"pattern": "*.mspa.n-able.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"},
+        {"pattern": "*.swi-rc.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"}
+      ],
+      "ports": [
+        {"port": 443, "proto": "tcp", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"},
+        {"port": 3377, "proto": "tcp", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"}
+      ],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "n-able", "product": "take control"},
+        {"vendor": "n-able", "product": "take control agent"}
+      ],
+      "excluded": []
+    },
+    "screenconnect": {
+      "name": "ConnectWise ScreenConnect",
+      "vendor": "ConnectWise",
+      "domains": [
+        {"pattern": "control.connectwise.com", "source": "lolrmm:screenconnect"},
+        {"pattern": "*.screenconnect.com", "source": "lolrmm:screenconnect"},
+        {"pattern": "instance-*-relay.screenconnect.com", "source": "lolrmm:screenconnect"},
+        {"pattern": "live.screenconnect.com", "source": "lolrmm:connectwise-control"}
+      ],
+      "ports": [
+        {"port": 443, "proto": "tcp", "source": "lolrmm:screenconnect"},
+        {"port": 8041, "proto": "tcp", "source": "lolrmm:screenconnect"}
+      ],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "connectwise", "product": "screenconnect"},
+        {"vendor": "connectwise", "product": "control"}
+      ],
+      "excluded": [
+        {"pattern": "*.connectwise.com", "source": "lolrmm:screenconnect", "reason": "parent-company wildcard that also covers connectwise psa (manage), automate, the home portal and university, so it would block the msp's unrelated connectwise tools; control.connectwise.com is kept"}
+      ]
+    },
+    "ninjaone": {
+      "name": "NinjaOne",
+      "vendor": "NinjaOne",
+      "domains": [
+        {"pattern": "*.ninjarmm.com", "source": "lolrmm:ninjarmm"},
+        {"pattern": "*.ninjaone.com", "source": "lolrmm:ninjarmm"},
+        {"pattern": "resources.ninjarmm.com", "source": "lolrmm:ninjarmm"},
+        {"pattern": "ninjaone.com", "source": "lolrmm:ninjarmm"},
+        {"pattern": "ninjarmm.net", "source": "lolrmm:ninjarmm"},
+        {"pattern": "*.ninjarmm.net", "source": "lolrmm:ninjarmm"},
+        {"pattern": "rmmservice.eu", "source": "lolrmm:ninjarmm"},
+        {"pattern": "*.rmmservice.eu", "source": "lolrmm:ninjarmm"},
+        {"pattern": "rmmservice.com.au", "source": "lolrmm:ninjarmm"},
+        {"pattern": "*.rmmservice.com.au", "source": "lolrmm:ninjarmm"},
+        {"pattern": "rmmservice.ca", "source": "lolrmm:ninjarmm"},
+        {"pattern": "*.rmmservice.ca", "source": "lolrmm:ninjarmm"},
+        {"pattern": "ninja-backup.com", "source": "lolrmm:ninjarmm"},
+        {"pattern": "*.ninja-backup.com", "source": "lolrmm:ninjarmm"}
+      ],
+      "ports": [],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "ninjaone", "product": "*"},
+        {"vendor": "ninjarmm", "product": "*"}
+      ],
+      "excluded": []
+    },
+    "datto_rmm": {
+      "name": "Datto RMM",
+      "vendor": "Datto",
+      "domains": [
+        {"pattern": "*.rmm.datto.com", "source": "lolrmm:centrastage-now-datto"},
+        {"pattern": "cc.centrastage.net", "source": "lolrmm:centrastage-now-datto"},
+        {"pattern": "*.cc.centrastage.net", "source": "lolrmm:centrastage-now-datto"}
+      ],
+      "ports": [],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "datto", "product": "datto rmm"},
+        {"vendor": "datto", "product": "rmm"},
+        {"vendor": "kaseya", "product": "datto rmm"}
+      ],
+      "excluded": []
+    },
+    "anydesk": {
+      "name": "AnyDesk",
+      "vendor": "AnyDesk",
+      "domains": [
+        {"pattern": "boot.net.anydesk.com", "source": "lolrmm:anydesk"},
+        {"pattern": "relay-*.net.anydesk.com", "source": "lolrmm:anydesk"},
+        {"pattern": "*.net.anydesk.com", "source": "lolrmm:anydesk"}
+      ],
+      "ports": [
+        {"port": 80, "proto": "tcp", "source": "lolrmm:anydesk"},
+        {"port": 443, "proto": "tcp", "source": "lolrmm:anydesk"},
+        {"port": 6568, "proto": "tcp", "source": "lolrmm:anydesk"},
+        {"port": 7070, "proto": "tcp", "source": "lolrmm:anydesk"}
+      ],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "anydesk", "product": "*"}
+      ],
+      "excluded": []
+    },
+    "teamviewer": {
+      "name": "TeamViewer",
+      "vendor": "TeamViewer",
+      "domains": [
+        {"pattern": "*.teamviewer.com", "source": "lolrmm:teamviewer"},
+        {"pattern": "router15.teamviewer.com", "source": "lolrmm:teamviewer"},
+        {"pattern": "client.teamviewer.com", "source": "lolrmm:teamviewer"},
+        {"pattern": "taf.teamviewer.com", "source": "lolrmm:teamviewer"}
+      ],
+      "ports": [
+        {"port": 443, "proto": "tcp", "source": "lolrmm:teamviewer"}
+      ],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "teamviewer", "product": "*"}
+      ],
+      "excluded": []
+    },
+    "splashtop": {
+      "name": "Splashtop",
+      "vendor": "Splashtop",
+      "domains": [
+        {"pattern": "*.splashtop.com", "source": "lolrmm:splashtop"},
+        {"pattern": "splashtop.com", "source": "lolrmm:splashtop-remote"},
+        {"pattern": "*.api.splashtop.com", "source": "lolrmm:splashtop-remote"},
+        {"pattern": "*.relay.splashtop.com", "source": "lolrmm:splashtop-remote"},
+        {"pattern": "*.api.splashtop.eu", "source": "lolrmm:splashtop-remote"}
+      ],
+      "ports": [],
+      "cidrs": [],
+      "kev_keys": [
+        {"vendor": "splashtop", "product": "*"}
+      ],
+      "excluded": []
+    }
+  }
+}
