@@ -1,0 +1,21 @@
+# secrets and dev keys, generated locally, never committed
+.env
+.env.*
+*.pem
+*.key
+*.p12
+**/priv/keys/
+
+# elixir build output (each app also has its own .gitignore)
+_build/
+deps/
+*.ez
+erl_crash.dump
+
+# node
+node_modules/
+
+# editors and os
+.elixir_ls/
+.lexical/
+.DS_Store
