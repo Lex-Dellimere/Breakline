@@ -354,3 +354,61 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   phase 4 adds passkey approval (T5). The panel says so.
 - **Demo password:** `mix cloud.dev.demo_password` sets the seeded demo user's password from
   `DEMO_PASSWORD` (dev only).
+
+## 2026-11-01 — phase 4 (approvals, advisories, notifications)
+
+### D28. Per-action passkey step-up
+- **What a step-up is:** a `Cloud.Accounts.StepUp` row bound to the user, tenant, purpose, subject and a sha256 of the canonical action parameters. It lives 2 minutes, is single use, and is dead after one failed verification.
+- **Verification:** a WebAuthn assertion via Wax: user verification required, origin and rp_id checked, sign count must move forward.
+- **Enforcement:** `RequireStepUp` runs inside the action's transaction. It applies to `Window :approve`, `:create_approved` and `:open_now`, `BreakGlass :create`, `AdvisoryLock :lift`, `Access.unlock` and passkey removal.
+- **Locking** never needs a step-up.
+- **Why not a session flag:** we use this instead of the strategy's session-wide "recently verified" flag, because that flag would approve any action.
+- **Unlock path:** unlock consumes one step-up and hands it to each lock it lifts. The receiving check re-reads the row and requires it to be verified, unfailed and consumed within the lifetime; a struct passed in context is never trusted.
+- **Registration:** passkeys are registered through our own Wax ceremony. The strategy's add-credential routes are disabled, and adding a second passkey needs a step-up from an existing one.
+- **TOTP:** a sign-in second factor only, rate limited and replay protected; it never approves. Recovery codes and a QR code are still missing (no eqrcode dependency).
+- **Sessions:** only the allowlisted auth flows create one, and password reset or confirm never skips TOTP.
+
+### D29. Per-tenant cloud audit chain
+- **Mechanics:** `Cloud.Audit` appends a `Breakline.AuditLog` record in the same transaction as each security-relevant action, serialised by locking a per-tenant head row. `verify/1` checks the chain against that head.
+- **Recorded actions:** window decisions, open, lock and unlock, advisory locks, break-glass, publishes, passkeys, TOTP, step-ups, request links and notification channels.
+- **Limit:** the head is in the same database (T9).
+
+### D30. Advisories
+- **Polling:**
+  - ash_oban scheduled actions poll KEV every 30 minutes and the ACSC alerts and advisories feeds at :05/:35 and :10/:40, so KEV runs first.
+  - One `advisories` queue with concurrency 1. No Oban Pro.
+  - Conditional GETs (304 verified live).
+- **Baseline:** the first successful fetch of each feed records every entry and acts on nothing (verified: 1766 KEV entries, no locks).
+- **KEV matches:** `auto_lock` tenants get an advisory lock (source `kev:<CVE>`, no expiry; an admin lifts it with a step-up), and `ask` tenants get a pending site advisory.
+- **ACSC matches:** CVE-via-KEV or whole-word product name, always pending. This resolves the parked "auto-lock or ask" decision as **ask**.
+- **Parsing:** ACSC is parsed with `:xmerl_sax_parser` with entities disallowed, and deduplicated by title slug.
+- **Confirming:** an approver or admin confirms or dismisses a pending advisory. Closing access needs no step-up.
+
+### D31. Notifications
+- **Channels:** Slack, Teams (Workflows webhooks only, since O365 connectors were retired in May 2026), email, and SMS through a dev adapter (provider still to choose).
+- **Targets:**
+  - Encrypted at rest with AES-256-GCM.
+  - The UI shows only the webhook host.
+  - Allowed hosts are exact: `hooks.slack.com/services/…` and `*.environment.api.powerplatform.com/powerautomate/automations/direct/…`.
+- **Messages:** one line plus a link to a page (`/advisories`, `/requests`, `/sites/:id`). Never a button, action or token. User-supplied names are reduced to plain text.
+- **Fallback:** a tenant with no email channel emails its admins and approvers.
+- **Delivery:** an Oban job per channel, 5 attempts with backoff, and a 4xx other than 408 or 429 is permanent.
+- **Dispatcher:** a single-node subscriber. With several nodes, move to an outbox (enqueue in the producing transaction).
+
+### D32. MSP request links and break-glass
+- **Request links:**
+  - A request link is an Ash actor whose only rights are `Window :request` and reading its own windows.
+  - The token is 32 random bytes; only its sha256 is stored. Links are emailed, last 14 days and can be revoked.
+  - Every bad token gets one generic invalid page.
+- **Request caps** (in the resource, under a row lock):
+  - at most 3 pending and 10 per 24 h per link;
+  - at most 12 h long, start no more than 5 min in the past;
+  - 30 token lookups per ip per 10 min.
+- **Approving** a request needs a step-up. Rejecting needs none.
+- **Break-glass** is capped at 4 hours in the resource and needs a step-up. Revoking needs none.
+- **Known residual:** the token sits in the URL, so it reaches browser history and the request log line.
+
+### D33. Landing page animation (exception to D4)
+- **What:** the landing page hero has one decorative `<canvas data-crawl aria-hidden=true>` animated by `assets/js/landing_crawl.js`, imported from app.js. It isn't a LiveView hook because `/` is a controller page.
+- **Constraints:** non-interactive, landing page only, theme colours, a still frame under `prefers-reduced-motion`, and paused when hidden or off-screen. All text, buttons and layout stay mishka components.
+- **Why:** user request (roadmap idea 4.2).

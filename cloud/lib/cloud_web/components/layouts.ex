@@ -37,60 +37,70 @@ defmodule CloudWeb.Layouts do
   def app(assigns) do
     ~H"""
     <header class="border-b border-zinc-200 dark:border-zinc-800">
-      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <.link href={~p"/"} class="flex items-center gap-2 text-base font-semibold">
+      <%!-- below lg the page links get their own row that scrolls sideways, so the
+           header never pushes the page wider than the screen --%>
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
+        <.link href={~p"/"} class="flex shrink-0 items-center gap-2 text-base font-semibold">
           <.icon name="hero-shield-check" class="size-6 text-blue-600 dark:text-blue-400" />
           <span>Breakline</span>
         </.link>
 
-        <nav class="flex items-center gap-2">
+        <nav
+          :if={@current_user}
+          id="main-nav"
+          aria-label="Main"
+          class="order-last -mx-1 flex w-full items-center gap-1 overflow-x-auto whitespace-nowrap lg:order-none lg:mx-0 lg:w-auto"
+        >
+          <.button_link
+            id="nav-sites"
+            navigate={~p"/sites"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Sites
+          </.button_link>
+          <.button_link
+            id="nav-requests"
+            navigate={~p"/requests"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Requests
+          </.button_link>
+          <.button_link
+            id="nav-advisories"
+            navigate={~p"/advisories"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Advisories
+          </.button_link>
+          <.button_link
+            id="nav-notifications"
+            navigate={~p"/settings/notifications"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Notifications
+          </.button_link>
+          <.button_link
+            id="nav-security"
+            navigate={~p"/account/security"}
+            variant="transparent"
+            color="natural"
+            size="small"
+          >
+            Security
+          </.button_link>
+        </nav>
+
+        <div class="ml-auto flex shrink-0 items-center gap-2">
           <%= if @current_user do %>
-            <.button_link
-              id="nav-sites"
-              navigate={~p"/sites"}
-              variant="transparent"
-              color="natural"
-              size="small"
-            >
-              Sites
-            </.button_link>
-            <.button_link
-              id="nav-requests"
-              navigate={~p"/requests"}
-              variant="transparent"
-              color="natural"
-              size="small"
-            >
-              Requests
-            </.button_link>
-            <.button_link
-              id="nav-advisories"
-              navigate={~p"/advisories"}
-              variant="transparent"
-              color="natural"
-              size="small"
-            >
-              Advisories
-            </.button_link>
-            <.button_link
-              id="nav-notifications"
-              navigate={~p"/settings/notifications"}
-              variant="transparent"
-              color="natural"
-              size="small"
-            >
-              Notifications
-            </.button_link>
-            <.button_link
-              id="nav-security"
-              navigate={~p"/account/security"}
-              variant="transparent"
-              color="natural"
-              size="small"
-            >
-              Security
-            </.button_link>
-            <span class="hidden text-sm text-zinc-600 sm:inline dark:text-zinc-400">
+            <span class="hidden text-sm text-zinc-600 xl:inline dark:text-zinc-400">
               {@current_user.email}
             </span>
             <.button_link href={~p"/sign-out"} variant="bordered" color="natural" size="small">
@@ -105,7 +115,7 @@ defmodule CloudWeb.Layouts do
             </.button_link>
           <% end %>
           <.theme_toggle />
-        </nav>
+        </div>
       </div>
     </header>
 
