@@ -122,7 +122,7 @@ defmodule CloudWeb.Layouts do
 
         <div class="ml-auto flex shrink-0 items-center gap-2">
           <%= if @current_user do %>
-            <span class="hidden text-sm text-zinc-600 xl:inline dark:text-zinc-400">
+            <span class="hidden text-sm text-zinc-600 2xl:inline dark:text-zinc-400">
               {@current_user.email}
             </span>
             <.button_link href={~p"/sign-out"} variant="bordered" color="natural" size="small">
