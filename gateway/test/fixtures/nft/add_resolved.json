@@ -1,0 +1,50 @@
+{
+  "nftables": [
+    {"add": {"table": {"family": "inet", "name": "breakline"}}},
+    {
+      "add": {
+        "set": {
+          "family": "inet",
+          "flags": ["timeout"],
+          "name": "rmm4",
+          "table": "breakline",
+          "type": "ipv4_addr"
+        }
+      }
+    },
+    {
+      "add": {
+        "set": {
+          "family": "inet",
+          "flags": ["timeout"],
+          "name": "rmm6",
+          "table": "breakline",
+          "type": "ipv6_addr"
+        }
+      }
+    },
+    {
+      "add": {
+        "element": {
+          "elem": [
+            {"elem": {"timeout": 3600, "val": "203.0.113.10"}},
+            {"elem": {"timeout": 7200, "val": "203.0.113.11"}}
+          ],
+          "family": "inet",
+          "name": "rmm4",
+          "table": "breakline"
+        }
+      }
+    },
+    {
+      "add": {
+        "element": {
+          "elem": [{"elem": {"timeout": 86400, "val": "2001:db8::10"}}],
+          "family": "inet",
+          "name": "rmm6",
+          "table": "breakline"
+        }
+      }
+    }
+  ]
+}
