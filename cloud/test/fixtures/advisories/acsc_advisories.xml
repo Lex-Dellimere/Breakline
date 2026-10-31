@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- trimmed from https://www.cyber.gov.au/rss/advisories as fetched on 2026-10-31 (ACSC, CC BY 4.0) -->
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0" xml:base="https://www.cyber.gov.au/">
+  <channel>
+    <title>ASD's ACSC - Advisories RSS</title>
+    <link>https://www.cyber.gov.au/</link>
+    <description/>
+    <language>en</language>
+
+    <item>
+  <title>Digital camouflage: crypters make malware undetectable</title>
+  <link>https://www.cyber.gov.au/advisory/digital-camouflage-crypters-make-malware-undetectable</link>
+  <description>Cybercriminals are increasingly using crypters to disguise malware and make it harder for antivirus software to detect.</description>
+  <pubDate>Tue, 08 Sep 2026 21:27:55 +1000</pubDate>
+    <dc:creator>Australian Cyber Security Centre (ACSC)</dc:creator>
+    <guid isPermaLink="true">https://www.cyber.gov.au/advisory/digital-camouflage-crypters-make-malware-undetectable</guid>
+    </item>
+<item>
+  <title>Russian state-supported cyber actors conduct phishing campaign targeting users of Zimbra Collaboration Suite</title>
+  <link>https://www.cyber.gov.au/advisory/russian-state-supported-cyber-actors-conduct-phishing-campaign-targeting-users-of-zimbra-collaboration-suite</link>
+  <description>Protect your organisation from phishing attacks by Russian state-sponsored cyber actors targeting Zimbra Collaboration Suite users.</description>
+  <pubDate>Tue, 08 Sep 2026 13:34:40 +1000</pubDate>
+    <dc:creator>Australian Cyber Security Centre (ACSC)</dc:creator>
+    <guid isPermaLink="true">https://www.cyber.gov.au/advisory/russian-state-supported-cyber-actors-conduct-phishing-campaign-targeting-users-of-zimbra-collaboration-suite</guid>
+    </item>
+
+  </channel>
+</rss>

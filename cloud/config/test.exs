@@ -56,3 +56,7 @@ config :phoenix,
 
 # jobs are only inserted, never run, unless a test drains or performs them (Oban.Testing)
 config :cloud, Oban, testing: :manual
+
+# advisory feed requests go to Req.Test stubs, see test/support/advisory_feeds.ex
+config :cloud, Cloud.Advisories.HTTP,
+  req_options: [plug: {Req.Test, Cloud.Advisories.HTTP}, retry: false]

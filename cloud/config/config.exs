@@ -64,7 +64,7 @@ config :spark,
 config :cloud,
   ecto_repos: [Cloud.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways]
+  ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways, Cloud.Advisories]
 
 # background jobs (oban, without oban pro). ash_oban adds the cron entries of the
 # resources' scheduled actions to the crontab at startup, see Cloud.Advisories.Feed.
