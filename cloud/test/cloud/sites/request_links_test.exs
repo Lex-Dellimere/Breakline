@@ -409,7 +409,17 @@ defmodule Cloud.Sites.RequestLinksTest do
                         starts_at: ^starts_at,
                         site_name: "Parramatta clinic",
                         time_zone: "Australia/Sydney"
-                      }}
+                      }} = message
+
+      # the notifications dispatcher reads the ids and the msp name from it
+      assert {:ok,
+              %{
+                type: :window_requested,
+                site_id: ^site_id,
+                window_id: ^window_id,
+                msp_contact_id: ^contact_id,
+                msp_name: ^contact_name
+              }} = Cloud.Notifications.Event.from_message(message)
 
       approve!(window, ctx.approver)
       approver_email = to_string(ctx.approver.email)
