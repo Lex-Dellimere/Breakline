@@ -64,6 +64,15 @@ defmodule CloudWeb.Layouts do
               Advisories
             </.button_link>
             <.button_link
+              id="nav-notifications"
+              navigate={~p"/settings/notifications"}
+              variant="transparent"
+              color="natural"
+              size="small"
+            >
+              Notifications
+            </.button_link>
+            <.button_link
               id="nav-security"
               navigate={~p"/account/security"}
               variant="transparent"

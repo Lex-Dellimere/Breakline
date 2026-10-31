@@ -117,7 +117,7 @@ defmodule Cloud.Notifications.Channel do
       allow_nil? false
       public? true
       default Cloud.Notifications.Event.types()
-      constraints items: [one_of: Cloud.Notifications.Event.types()]
+      constraints items: [one_of: Cloud.Notifications.Event.types()], min_length: 1
     end
 
     timestamps()

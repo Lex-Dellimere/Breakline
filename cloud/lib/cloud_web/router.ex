@@ -40,6 +40,7 @@ defmodule CloudWeb.Router do
       live "/sites/:id", SitesLive.Show, :show
       live "/advisories", AdvisoriesLive.Index, :index
       live "/account/security", AccountLive.Security, :show
+      live "/settings/notifications", SettingsLive.Notifications, :index
     end
   end
 
@@ -104,6 +105,8 @@ defmodule CloudWeb.Router do
 
       live_dashboard "/dashboard", metrics: CloudWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+      # what the dev sms adapter would have sent, next to the mailbox
+      live "/sms", CloudWeb.DevLive.Sms, :index
     end
   end
 
