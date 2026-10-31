@@ -170,7 +170,10 @@
         {"pattern": "taf.teamviewer.com", "source": "lolrmm:teamviewer"}
       ],
       "ports": [
-        {"port": 443, "proto": "tcp", "source": "lolrmm:teamviewer"}
+        {"port": 443, "proto": "tcp", "source": "lolrmm:teamviewer"},
+        {"port": 5938, "proto": "tcp", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"},
+        {"port": 5938, "proto": "udp", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"},
+        {"port": 80, "proto": "tcp", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"}
       ],
       "cidrs": [],
       "kev_keys": [
