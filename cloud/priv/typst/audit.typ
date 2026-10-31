@@ -101,7 +101,6 @@
   stroke: 0.6pt + rule,
   {
     text(weight: 700)[Scope. ]
-    [Verification covers each whole chain, from its first record to its head; the records listed below cover only the period. ]
     data.coverage
   },
 )
