@@ -2,6 +2,9 @@ defmodule CloudWeb.Layouts do
   @moduledoc """
   This module holds layouts and related functionality
   used by your application.
+
+  Everything here is built from mishka chelekom components
+  (imported through `CloudWeb.Components.MishkaComponents`) and plain tailwind.
   """
   use CloudWeb, :html
 
@@ -12,15 +15,11 @@ defmodule CloudWeb.Layouts do
   embed_templates "layouts/*"
 
   @doc """
-  Renders your app layout.
-
-  This function is typically invoked from every template,
-  and it often contains your application menu, sidebar,
-  or similar.
+  Renders the app layout: header with navigation, main content and the flash group.
 
   ## Examples
 
-      <Layouts.app flash={@flash}>
+      <Layouts.app flash={@flash} current_user={@current_user}>
         <h1>Content</h1>
       </Layouts.app>
 
@@ -31,39 +30,42 @@ defmodule CloudWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
 
+  attr :current_user, :map, default: nil, doc: "the signed in user, if any"
+
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://phoenix.hexdocs.pm/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
-          </li>
-        </ul>
+    <header class="border-b border-zinc-200 dark:border-zinc-800">
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <.link href={~p"/"} class="flex items-center gap-2 text-base font-semibold">
+          <.icon name="hero-shield-check" class="size-6 text-blue-600 dark:text-blue-400" />
+          <span>Breakline</span>
+        </.link>
+
+        <nav class="flex items-center gap-2">
+          <%= if @current_user do %>
+            <span class="hidden text-sm text-zinc-600 sm:inline dark:text-zinc-400">
+              {@current_user.email}
+            </span>
+            <.button_link href={~p"/sign-out"} variant="bordered" color="natural" size="small">
+              Sign out
+            </.button_link>
+          <% else %>
+            <.button_link href={~p"/sign-in"} variant="transparent" color="natural" size="small">
+              Sign in
+            </.button_link>
+            <.button_link href={~p"/register"} variant="default" color="primary" size="small">
+              Register
+            </.button_link>
+          <% end %>
+          <.theme_toggle />
+        </nav>
       </div>
     </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <main class="px-4 py-12 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-5xl space-y-4">
         {render_slot(@inner_block)}
       </div>
     </main>
@@ -73,86 +75,77 @@ defmodule CloudWeb.Layouts do
   end
 
   @doc """
-  Shows the flash group with standard titles and content.
+  Shows the flash group (info, error and connection-lost flashes) using mishka's alert flashes.
 
   ## Examples
 
-      <.flash_group flash={@flash} />
+      <Layouts.flash_group flash={@flash} />
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
   attr :id, :string, default: "flash-group", doc: "the optional id of flash container"
 
   def flash_group(assigns) do
     ~H"""
-    <div id={@id} aria-live="polite">
-      <.flash kind={:info} flash={@flash} />
-      <.flash kind={:error} flash={@flash} />
-
-      <.flash
-        id="client-error"
-        kind={:error}
-        title={gettext("We can't find the internet")}
-        phx-disconnected={
-          show(".phx-client-error #client-error")
-          |> JS.remove_attribute("hidden", to: ".phx-client-error #client-error")
-        }
-        phx-connected={hide("#client-error") |> JS.set_attribute({"hidden", ""})}
-        hidden
-      >
-        {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
-      </.flash>
-
-      <.flash
-        id="server-error"
-        kind={:error}
-        title={gettext("Something went wrong!")}
-        phx-disconnected={
-          show(".phx-server-error #server-error")
-          |> JS.remove_attribute("hidden", to: ".phx-server-error #server-error")
-        }
-        phx-connected={hide("#server-error") |> JS.set_attribute({"hidden", ""})}
-        hidden
-      >
-        {gettext("Attempting to reconnect")}
-        <.icon name="hero-arrow-path" class="ml-1 size-3 motion-safe:animate-spin" />
-      </.flash>
-    </div>
+    <CloudWeb.Components.Alert.flash_group id={@id} flash={@flash} />
     """
   end
 
   @doc """
-  Provides dark vs light theme toggle based on themes defined in app.css.
+  Renders a narrow, centered layout for the auth pages.
+  """
+  attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :current_user, :map, default: nil, doc: "the signed in user, if any"
+  attr :title, :string, required: true
+  attr :subtitle, :string, default: nil
+  slot :inner_block, required: true
+  slot :footer
+
+  def auth(assigns) do
+    ~H"""
+    <.app flash={@flash} current_user={@current_user}>
+      <div class="mx-auto w-full max-w-md">
+        <.card variant="bordered" color="natural" rounded="large" padding="large" space="medium">
+          <.card_title title={@title} size="large" font_weight="font-semibold" />
+          <.card_content>
+            <p :if={@subtitle} class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+              {@subtitle}
+            </p>
+            {render_slot(@inner_block)}
+          </.card_content>
+        </.card>
+        <div :if={@footer != []} class="mt-4 space-y-1 text-center text-sm">
+          {render_slot(@footer)}
+        </div>
+      </div>
+    </.app>
+    """
+  end
+
+  @doc """
+  Provides a system / light / dark theme toggle.
 
   See <head> in root.html.heex which applies the theme before page load.
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 [[data-theme-source=system]_&]:!left-0 transition-[left]" />
+    <div class="relative flex flex-row items-center rounded-full border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+      <div class="absolute left-0 h-full w-1/3 rounded-full border border-zinc-300 bg-white transition-[left] dark:border-zinc-600 dark:bg-zinc-600 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 [[data-theme-source=system]_&]:!left-0" />
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        :for={
+          {theme, icon} <- [
+            {"system", "hero-computer-desktop-micro"},
+            {"light", "hero-sun-micro"},
+            {"dark", "hero-moon-micro"}
+          ]
+        }
+        type="button"
+        class="relative flex w-1/3 cursor-pointer p-2"
         phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="system"
+        data-phx-theme={theme}
+        aria-label={"#{theme} theme"}
       >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="light"
-      >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="dark"
-      >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
+        <.icon name={icon} class="size-4 opacity-75 hover:opacity-100" />
       </button>
     </div>
     """
