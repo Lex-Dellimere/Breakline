@@ -2,14 +2,16 @@ defmodule CloudWeb.AuditLive.Index do
   @moduledoc """
   The audit page: pick a tenant, a period (the last 7 or 30 days, or custom
   dates) and sites, see whether each hash chain verifies, preview the most
-  recent entries of the period, and download the export as json
-  (`CloudWeb.AuditExportController`).
+  recent entries of the period, and download the export as json or as a PDF
+  report (`CloudWeb.AuditExportController`).
 
   The preview is `Cloud.AuditExport.build/2` for the same period and sites
   as the download link, read as the user, and is not recorded; only a
   download is. The verification sentences come from
-  `Cloud.AuditExport.to_render_model/1`, the same model a PDF report will be
-  rendered from.
+  `Cloud.AuditExport.to_render_model/1`, the same model the PDF report is
+  rendered from. A period with more records than one PDF holds
+  (`Cloud.AuditExport.PDF.max_records/0`) shows the PDF button disabled with
+  a note to pick a shorter period.
 
   The choices live in the url (`?tenant=&preset=&from=&to=&site_ids=`), so a
   view can be shared and reloaded. Admins and approvers of a tenant may use
@@ -19,6 +21,7 @@ defmodule CloudWeb.AuditLive.Index do
   use CloudWeb, :live_view
 
   alias Cloud.AuditExport
+  alias Cloud.AuditExport.PDF
   alias CloudWeb.AuditParams
   alias CloudWeb.SitesLive.Data
 
@@ -77,7 +80,8 @@ defmodule CloudWeb.AuditLive.Index do
          |> assign(:period_error, "Pick a start date before the end date")
          |> assign(:form, form(preset, params["from"], params["to"]))
          |> assign(:model, nil)
-         |> assign(:download_url, nil)}
+         |> assign(:download_url, nil)
+         |> assign(:pdf_url, nil)}
     end
   end
 
@@ -118,6 +122,8 @@ defmodule CloudWeb.AuditLive.Index do
         )
         |> assign(:filename, AuditExport.filename(export))
         |> assign(:download_url, download_url(tenant.id, from, to, socket.assigns.site_ids))
+        |> assign(:pdf_url, download_url(tenant.id, from, to, socket.assigns.site_ids, :pdf))
+        |> assign(:pdf_records, PDF.record_count(model))
         |> assign(
           :form,
           form(socket.assigns.preset, params["from"] || date(from), params["to"] || date(to, -1))
@@ -136,12 +142,15 @@ defmodule CloudWeb.AuditLive.Index do
     |> Enum.take(@preview)
   end
 
-  defp download_url(tenant_id, from, to, site_ids) do
+  defp download_url(tenant_id, from, to, site_ids, format \\ :json) do
     query =
       [tenant: tenant_id, from: DateTime.to_iso8601(from), to: DateTime.to_iso8601(to)] ++
         if(site_ids, do: [site_ids: Enum.join(site_ids, ",")], else: [])
 
-    ~p"/audit/export.json?#{query}"
+    case format do
+      :json -> ~p"/audit/export.json?#{query}"
+      :pdf -> ~p"/audit/export.pdf?#{query}"
+    end
   end
 
   defp form(preset, from, to),
@@ -293,21 +302,36 @@ defmodule CloudWeb.AuditLive.Index do
               >
                 Download JSON
               </.button_link>
-              <%!-- pdf download: the renderer will turn Cloud.AuditExport.to_render_model/1
-                   into a pdf at /audit/export.pdf with the same params; the library is
-                   still to be decided, so the button is shown disabled until then --%>
+              <.button_link
+                :if={@pdf_records <= PDF.max_records()}
+                id="download-pdf"
+                href={@pdf_url}
+                variant="bordered"
+                color="natural"
+                size="small"
+                icon="hero-document"
+              >
+                Download PDF
+              </.button_link>
               <.button
+                :if={@pdf_records > PDF.max_records()}
                 id="download-pdf"
                 disabled
                 variant="bordered"
                 color="natural"
                 size="small"
                 icon="hero-document"
-                title="PDF reports are coming"
               >
-                PDF (coming)
+                PDF
               </.button>
             </div>
+            <p
+              :if={@pdf_records > PDF.max_records()}
+              id="pdf-too-large"
+              class="mt-2 text-xs text-zinc-500"
+            >
+              This period has {@pdf_records} records, more than the {PDF.max_records()} one PDF can hold. Pick a shorter period for the PDF; the json export has them all.
+            </p>
           </.card_content>
         </.card>
 

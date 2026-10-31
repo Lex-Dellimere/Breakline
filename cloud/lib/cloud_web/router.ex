@@ -15,9 +15,9 @@ defmodule CloudWeb.Router do
   end
 
   # a file download for a signed-in browser session: the session cookie signs the
-  # user in, the response is json
+  # user in, the response is json or pdf
   pipeline :browser_download do
-    plug :accepts, ["json"]
+    plug :accepts, ["json", "pdf"]
     plug :fetch_session
     plug :fetch_flash
     plug :put_secure_browser_headers
@@ -63,6 +63,7 @@ defmodule CloudWeb.Router do
     pipe_through :browser_download
 
     get "/audit/export.json", AuditExportController, :show
+    get "/audit/export.pdf", AuditExportController, :pdf
   end
 
   scope "/", CloudWeb do

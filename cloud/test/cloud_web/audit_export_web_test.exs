@@ -18,10 +18,10 @@ defmodule CloudWeb.AuditExportWebTest do
   end
 
   # the download link's path and decoded query
-  defp download(view) do
+  defp download(view, selector \\ "#download-json") do
     href =
       view
-      |> element("#download-json")
+      |> element(selector)
       |> render()
       |> then(&Regex.run(~r/href="([^"]+)"/, &1))
       |> List.last()
@@ -103,6 +103,16 @@ defmodule CloudWeb.AuditExportWebTest do
       conn =
         ctx.conn
         |> log_in_user(ctx.admin)
+        |> get(~p"/audit/export.pdf?#{[from: "2026-10-10", to: "2026-10-01"]}")
+
+      assert conn.status == 400
+
+      conn = get(build_conn(), ~p"/audit/export.pdf?#{[tenant: ctx.tenant.id]}")
+      assert redirected_to(conn) == ~p"/sign-in"
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.admin)
         |> get(~p"/audit/export.json?#{[from: "2026-10-10", to: "2026-10-01"]}")
 
       assert conn.status == 400
@@ -133,7 +143,9 @@ defmodule CloudWeb.AuditExportWebTest do
       assert %{path: "/audit/export.json", query: %{"tenant" => tenant_id}} = download(view)
       assert tenant_id == ctx.tenant.id
 
-      assert has_element?(view, "#download-pdf[disabled]")
+      # the pdf link carries the same params
+      assert download(view, "#download-pdf") == %{download(view) | path: "/audit/export.pdf"}
+      refute has_element?(view, "#pdf-too-large")
 
       # the preview is not an export
       assert exported_entries(ctx.tenant.id) == []
