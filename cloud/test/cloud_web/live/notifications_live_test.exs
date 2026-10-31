@@ -142,7 +142,9 @@ defmodule CloudWeb.NotificationsLiveTest do
     member!(ctx.admin, ctx.other.tenant, :admin)
     channel!(ctx.other.tenant, ctx.other.admin, %{name: "Other Slack"})
 
-    {:ok, view, _html} = live(ctx.conn, ~p"/settings/notifications")
+    # tenants are listed by name and the first is the default; test names are random,
+    # so pin the starting tenant instead of relying on which name sorts first
+    {:ok, view, _html} = live(ctx.conn, ~p"/settings/notifications?tenant=#{ctx.tenant.id}")
     assert has_element?(view, "#tenant-picker")
     refute render(view) =~ "Other Slack"
 

@@ -103,12 +103,14 @@ defmodule Cloud.Notifications.TargetTest do
   end
 
   test "masks never show the webhook secret" do
+    # the host and nothing else: every character of the path and query is secret
     slack = Target.mask(:slack, slack_url())
-    assert slack =~ "hooks.slack.com"
+    assert slack == "hooks.slack.com/…"
     refute slack =~ slack_secret()
     refute slack =~ "T0ABC1234"
 
     teams = Target.mask(:teams, teams_url())
+    assert teams == URI.parse(teams_url()).host <> "/…"
     assert teams =~ "environment.api.powerplatform.com"
     refute teams =~ teams_sig()
 

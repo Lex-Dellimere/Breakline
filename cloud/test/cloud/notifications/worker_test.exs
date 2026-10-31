@@ -179,10 +179,15 @@ defmodule Cloud.Notifications.WorkerTest do
       assert reload(ctx, delivery).status == :sent
     end
 
-    for user <- [ctx.admin, ctx.approver] do
-      address = to_string(user.email)
-      assert_email_sent(to: [{"", address}])
-    end
+    # the two deliveries can run in either order, so compare recipients as a set
+    sent =
+      for _ <- 1..2 do
+        assert_received {:email, email}
+        email.to
+      end
+
+    expected = for user <- [ctx.admin, ctx.approver], do: [{"", to_string(user.email)}]
+    assert Enum.sort(sent) == Enum.sort(expected)
   end
 
   describe "failures" do

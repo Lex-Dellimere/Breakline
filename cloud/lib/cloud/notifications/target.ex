@@ -123,14 +123,14 @@ defmodule Cloud.Notifications.Target do
   defp check(_false, message), do: {:error, message}
 
   @doc """
-  A form of the target that is safe to show: the webhook host with the last
-  four characters of its path, the email's first letter and domain, the
-  phone number's country prefix and last three digits.
+  A form of the target that is safe to show: the webhook host only (every
+  character of a webhook path or query is part of its secret), the email's
+  first letter and domain, the phone number's country prefix and last three
+  digits. Channels are told apart by their name.
   """
   @spec mask(kind(), String.t()) :: String.t()
   def mask(kind, url) when kind in [:slack, :teams] do
-    host = URI.parse(url).host || "webhook"
-    host <> "/…" <> String.slice(url, -4, 4)
+    (URI.parse(url).host || "webhook") <> "/…"
   end
 
   def mask(:email, email) do
