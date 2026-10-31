@@ -129,6 +129,46 @@ defmodule Breakline.AuditLog do
     end
   end
 
+  @doc """
+  Verifies records that continue a chain from a known head, oldest first, with the
+  same checks as `verify_chain/2`. This is how a copy of a chain is extended
+  incrementally: the receiver keeps only the head it last accepted and checks each
+  new batch against it.
+
+  `after:` is required: the `{seq, hash_hex}` the first record must follow, or `nil`
+  when the records start the chain at seq 0. The first record must then have seq
+  `seq + 1` and `prev_hash` equal to `hash_hex`.
+
+  Returns `{:ok, head}` with the head after the last record (the `after:` head itself
+  for an empty list), or `{:error, {:broken_at, seq, reason}}` where `seq` is the seq
+  the broken record should have had. The reasons are those of `verify_chain/2`;
+  `:seq_gap` on the first record means the batch does not start right after the head.
+
+  Raises `ArgumentError` if `after:` is missing or not a valid head.
+  """
+  @spec verify_segment([record()], keyword()) ::
+          {:ok, head()} | {:error, {:broken_at, non_neg_integer(), break_reason()}}
+  def verify_segment(records, opts) when is_list(records) and is_list(opts) do
+    after_head =
+      case Keyword.fetch(opts, :after) do
+        {:ok, head} -> head
+        :error -> raise ArgumentError, "verify_segment/2 needs an after: head or nil"
+      end
+
+    {start, prev} =
+      case after_head do
+        nil -> {0, @zero_hash}
+        {seq, hash_hex} when is_integer(seq) and seq >= 0 -> {seq + 1, decode_hash!(hash_hex)}
+        other -> raise ArgumentError, "invalid after: head #{inspect(other)}"
+      end
+
+    case walk(records, start, prev) do
+      {:ok, nil} -> {:ok, after_head}
+      {:ok, head} -> {:ok, head}
+      {:error, _} = error -> error
+    end
+  end
+
   # walking the chain
 
   defp walk([], _index, _prev), do: {:ok, nil}

@@ -165,11 +165,108 @@ defmodule Breakline.AuditLogTest do
     end
   end
 
+  describe "verify_segment/2" do
+    setup do
+      chain = Enum.reduce(0..5, AuditLog.new(), &AuditLog.append(&2, %{"n" => &1}))
+      %{records: AuditLog.records(chain), head: AuditLog.head(chain)}
+    end
+
+    test "a whole chain from genesis", %{records: rs, head: head} do
+      assert AuditLog.verify_segment(rs, after: nil) == {:ok, head}
+      assert AuditLog.verify_segment([], after: nil) == {:ok, nil}
+    end
+
+    test "batches continue from the head before them", %{records: rs, head: head} do
+      {first, rest} = Enum.split(rs, 2)
+      assert {:ok, {1, _} = mid} = AuditLog.verify_segment(first, after: nil)
+      assert AuditLog.verify_segment(rest, after: mid) == {:ok, head}
+      assert AuditLog.verify_segment([], after: mid) == {:ok, mid}
+
+      # one record at a time
+      final =
+        Enum.reduce(rs, nil, fn r, h ->
+          {:ok, h} = AuditLog.verify_segment([r], after: h)
+          h
+        end)
+
+      assert final == head
+    end
+
+    test "a gap, an overlap or another head is refused", %{records: rs} do
+      mid = {1, Enum.at(rs, 1)["hash"]}
+
+      # skips seq 2
+      assert AuditLog.verify_segment(Enum.drop(rs, 3), after: mid) ==
+               {:error, {:broken_at, 2, :seq_gap}}
+
+      # starts again at seq 1
+      assert AuditLog.verify_segment(Enum.drop(rs, 1), after: mid) ==
+               {:error, {:broken_at, 2, :seq_gap}}
+
+      # the right seq after a head with another hash
+      assert AuditLog.verify_segment(Enum.drop(rs, 2), after: {1, String.duplicate("a", 64)}) ==
+               {:error, {:broken_at, 2, :prev_mismatch}}
+
+      # a chain from genesis does not continue a head
+      assert AuditLog.verify_segment(rs, after: mid) == {:error, {:broken_at, 2, :seq_gap}}
+
+      assert AuditLog.verify_segment(Enum.drop(rs, 2), after: nil) ==
+               {:error, {:broken_at, 0, :seq_gap}}
+    end
+
+    test "edits inside the batch are reported at their seq", %{records: rs} do
+      mid = {1, Enum.at(rs, 1)["hash"]}
+      batch = Enum.drop(rs, 2)
+
+      edited = List.update_at(batch, 2, &put_in(&1, ["entry", "n"], 99))
+
+      assert AuditLog.verify_segment(edited, after: mid) ==
+               {:error, {:broken_at, 4, :hash_mismatch}}
+
+      assert AuditLog.verify_segment(List.delete_at(batch, 1), after: mid) ==
+               {:error, {:broken_at, 3, :seq_gap}}
+
+      assert AuditLog.verify_segment([nil | batch], after: mid) ==
+               {:error, {:broken_at, 2, :malformed}}
+    end
+
+    test "a missing or invalid head raises", %{records: rs} do
+      assert_raise ArgumentError, fn -> AuditLog.verify_segment(rs, []) end
+      assert_raise ArgumentError, fn -> AuditLog.verify_segment(rs, after: {1, "xyz"}) end
+      assert_raise ArgumentError, fn -> AuditLog.verify_segment(rs, after: {-1, "00"}) end
+    end
+  end
+
   describe "properties" do
     property "an untouched chain verifies, with and without its head" do
       check all({records, head} <- chain_records()) do
         assert AuditLog.verify_chain(records) == :ok
         assert AuditLog.verify_chain(records, expected_head: head) == :ok
+      end
+    end
+
+    property "a chain split anywhere verifies batch by batch" do
+      check all(
+              {records, head} <- chain_records(),
+              cuts <- list_of(integer(0..max(length(records), 1)), max_length: 4)
+            ) do
+        {batches, last} =
+          cuts
+          |> Enum.sort()
+          |> Enum.reduce({[], {records, 0}}, fn cut, {acc, {rest, done}} ->
+            {batch, rest} = Enum.split(rest, max(cut - done, 0))
+            {[batch | acc], {rest, done + length(batch)}}
+          end)
+
+        batches = Enum.reverse([elem(last, 0) | batches])
+
+        final =
+          Enum.reduce(batches, nil, fn batch, h ->
+            assert {:ok, h} = AuditLog.verify_segment(batch, after: h)
+            h
+          end)
+
+        assert final == head
       end
     end
 
