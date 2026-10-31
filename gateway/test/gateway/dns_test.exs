@@ -446,18 +446,7 @@ defmodule Gateway.DNSTest do
 
     pid =
       spawn_link(fn ->
-        {:ok, udp} = :gen_udp.open(0, [:binary, ip: @localhost, active: true])
-        {:ok, port} = :inet.port(udp)
-
-        {:ok, lsock} =
-          :gen_tcp.listen(port, [
-            :binary,
-            ip: @localhost,
-            packet: 2,
-            active: false,
-            reuseaddr: true
-          ])
-
+        {udp, lsock, port} = open_udp_and_tcp(20)
         spawn_link(fn -> upstream_accept(lsock, test) end)
         send(parent, {:upstream_port, self(), port})
         upstream_loop(udp, test, behaviour)
@@ -465,6 +454,24 @@ defmodule Gateway.DNSTest do
 
     receive do
       {:upstream_port, ^pid, port} -> {@localhost, port}
+    end
+  end
+
+  # the free udp port the kernel picks can already be taken for tcp on a busy host,
+  # so retry with a fresh port instead of failing the test
+  defp open_udp_and_tcp(attempts) when attempts > 0 do
+    {:ok, udp} = :gen_udp.open(0, [:binary, ip: @localhost, active: true])
+    {:ok, port} = :inet.port(udp)
+
+    tcp_opts = [:binary, ip: @localhost, packet: 2, active: false, reuseaddr: true]
+
+    case :gen_tcp.listen(port, tcp_opts) do
+      {:ok, lsock} ->
+        {udp, lsock, port}
+
+      {:error, :eaddrinuse} ->
+        :gen_udp.close(udp)
+        open_udp_and_tcp(attempts - 1)
     end
   end
 

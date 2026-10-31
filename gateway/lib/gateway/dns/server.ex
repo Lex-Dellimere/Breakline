@@ -33,9 +33,7 @@ defmodule Gateway.DNS.Server do
 
     udp_opts = [:binary, family, ip: ip, active: @udp_active, reuseaddr: true]
 
-    with {:ok, udp} <- :gen_udp.open(Keyword.fetch!(opts, :port), udp_opts),
-         {:ok, port} <- :inet.port(udp),
-         {:ok, lsock} <- listen_tcp(opts[:tcp], ip, family, port) do
+    with {:ok, udp, port, lsock} <- open_sockets(Keyword.fetch!(opts, :port), udp_opts, opts, 20) do
       ctx = %{
         upstreams: Keyword.fetch!(opts, :upstreams),
         timeout_ms: Keyword.fetch!(opts, :timeout_ms),
@@ -76,6 +74,29 @@ defmodule Gateway.DNS.Server do
     end
 
     {:noreply, %{state | ctx: ctx}}
+  end
+
+  # with port 0 the kernel picks a free udp port, but that number can already be
+  # taken for tcp, so pick again rather than failing. a fixed port fails at once.
+  defp open_sockets(requested, udp_opts, opts, attempts) do
+    ip = Keyword.fetch!(opts, :ip)
+    family = if tuple_size(ip) == 8, do: :inet6, else: :inet
+
+    with {:ok, udp} <- :gen_udp.open(requested, udp_opts),
+         {:ok, port} <- :inet.port(udp) do
+      case listen_tcp(opts[:tcp], ip, family, port) do
+        {:ok, lsock} ->
+          {:ok, udp, port, lsock}
+
+        {:error, :eaddrinuse} when requested == 0 and attempts > 1 ->
+          :gen_udp.close(udp)
+          open_sockets(requested, udp_opts, opts, attempts - 1)
+
+        {:error, reason} ->
+          :gen_udp.close(udp)
+          {:error, reason}
+      end
+    end
   end
 
   defp listen_tcp(false, _ip, _family, _port), do: {:ok, nil}
