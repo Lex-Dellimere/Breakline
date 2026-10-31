@@ -18,3 +18,9 @@ Open decisions parked for later phases:
 - sms provider (phase 4)
 - pdf library (phase 5)
 - custom nerves system vs debian on the pilot box (phase 6)
+
+Ideas parked for later:
+- landing page (user idea, tagged 4.2): small squares slowly coming up out of the ground and
+  crawling along the floor and up the walls, behind the hero. It would be a hand-written animation,
+  not a mishka component, so it needs an explicit exception to D4 when it's built. Respect
+  `prefers-reduced-motion`.
