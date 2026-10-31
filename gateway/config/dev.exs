@@ -5,13 +5,16 @@ import Config
 dev_dir = Path.expand("../tmp/dev", __DIR__)
 key_file = Path.expand("../priv/keys/dev_ed25519.json", __DIR__)
 
-public_keys =
-  with {:ok, bytes} <- File.read(key_file),
+read_key = fn path ->
+  with {:ok, bytes} <- File.read(path),
        {:ok, %{"key_id" => id, "public_key" => pub}} <- JSON.decode(bytes) do
     %{id => pub}
   else
     _ -> %{}
   end
+end
+
+public_keys = read_key.(key_file)
 
 config :gateway,
   site_id: "dev-site",
@@ -29,15 +32,41 @@ config :gateway, Gateway.DNS,
   ip: {127, 0, 0, 1},
   port: 5300
 
-# the uplink to a local cloud, off by default so dev keeps using the inbox. the cloud
-# listens on 4011 with mutual tls and the certificates are generated into priv/keys/
-# (git-ignored). uncomment to connect:
-#
-# keys_dir = Path.expand("../priv/keys", __DIR__)
-#
-# config :gateway, :uplink,
-#   url: "wss://localhost:4011/gateway/socket/websocket",
-#   certfile: Path.join(keys_dir, "gateway_cert.pem"),
-#   keyfile: Path.join(keys_dir, "gateway_key.pem"),
-#   cacertfile: Path.join(keys_dir, "ca_cert.pem"),
-#   server_name: "localhost"
+# the uplink to a local cloud on 4011, wired up by `mix cloud.dev.gateway_cert <site_id>`
+# in cloud/, which writes into priv/keys/ (git-ignored): the client certificate and key,
+# the dev ca, site.json and the cloud signer's public key. with all of them present the
+# gateway takes that site id, trusts the cloud's key as well as the dev key, and dials
+# the cloud. without them dev runs on the inbox alone, as before
+keys_dir = Path.expand("../priv/keys", __DIR__)
+
+uplink_files =
+  ~w(gateway_cert.pem gateway_key.pem ca_cert.pem site.json cloud_signer.public.json)
+
+cloud_site_id =
+  with true <- Enum.all?(uplink_files, &File.exists?(Path.join(keys_dir, &1))),
+       {:ok, bytes} <- File.read(Path.join(keys_dir, "site.json")),
+       {:ok, %{"site_id" => id}} when is_binary(id) and id != "" <- JSON.decode(bytes) do
+    id
+  else
+    _ -> nil
+  end
+
+if cloud_site_id do
+  # the cloud site's state lives apart from the inbox demo's dev-site state, whose
+  # version floor (unix time versions) would refuse the cloud's policy versions
+  uplink_dir = Path.expand("../tmp/dev_uplink", __DIR__)
+
+  config :gateway,
+    site_id: cloud_site_id,
+    public_keys:
+      Map.merge(public_keys, read_key.(Path.join(keys_dir, "cloud_signer.public.json"))),
+    data_dir: uplink_dir,
+    inbox_dir: Path.join(uplink_dir, "inbox")
+
+  config :gateway, :uplink,
+    url: "wss://localhost:4011/gateway/socket/websocket",
+    certfile: Path.join(keys_dir, "gateway_cert.pem"),
+    keyfile: Path.join(keys_dir, "gateway_key.pem"),
+    cacertfile: Path.join(keys_dir, "ca_cert.pem"),
+    server_name: "localhost"
+end
