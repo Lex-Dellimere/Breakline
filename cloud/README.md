@@ -91,9 +91,9 @@ elixir --sname probe --rpc-eval cloud@Nx '
 dig @127.0.0.1 -p 5300 sis.n-able.com      # status: NXDOMAIN again
 ```
 
-**Security** can also turn on TOTP as a second sign-in factor. It shows the `otpauth://`
-link and the key as text (there is no QR code); paste or type them into an authenticator
-app. TOTP only signs in, it never approves.
+**Security** can also turn on TOTP as a second sign-in factor. It shows a QR code of the
+`otpauth://` link to scan with an authenticator app, and the link and the key as text to
+paste or type instead. TOTP only signs in, it never approves.
 
 Every action is recorded in the tenant's audit chain:
 
@@ -124,7 +124,8 @@ anchored it.
 After sign in you land on http://localhost:4010/dashboard: counters, each site's live state and
 why, and its windows for the next 7 days. Each site page links to its timeline
 (`/sites/:id/timeline`). On http://localhost:4010/audit pick a period and sites, check the chain
-verification and download the json export; then re-check the file offline from `core/`:
+verification and download the json export or the PDF report (the PDF needs the Typst binary,
+see "PDF reports" below); then re-check the json file offline from `core/`:
 
 ```sh
 cd core && mix breakline.audit.verify ~/Downloads/breakline-audit-demo-2026-10-25-2026-11-01.json
@@ -134,6 +135,28 @@ echo $?   # 0 intact, 1 broken (the first break is printed), 2 not an export
 To start over on the gateway side, stop it and `rm -rf gateway/tmp/dev_uplink`. Removing
 `gateway/priv/keys/site.json` takes the gateway back to the inbox-only dev setup.
 
+## PDF reports
+
+`/audit/export.pdf` renders the audit export with the Typst CLI, run as a separate process
+(D38). Install the pinned binary once:
+
+```sh
+mix cloud.typst.install     # typst 0.15.1, sha256-checked, to priv/bin/typst (git-ignored)
+```
+
+It needs `tar` with xz support and coreutils `timeout` on the host. The binary is a static
+musl build, so it runs on any x86_64 Linux.
+
+In production the binary comes one of two ways:
+
+* run `MIX_ENV=prod mix cloud.typst.install` before `mix release`, so it ships in the release's
+  `priv/bin/typst` (used when `TYPST_PATH` is unset); `--archive PATH` installs from an
+  already downloaded asset when the build has no network;
+* or put it in the container image (for example `COPY` the checksum-verified binary to
+  `/usr/local/bin/typst`) and set `TYPST_PATH=/usr/local/bin/typst`.
+
+Without the binary the PDF download answers 503 and the json export still works.
+
 ## Tests
 
 ```sh
@@ -142,3 +165,8 @@ mix test
 
 `test/cloud_web/gateway_endpoint_tls_test.exs` runs the gateway endpoint behind a real
 Bandit TLS listener with certificates from `openssl`, so `openssl` must be on the path.
+
+Tests tagged `:typst` render real PDFs. They run when `priv/bin/typst` exists and are
+excluded otherwise; `test/test_helper.exs` prints a note when that happens. The no-network
+render uses `unshare -rn` when the host allows it, and the PDF text check uses `pdftotext`
+when it is installed.
