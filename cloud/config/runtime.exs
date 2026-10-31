@@ -28,7 +28,46 @@ case {config_env(), System.get_env("PORT")} do
   {_, port} -> config :cloud, CloudWeb.Endpoint, http: [port: String.to_integer(port)]
 end
 
+# the gateway endpoint's mutual tls listener. both sides must present a certificate: the
+# server's own, and a gateway client certificate signed by the client ca
+gateway_tls = fn port, certfile, keyfile, cacertfile, ip ->
+  [
+    ip: ip,
+    port: port,
+    certfile: certfile,
+    keyfile: keyfile,
+    thousand_island_options: [
+      transport_options: [
+        cacertfile: cacertfile,
+        verify: :verify_peer,
+        fail_if_no_peer_cert: true,
+        versions: [:"tlsv1.3", :"tlsv1.2"],
+        depth: 4
+      ]
+    ]
+  ]
+end
+
 if config_env() == :dev do
+  # certificates from `mix cloud.dev.pki`; without them the gateway endpoint does not listen
+  keys = Path.expand("../priv/keys", __DIR__)
+
+  pki =
+    Enum.map(
+      ~w(gateway_endpoint_cert.pem gateway_endpoint_key.pem dev_ca_cert.pem),
+      &Path.join(keys, &1)
+    )
+
+  if Enum.all?(pki, &File.exists?/1) do
+    [cert, key, ca] = pki
+    port = String.to_integer(System.get_env("GATEWAY_PORT") || "4011")
+
+    config :cloud, CloudWeb.GatewayEndpoint,
+      https: gateway_tls.(port, cert, key, ca, {127, 0, 0, 1})
+  else
+    config :cloud, CloudWeb.GatewayEndpoint, server: false
+  end
+
   # Reload browser tabs when matching files change.
   config :cloud, CloudWeb.Endpoint,
     live_reload: [
@@ -78,6 +117,23 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "example.com"
 
   config :cloud, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
+
+  # the gateway endpoint: GATEWAY_TLS_CERT and GATEWAY_TLS_KEY are its server certificate,
+  # GATEWAY_CLIENT_CA the ca that signs gateway client certificates
+  fetch_env! = fn name ->
+    System.get_env(name) || raise "environment variable #{name} is missing"
+  end
+
+  config :cloud, CloudWeb.GatewayEndpoint,
+    server: System.get_env("PHX_SERVER") != nil,
+    https:
+      gateway_tls.(
+        String.to_integer(System.get_env("GATEWAY_PORT") || "4011"),
+        fetch_env!.("GATEWAY_TLS_CERT"),
+        fetch_env!.("GATEWAY_TLS_KEY"),
+        fetch_env!.("GATEWAY_CLIENT_CA"),
+        {0, 0, 0, 0, 0, 0, 0, 0}
+      )
 
   config :cloud, CloudWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

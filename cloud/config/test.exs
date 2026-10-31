@@ -32,6 +32,8 @@ config :cloud, CloudWeb.Endpoint,
   secret_key_base: "vsNcDxV/6H0I+rQppo69GvPk2JIUWW2ts+brvg3W6U02HAE0xS6GPRXEpb9eyLjs",
   server: false
 
+config :cloud, CloudWeb.GatewayEndpoint, server: false
+
 # In test we don't send emails
 config :cloud, Cloud.Mailer, adapter: Swoosh.Adapters.Test
 

@@ -83,6 +83,15 @@ config :cloud, CloudWeb.Endpoint,
   pubsub_server: Cloud.PubSub,
   live_view: [signing_salt: "WMcoXO7w"]
 
+# the endpoint gateways dial: https with mutual tls only, see CloudWeb.GatewayEndpoint.
+# the listener (port, certificates) is set per environment in runtime.exs. gateways are
+# not browsers and authenticate with their client certificate, so origins are not checked
+config :cloud, CloudWeb.GatewayEndpoint,
+  adapter: Bandit.PhoenixAdapter,
+  pubsub_server: Cloud.PubSub,
+  check_origin: false,
+  render_errors: [formats: [json: CloudWeb.ErrorJSON], layout: false]
+
 # Configure LiveView
 config :phoenix_live_view,
   # the attribute set on all root tags. Used for Phoenix.LiveView.ColocatedCSS.

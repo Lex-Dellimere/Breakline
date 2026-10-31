@@ -82,4 +82,17 @@ defmodule Cloud.Fixtures do
       attrs
     )
   end
+
+  @doc """
+  Pins a random stand-in certificate on the site's gateway. Returns
+  `{site, der}`; the der only has to fingerprint the same, it is never parsed.
+  """
+  def gateway!(site) do
+    der = :crypto.strong_rand_bytes(200)
+
+    site =
+      Sites.assign_gateway!(site, Cloud.Gateways.cert_fingerprint(der), authorize?: false)
+
+    {site, der}
+  end
 end
