@@ -62,6 +62,9 @@ config :cloud, CloudWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :cloud, dev_routes: true, token_signing_secret: "aLJ9QGbHAdlB9vfO0I3EIu+Ol8ShvCc0"
 
+# live_debugger defaults to 4007, which another local project already uses
+config :live_debugger, port: 4017
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 

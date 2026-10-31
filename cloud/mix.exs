@@ -12,7 +12,23 @@ defmodule Cloud.MixProject do
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader],
-      consolidate_protocols: Mix.env() != :dev
+      consolidate_protocols: Mix.env() != :dev,
+      usage_rules: usage_rules()
+    ]
+  end
+
+  # `mix usage_rules.sync` writes these into the managed block of AGENTS.md.
+  # the ash family is linked rather than inlined to keep AGENTS.md readable
+  defp usage_rules do
+    [
+      file: "AGENTS.md",
+      usage_rules: [
+        "usage_rules:all",
+        "phoenix:all",
+        :mishka_chelekom,
+        {:ash, link: :markdown},
+        {~r/^ash_/, link: :markdown}
+      ]
     ]
   end
 
