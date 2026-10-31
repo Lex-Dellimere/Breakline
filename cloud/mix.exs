@@ -96,6 +96,8 @@ defmodule Cloud.MixProject do
        depth: 1},
       {:swoosh, "~> 1.16"},
       {:req, "~> 0.5"},
+      # totp setup qr code as server-rendered svg (D39)
+      {:eqrcode, "~> 0.2.1"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},

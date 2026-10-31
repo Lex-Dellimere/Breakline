@@ -111,6 +111,12 @@ defmodule CloudWeb.AccountSecurityLiveTest do
 
     assert has_element?(view, "#totp-uri", "otpauth://totp/Breakline:")
 
+    # the qr code is an inline svg of rect modules, drawn on the server
+    assert has_element?(view, "#totp-qr svg#totp-qr-svg rect")
+    qr = view |> element("#totp-qr") |> render()
+    refute qr =~ "otpauth"
+    refute qr =~ "<script"
+
     secret_b32 =
       view
       |> element("#totp-secret")

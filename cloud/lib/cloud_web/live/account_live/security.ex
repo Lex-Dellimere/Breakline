@@ -7,8 +7,9 @@ defmodule CloudWeb.AccountLive.Security do
     a second or later passkey, and removing any, first needs a step-up from
     an existing passkey (`CloudWeb.StepUp`). An admin or approver cannot
     remove their last passkey.
-  - TOTP: set up with an authenticator app (the `otpauth://` uri is shown as
-    text to paste or type: there is no QR code library in the project) and
+  - TOTP: set up with an authenticator app by scanning a QR code of the
+    `otpauth://` uri (an inline SVG drawn on the server, `CloudWeb.TotpQr`),
+    or by pasting the uri or typing the key, both still shown as text; then
     confirmed with a code, or turned off with a current code. TOTP is a
     second sign-in factor only, it never approves.
   """
@@ -33,6 +34,7 @@ defmodule CloudWeb.AccountLive.Security do
      |> assign(:step_up, nil)
      |> assign(:registration, nil)
      |> assign(:totp_setup, nil)
+     |> assign(:totp_qr, nil)
      |> assign(:passkey_form, to_form(%{"label" => ""}, as: :passkey))
      |> assign(:totp_form, to_form(%{"code" => ""}, as: :totp))
      |> load()}
@@ -143,7 +145,11 @@ defmodule CloudWeb.AccountLive.Security do
     case Totp.begin_setup(socket.assigns.current_user) do
       {:ok, setup} ->
         {:noreply,
-         assign(socket, totp_setup: setup, totp_form: to_form(%{"code" => ""}, as: :totp))}
+         assign(socket,
+           totp_setup: setup,
+           totp_qr: CloudWeb.TotpQr.svg(setup.uri),
+           totp_form: to_form(%{"code" => ""}, as: :totp)
+         )}
 
       {:error, _error} ->
         {:noreply, put_flash(socket, :error, "TOTP setup could not start")}
@@ -355,9 +361,18 @@ defmodule CloudWeb.AccountLive.Security do
             <% @totp_setup -> %>
               <div id="totp-setup" class="space-y-3 text-sm">
                 <p class="text-zinc-600 dark:text-zinc-400">
-                  Add this account to your authenticator app, then enter the code it shows.
-                  Paste the link into an app that accepts one, or type the key by hand.
+                  Scan the QR code with your authenticator app, then enter the code it shows.
+                  If you cannot scan it, paste the link into an app that accepts one, or type the key by hand.
                 </p>
+                <div
+                  :if={@totp_qr}
+                  id="totp-qr"
+                  class="size-48 rounded-lg border border-zinc-200 bg-white p-2 dark:border-zinc-700"
+                  role="img"
+                  aria-label="QR code of the setup link"
+                >
+                  {@totp_qr}
+                </div>
                 <div>
                   <p class="text-xs text-zinc-500">Setup link</p>
                   <code
