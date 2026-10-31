@@ -19,6 +19,10 @@ defmodule Gateway.Store do
   whose first entry, `audit_chain_reset`, records why and where the old file went. A
   broken chain is never continued silently.
 
+  The chain id (`audit_chain_id/1`) is the hash of a chain's record 0, so a reset
+  chain has a new one. The uplink sends it with the records (`audit_records/3`), so
+  the cloud never mixes records of two chains.
+
   Options: `:data_dir` (required), `:clock` (a `Gateway.Clock`, for timestamps on the
   entries the store writes itself) and `:name` (defaults to this module).
   """
@@ -91,6 +95,24 @@ defmodule Gateway.Store do
   @spec audit_head(GenServer.server()) :: AuditLog.head()
   def audit_head(server \\ __MODULE__), do: GenServer.call(server, :audit_head)
 
+  @doc """
+  Returns the chain id of the audit chain: the hash of its record 0, or nil while the
+  chain is empty. A chain reset starts a new chain, so it gets a new id.
+  """
+  @spec audit_chain_id(GenServer.server()) :: String.t() | nil
+  def audit_chain_id(server \\ __MODULE__), do: GenServer.call(server, :audit_chain_id)
+
+  @doc """
+  Returns up to `limit` audit records starting at seq `from_seq`, oldest first, or
+  `[]` when `from_seq` is past the head.
+  """
+  @spec audit_records(non_neg_integer(), pos_integer(), GenServer.server()) ::
+          [AuditLog.record()]
+  def audit_records(from_seq, limit, server \\ __MODULE__)
+      when is_integer(from_seq) and from_seq >= 0 and is_integer(limit) and limit > 0 do
+    GenServer.call(server, {:audit_records, from_seq, limit})
+  end
+
   @doc "Returns the data directory."
   @spec data_dir(GenServer.server()) :: Path.t()
   def data_dir(server \\ __MODULE__), do: GenServer.call(server, :data_dir)
@@ -117,10 +139,17 @@ defmodule Gateway.Store do
     File.mkdir_p!(dir)
 
     audit_path = Path.join(dir, @audit)
-    {head, reset} = open_chain(audit_path, clock)
+    {head, chain_id, reset} = open_chain(audit_path, clock)
     {:ok, fd} = :file.open(audit_path, [:append, :binary, :raw])
 
-    state = %{dir: dir, clock: clock, audit_fd: fd, head: head}
+    state = %{
+      dir: dir,
+      clock: clock,
+      audit_path: audit_path,
+      audit_fd: fd,
+      head: head,
+      chain_id: chain_id
+    }
 
     state =
       case reset do
@@ -173,6 +202,12 @@ defmodule Gateway.Store do
   end
 
   def handle_call(:audit_head, _from, s), do: {:reply, s.head, s}
+  def handle_call(:audit_chain_id, _from, s), do: {:reply, s.chain_id, s}
+
+  def handle_call({:audit_records, from_seq, limit}, _from, s) do
+    {:reply, records_from(s, from_seq, limit), s}
+  end
+
   def handle_call(:data_dir, _from, s), do: {:reply, s.dir, s}
 
   @impl true
@@ -183,14 +218,14 @@ defmodule Gateway.Store do
   defp open_chain(path, clock) do
     case read_audit(path) do
       {:ok, []} ->
-        {nil, nil}
+        {nil, nil, nil}
 
-      {:ok, records} ->
+      {:ok, [first | _] = records} ->
         last = List.last(records)
-        {{last["seq"], last["hash"]}, nil}
+        {{last["seq"], last["hash"]}, first["hash"], nil}
 
       {:error, :enoent} ->
-        {nil, nil}
+        {nil, nil, nil}
 
       {:error, reason} ->
         now = clock.now()
@@ -206,7 +241,7 @@ defmodule Gateway.Store do
           "moved_to" => Path.basename(moved)
         }
 
-        {nil, entry}
+        {nil, nil, entry}
     end
   end
 
@@ -220,12 +255,31 @@ defmodule Gateway.Store do
 
     with :ok <- :file.write(s.audit_fd, line),
          :ok <- :file.sync(s.audit_fd) do
-      {:ok, record, %{s | head: {record["seq"], record["hash"]}}}
+      chain_id = s.chain_id || record["hash"]
+      {:ok, record, %{s | head: {record["seq"], record["hash"]}, chain_id: chain_id}}
     else
       {:error, reason} ->
         Logger.error("audit append failed: #{inspect(reason)}")
         {:error, reason}
     end
+  end
+
+  # line n of audit.jsonl is the record with seq n, and every line up to the head was
+  # written and fsynced by this process, so reading lines is enough here
+  defp records_from(%{head: nil}, _from_seq, _limit), do: []
+  defp records_from(%{head: {head_seq, _}}, from_seq, _limit) when from_seq > head_seq, do: []
+
+  defp records_from(s, from_seq, limit) do
+    s.audit_path
+    |> File.stream!(:line)
+    |> Stream.drop(from_seq)
+    |> Stream.take(limit)
+    |> Enum.flat_map(fn line ->
+      case CanonicalJSON.decode(String.trim_trailing(line, "\n")) do
+        {:ok, record} when is_map(record) -> [record]
+        _ -> []
+      end
+    end)
   end
 
   defp read_records(path) do

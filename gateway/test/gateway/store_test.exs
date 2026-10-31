@@ -82,6 +82,45 @@ defmodule Gateway.StoreTest do
     assert :ok = AuditLog.verify_chain([r0, r1, r2], expected_head: {2, r2["hash"]})
   end
 
+  test "the chain id is the hash of record 0 and survives a restart", %{dir: dir} do
+    store = start_store(dir)
+    assert Store.audit_chain_id(store) == nil
+    {:ok, r0} = Store.audit(%{"type" => "a"}, store)
+    {:ok, _} = Store.audit(%{"type" => "b"}, store)
+    assert Store.audit_chain_id(store) == r0["hash"]
+
+    store = restart_store(dir)
+    assert Store.audit_chain_id(store) == r0["hash"]
+  end
+
+  test "a chain reset gets a new chain id", %{dir: dir} do
+    store = start_store(dir)
+    {:ok, r0} = Store.audit(%{"type" => "a"}, store)
+    stop_supervised!(:test_store)
+    File.write!(audit_path(dir), "not json\n")
+
+    store = start_store(dir)
+    {0, reset_hash} = Store.audit_head(store)
+    assert Store.audit_chain_id(store) == reset_hash
+    refute reset_hash == r0["hash"]
+  end
+
+  test "audit_records returns a range of records, oldest first", %{dir: dir} do
+    store = start_store(dir)
+    assert Store.audit_records(0, 10, store) == []
+
+    records =
+      for t <- ~w(a b c d e) do
+        {:ok, r} = Store.audit(%{"type" => t}, store)
+        r
+      end
+
+    assert Store.audit_records(0, 10, store) == records
+    assert Store.audit_records(1, 2, store) == Enum.slice(records, 1, 2)
+    assert Store.audit_records(4, 10, store) == [List.last(records)]
+    assert Store.audit_records(5, 10, store) == []
+  end
+
   test "an edited audit file is moved aside and a new chain records it", %{dir: dir} do
     store = start_store(dir)
     for t <- ~w(a b c), do: {:ok, _} = Store.audit(%{"type" => t}, store)
