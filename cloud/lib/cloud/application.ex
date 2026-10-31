@@ -15,6 +15,12 @@ defmodule Cloud.Application do
       {DNSCluster, query: Application.get_env(:cloud, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Cloud.PubSub},
       CloudWeb.GatewayPresence,
+      # background jobs, including the advisory feed polls scheduled by ash_oban
+      {Oban,
+       AshOban.config(
+         Application.fetch_env!(:cloud, :ash_domains),
+         Application.fetch_env!(:cloud, Oban)
+       )},
       # Start a worker by calling: Cloud.Worker.start_link(arg)
       # {Cloud.Worker, arg},
       # Start to serve requests, typically the last entry

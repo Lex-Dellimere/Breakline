@@ -66,6 +66,20 @@ config :cloud,
   generators: [timestamp_type: :utc_datetime],
   ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways]
 
+# background jobs (oban, without oban pro). ash_oban adds the cron entries of the
+# resources' scheduled actions to the crontab at startup, see Cloud.Advisories.Feed.
+# the advisories queue runs one job at a time so two polls of a feed never race
+config :ash_oban, pro?: false
+
+config :cloud, Oban,
+  engine: Oban.Engines.Basic,
+  notifier: Oban.Notifiers.Postgres,
+  queues: [default: 10, advisories: 1],
+  lifeline: [rescue_after: {2, :hours}],
+  pruner: [max_age: {7, :day}],
+  repo: Cloud.Repo,
+  cron: [crontab: []]
+
 # signs gateway commands. the file signer is for dev and pilots; production replaces it
 # with a kms or hsm backed Cloud.Signer implementation
 config :cloud, :signer, Cloud.Signer.File

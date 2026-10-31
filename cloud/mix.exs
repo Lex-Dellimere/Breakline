@@ -57,6 +57,8 @@ defmodule Cloud.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:oban, "~> 2.24"},
+      {:ash_oban, "~> 0.10"},
       {:ash_ai, "~> 1.0"},
       {:breakline, path: "../core"},
       {:bcrypt_elixir, "~> 3.0"},
