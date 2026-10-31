@@ -85,7 +85,7 @@ defmodule CloudWeb do
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components
-      import CloudWeb.CoreComponents
+      use CloudWeb.Components.MishkaComponents
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

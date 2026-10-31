@@ -1,5 +1,11 @@
 import Config
 
+config :ash_authentication, dev_mailbox_path: "/dev/mailbox"
+
+config :ash,
+  policies: [show_policy_breakdowns?: true],
+  keyset_signing_secret: "o4UQT/WFHo3EkAYZw49I1qHSgi1BkKmdvyJ+0DC9xgs"
+
 # Configure your database
 config :cloud, Cloud.Repo,
   username: "postgres",
@@ -54,7 +60,7 @@ config :cloud, CloudWeb.Endpoint,
 # different ports.
 
 # Enable dev routes for dashboard and mailbox
-config :cloud, dev_routes: true
+config :cloud, dev_routes: true, token_signing_secret: "aLJ9QGbHAdlB9vfO0I3EIu+Ol8ShvCc0"
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"

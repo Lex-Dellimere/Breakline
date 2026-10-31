@@ -15,7 +15,8 @@ defmodule Cloud.Application do
       # Start a worker by calling: Cloud.Worker.start_link(arg)
       # {Cloud.Worker, arg},
       # Start to serve requests, typically the last entry
-      CloudWeb.Endpoint
+      CloudWeb.Endpoint,
+      {AshAuthentication.Supervisor, [otp_app: :cloud]}
     ]
 
     # See https://elixir.hexdocs.pm/Supervisor.html
