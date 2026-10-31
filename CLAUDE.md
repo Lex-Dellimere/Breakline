@@ -49,6 +49,7 @@ optimise for a working, demo-able slice, not completeness.
 - `docker compose up -d` starts Postgres 17 as `breakline-pg` on `127.0.0.1:5433`. Port 5432 on this
   machine belongs to another project's container: never use it.
 - cloud: `cd cloud && mix setup && mix phx.server`, then http://localhost:4010 (4000 is taken).
+  Dev only: ash_admin at `/admin`, live_debugger on port 4017.
 - Tests: `mix test` in `core/`, `gateway/` and `cloud/`.
 - `nft` is not installed on the dev host. Firewall code is tested through the fake impl and golden
   `nft -j` json; real nftables runs come later in a netns or VM.

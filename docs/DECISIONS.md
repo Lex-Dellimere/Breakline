@@ -94,3 +94,29 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
 - **Decision:** commit messages and code comments are all lowercase, plain and human, with no emoji
   and no co-author trailers.
 - **Why:** user instruction, 2026-10-31.
+
+### D11. Auth page routing
+- **Decision:** every page is one of our own mishka LiveViews in `cloud/lib/cloud_web/live/auth_live/`:
+  - `/sign-in` via `sign_in_route live_view:`.
+  - `/password-reset/:token` via `reset_route`.
+  - `/confirm_new_user/:token` via `confirm_route`.
+  - `/sign-out` via `sign_out_route`.
+  - `/register` and `/reset` are plain `live` routes inside `ash_authentication_live_session` with
+    `live_no_user`.
+- **Why:** `sign_in_route` takes a single LiveView for sign-in, register and reset-request together.
+  Splitting them keeps each page simple. The confirm and sign-out routes would otherwise render
+  ash_authentication_phoenix's own UI, which breaks D4.
+- **Removed:** `magic_sign_in_route` (there is no magic-link login strategy) and `auth_overrides.ex`.
+
+### D12. Dev tool wiring
+- **Decision:**
+  - ash_admin's route lives only in the router's `dev_routes` block. The dep stays in all envs, as
+    its installer added it.
+  - live_debugger is a dev-only dep and runs on port 4017, because its default 4007 is taken on the
+    dev machine.
+  - `cloud/AGENTS.md` is synced by usage_rules, with ash packages linked rather than inlined.
+  - phx.new's daisyUI and core_components guidance in `cloud/AGENTS.md` was rewritten to point at
+    mishka.
+- **Why:** keep product UI mishka-only (D4) and keep agent instructions consistent with it.
+- **Revisit:** make ash_admin `only: :dev` once the router no longer needs it at compile time
+  outside dev.
