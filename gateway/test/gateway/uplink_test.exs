@@ -123,7 +123,10 @@ defmodule Gateway.UplinkTest do
       # pushes are synchronous calls into the test process, so each one is taken
       # before the uplink answers a status call
       assert_push @topic, "heartbeat", _
-      assert_push @topic, "events", _
+      assert_push @topic, "events", %{"events" => events}
+      assert Enum.any?(events, &(&1["type"] == "state_changed"))
+      # a state change in the events is reported with a heartbeat straight away
+      assert_push @topic, "heartbeat", _
       assert_push @topic, "audit", _
       assert %{connected?: true, joined?: true} = Uplink.status()
     end
@@ -199,6 +202,8 @@ defmodule Gateway.UplinkTest do
         "reason" => nil
       }
 
+      # every pushed policy is followed by a heartbeat with the state it led to
+      assert_push @topic, "heartbeat", %{"status" => %{"policy_version" => 4}}
       assert Enforcer.status().policy_version == 4
 
       capture_log(fn ->
@@ -210,6 +215,7 @@ defmodule Gateway.UplinkTest do
           "reason" => "stale_version"
         }
 
+        assert_push @topic, "heartbeat", _
         push(Uplink, @topic, "policy", %{"command" => wire(priv, 6, site_id: "other-site")})
 
         assert_push @topic, "policy_result", %{
@@ -218,6 +224,7 @@ defmodule Gateway.UplinkTest do
           "reason" => "site_mismatch"
         }
 
+        assert_push @topic, "heartbeat", _
         push(Uplink, @topic, "policy", %{"command" => 42})
 
         assert_push @topic, "policy_result", %{
@@ -225,6 +232,8 @@ defmodule Gateway.UplinkTest do
           "result" => "rejected",
           "reason" => "malformed"
         }
+
+        assert_push @topic, "heartbeat", _
       end)
 
       assert Enforcer.status().policy_version == 4

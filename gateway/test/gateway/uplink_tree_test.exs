@@ -121,6 +121,8 @@ defmodule Gateway.UplinkTreeTest do
     assert_join "gateway:test-site", %{"hello" => _}, {:ok, %{"heartbeat_ms" => 60_000}}
     assert_push "gateway:test-site", "heartbeat", _
     assert_push "gateway:test-site", "events", _
+    # the enforcer's boot state change in the events brings an immediate heartbeat
+    assert_push "gateway:test-site", "heartbeat", _
     assert_push "gateway:test-site", "audit", _
     assert %{joined?: true} = Uplink.status()
   end

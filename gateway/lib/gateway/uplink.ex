@@ -465,7 +465,9 @@ defmodule Gateway.Uplink do
 
   @impl Slipstream
   def handle_message(_topic, "policy", %{"command" => wire}, socket) do
-    {:ok, handle_policy(wire, socket)}
+    # heartbeat straight away so the cloud shows the new state without waiting a cycle
+    socket = handle_policy(wire, socket)
+    {:ok, send_heartbeat(socket)}
   end
 
   def handle_message(_topic, event, _payload, socket) do
@@ -571,7 +573,12 @@ defmodule Gateway.Uplink do
       case push_msg(socket, "events", %{"events" => batch.batch}) do
         {:ok, ref} ->
           timer = Process.send_after(self(), {:reply_timeout, ref}, a.c.reply_timeout_ms)
-          assign(socket, :events, %{batch | ref: ref, timer: timer})
+          socket = assign(socket, :events, %{batch | ref: ref, timer: timer})
+
+          # a scheduled change (a window opening or ending, the clock) is reported at once too
+          if Enum.any?(batch.batch, &(&1["type"] == "state_changed")),
+            do: send_heartbeat(socket),
+            else: socket
 
         {:error, reason} ->
           Logger.warning("uplink: events not sent: #{inspect(reason)}")
