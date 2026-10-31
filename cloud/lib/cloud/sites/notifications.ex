@@ -9,8 +9,9 @@ defmodule Cloud.Sites.Notifications do
   with:
 
   - `:window_requested`, `:window_approved`, `:window_rejected`:
-    `window_id`, `site_name`, `time_zone`, `contact_name` (nil when no
-    contact requested it), `starts_at` and `ends_at` (local naive datetimes
+    `window_id`, `site_name`, `time_zone`, `msp_contact_id` and `msp_name`
+    (nil when no contact requested it; `contact_name` is the same name),
+    `starts_at` and `ends_at` (local naive datetimes
     in the site's zone, nil for a recurring window), `reason`, `note` (the
     rejection note), `by` (the deciding user's email, nil for a request) and
     `path` (`"/requests"`)
@@ -51,6 +52,7 @@ defmodule Cloud.Sites.Notifications do
   @spec payload(atom(), Window.t() | BreakGlass.t(), term()) :: map()
   def payload(type, %Window{} = window, actor) do
     site = site(window.site_id)
+    name = contact_name(window)
 
     %{
       type: type,
@@ -59,7 +61,9 @@ defmodule Cloud.Sites.Notifications do
       site_name: site && site.name,
       time_zone: site && site.time_zone,
       window_id: window.id,
-      contact_name: contact_name(window),
+      msp_contact_id: window.requested_by_id,
+      msp_name: name,
+      contact_name: name,
       starts_at: window.starts_at,
       ends_at: window.ends_at,
       reason: window.reason,

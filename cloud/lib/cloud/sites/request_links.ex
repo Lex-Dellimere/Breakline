@@ -51,16 +51,18 @@ defmodule Cloud.Sites.RequestLinks do
   """
   @spec lookup(String.t()) :: {:ok, RequestLink.t()} | {:error, :invalid}
   def lookup(token) when is_binary(token) do
-    case Sites.get_request_link_by_token_hash(hash_token(token),
-           authorize?: false,
-           not_found_error?: false,
-           load: [:site, :msp_contact]
-         ) do
-      {:ok, %RequestLink{} = link} ->
-        if usable?(link), do: {:ok, link}, else: {:error, :invalid}
-
-      _ ->
-        {:error, :invalid}
+    with {:ok, %RequestLink{} = link} <-
+           Sites.get_request_link_by_token_hash(hash_token(token),
+             authorize?: false,
+             not_found_error?: false
+           ),
+         true <- usable?(link),
+         # the contact is tenant-scoped, so it loads with the link's tenant
+         {:ok, link} <-
+           Ash.load(link, [:site, :msp_contact], tenant: link.tenant_id, authorize?: false) do
+      {:ok, link}
+    else
+      _ -> {:error, :invalid}
     end
   end
 

@@ -55,6 +55,15 @@ defmodule CloudWeb.Layouts do
               Sites
             </.button_link>
             <.button_link
+              id="nav-requests"
+              navigate={~p"/requests"}
+              variant="transparent"
+              color="natural"
+              size="small"
+            >
+              Requests
+            </.button_link>
+            <.button_link
               id="nav-advisories"
               navigate={~p"/advisories"}
               variant="transparent"

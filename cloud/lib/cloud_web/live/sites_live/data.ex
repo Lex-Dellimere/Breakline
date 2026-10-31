@@ -50,6 +50,57 @@ defmodule CloudWeb.SitesLive.Data do
     Sites.list_windows!(actor: user, tenant: site.tenant_id, query: [filter: [site_id: site.id]])
   end
 
+  @doc """
+  The user's role in a tenant (`:admin`, `:approver`) or nil. Only decides
+  what the page offers; every action is still authorised by its resource.
+  """
+  @spec role(User.t(), String.t()) :: atom() | nil
+  def role(%User{} = user, tenant_id) do
+    case Accounts.membership_for(user.id, tenant_id, authorize?: false) do
+      {:ok, %{role: role}} -> role
+      _ -> nil
+    end
+  end
+
+  @doc """
+  The site's active break-glass, if any, with `approved_by` loaded (a
+  trusted load of the opener's email; users cannot read other users).
+  """
+  @spec current_break_glass(User.t(), Sites.Site.t()) :: Sites.BreakGlass.t() | nil
+  def current_break_glass(%User{} = user, site) do
+    now = DateTime.utc_now()
+
+    Sites.list_break_glasses!(
+      actor: user,
+      tenant: site.tenant_id,
+      query: [
+        filter: [site_id: site.id, revoked_at: [is_nil: true], until: [greater_than: now]],
+        sort: [inserted_at: :desc, id: :desc],
+        limit: 1
+      ]
+    )
+    |> case do
+      [break_glass] -> Ash.load!(break_glass, :approved_by, authorize?: false)
+      [] -> nil
+    end
+  end
+
+  @doc "The site's MSP request links, newest first, with their contacts (admins only)."
+  @spec request_links(User.t(), Sites.Site.t()) :: [Sites.RequestLink.t()]
+  def request_links(%User{} = user, site) do
+    Sites.list_request_links!(
+      actor: user,
+      tenant: site.tenant_id,
+      query: [filter: [site_id: site.id], sort: [inserted_at: :desc], load: [:msp_contact]]
+    )
+  end
+
+  @doc "The tenant's MSP contacts, by name."
+  @spec msp_contacts(User.t(), String.t()) :: [Sites.MspContact.t()]
+  def msp_contacts(%User{} = user, tenant_id) do
+    Sites.list_msp_contacts!(actor: user, tenant: tenant_id, query: [sort: [name: :asc]])
+  end
+
   @doc "The site's newest gateway events, newest first."
   @spec recent_events(User.t(), Sites.Site.t(), pos_integer()) :: [Gateways.Event.t()]
   def recent_events(%User{} = user, site, limit) do

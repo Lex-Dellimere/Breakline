@@ -39,6 +39,7 @@ defmodule CloudWeb.Router do
       live "/sites", SitesLive.Index, :index
       live "/sites/:id", SitesLive.Show, :show
       live "/advisories", AdvisoriesLive.Index, :index
+      live "/requests", RequestsLive.Index, :index
       live "/account/security", AccountLive.Security, :show
       live "/settings/notifications", SettingsLive.Notifications, :index
     end
@@ -48,6 +49,12 @@ defmodule CloudWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    # the msp contact's magic link: no account, no sign in. it can only request a
+    # window (CloudWeb.RequestLive.Show, threat model T6)
+    live_session :msp_request, on_mount: [{CloudWeb.LiveUserAuth, :live_user_optional}] do
+      live "/request/:token", RequestLive.Show, :show
+    end
 
     # strategy routes we never serve, matched before auth_routes forwards /auth:
     # totp setup and verify run in our liveviews (a direct confirm_setup would store a
