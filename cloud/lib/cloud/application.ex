@@ -16,6 +16,8 @@ defmodule Cloud.Application do
         {DNSCluster, query: Application.get_env(:cloud, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Cloud.PubSub},
         CloudWeb.GatewayPresence,
+        # counters for public pages, such as token lookups on the msp request page
+        CloudWeb.RateLimit,
         # background jobs, including the advisory feed polls scheduled by ash_oban
         {Oban,
          AshOban.config(

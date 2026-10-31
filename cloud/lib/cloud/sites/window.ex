@@ -11,7 +11,9 @@ defmodule Cloud.Sites.Window do
   The shape rules are those of `Breakline.Policy.RecurringWindow` and
   `Breakline.Policy.OneOffWindow` (`Cloud.Sites.Validations.WindowShape`).
 
-  Lifecycle: a window is `:requested` (by an MSP contact or an admin), then
+  Lifecycle: a window is `:requested` (by an admin, or by an MSP contact
+  through their `Cloud.Sites.RequestLink`, see
+  `Cloud.Sites.Changes.FromRequestLink`), then
   `:approved` or `:rejected` by an approver or admin, and may be `:cancelled`.
   Only approved windows are published. Approving, booking an approved window
   directly, opening now and cancelling each publish a new policy version.
@@ -26,6 +28,11 @@ defmodule Cloud.Sites.Window do
   - `:open_now`: purpose `:open_window`, subject the site, params `site_id`
     and `minutes`
 
+  A request made through a link carries the link (`request_link_id`) and a
+  `reason` (reason or ticket reference). Rejecting takes an optional `note`.
+  Requesting, approving and rejecting notify the tenant's channels after
+  commit (`Cloud.Sites.Notifications`).
+
   Every action is recorded in the tenant's audit chain (`Cloud.Audit`).
   """
 
@@ -37,8 +44,8 @@ defmodule Cloud.Sites.Window do
 
   alias Cloud.Accounts.Changes.RequireStepUp
   alias Cloud.Audit.Changes.Record
-  alias Cloud.Checks.TenantMember
-  alias Cloud.Sites.Changes.Publish
+  alias Cloud.Checks.{RequestLinkActor, RequestLinkWindows, TenantMember}
+  alias Cloud.Sites.Changes.{FromRequestLink, Notify, Publish}
   alias Cloud.Sites.Validations.WindowShape
 
   @shape_fields [:site_id, :kind, :days, :starts, :ends, :starts_at, :ends_at]
@@ -51,6 +58,8 @@ defmodule Cloud.Sites.Window do
       reference :site, on_delete: :delete, match_tenant?: true
       reference :requested_by, on_delete: {:nilify, [:requested_by_id]}, match_tenant?: true
       reference :approved_by, on_delete: :nilify
+      reference :rejected_by, on_delete: :nilify
+      reference :request_link, on_delete: {:nilify, [:request_link_id]}, match_tenant?: true
       reference :tenant, on_delete: :delete
     end
   end
@@ -74,9 +83,16 @@ defmodule Cloud.Sites.Window do
     create :request do
       primary? true
       transaction? true
-      accept @shape_fields ++ [:requested_by_id]
+      accept @shape_fields ++ [:requested_by_id, :reason]
+      # a request link actor gets its site, contact and kind forced and its caps checked
+      change FromRequestLink
       validate {WindowShape, []}
-      change {Record, action: "window.requested", fields: @shape_fields ++ [:requested_by_id]}
+
+      change {Record,
+              action: "window.requested",
+              fields: @shape_fields ++ [:requested_by_id, :request_link_id, :reason]}
+
+      change {Notify, type: :window_requested}
     end
 
     create :create_approved do
@@ -142,6 +158,7 @@ defmodule Cloud.Sites.Window do
       change set_attribute(:approved_at, &DateTime.utc_now/0)
       change {Record, action: "window.approved", fields: [:site_id, :kind]}
       change {Publish, reason: "window approved"}
+      change {Notify, type: :window_approved}
     end
 
     update :reject do
@@ -149,11 +166,19 @@ defmodule Cloud.Sites.Window do
       transaction? true
       accept []
 
+      argument :note, :string do
+        constraints max_length: 500
+      end
+
       validate attribute_equals(:status, :requested),
         message: "only a requested window can be rejected"
 
       change set_attribute(:status, :rejected)
-      change {Record, action: "window.rejected", fields: [:site_id]}
+      change set_attribute(:rejection_note, arg(:note))
+      change set_attribute(:rejected_at, &DateTime.utc_now/0)
+      change relate_actor(:rejected_by, allow_nil?: true)
+      change {Record, action: "window.rejected", fields: [:site_id, :rejection_note]}
+      change {Notify, type: :window_rejected}
     end
 
     update :cancel do
@@ -173,10 +198,12 @@ defmodule Cloud.Sites.Window do
   policies do
     policy action_type(:read) do
       authorize_if TenantMember
+      authorize_if RequestLinkWindows
     end
 
     policy action(:request) do
       authorize_if {TenantMember, role: :admin}
+      authorize_if RequestLinkActor
     end
 
     policy action([:create_approved, :open_now, :approve, :reject, :cancel]) do
@@ -213,6 +240,18 @@ defmodule Cloud.Sites.Window do
 
     attribute :approved_at, :utc_datetime_usec, public?: true
 
+    attribute :reason, :string do
+      public? true
+      constraints max_length: 500
+    end
+
+    attribute :rejected_at, :utc_datetime_usec, public?: true
+
+    attribute :rejection_note, :string do
+      public? true
+      constraints max_length: 500
+    end
+
     timestamps()
   end
 
@@ -221,5 +260,7 @@ defmodule Cloud.Sites.Window do
     belongs_to :site, Cloud.Sites.Site, allow_nil?: false, public?: true
     belongs_to :requested_by, Cloud.Sites.MspContact, public?: true
     belongs_to :approved_by, Cloud.Accounts.User, public?: true
+    belongs_to :rejected_by, Cloud.Accounts.User, public?: true
+    belongs_to :request_link, Cloud.Sites.RequestLink, public?: true
   end
 end

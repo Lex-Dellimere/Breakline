@@ -1,8 +1,8 @@
 defmodule Cloud.Sites do
   @moduledoc """
   Sites and everything that decides whether their RMM channel is open:
-  windows, advisory locks, break-glass, MSP contacts and the published policy
-  versions.
+  windows, advisory locks, break-glass, MSP contacts, their request links and
+  the published policy versions.
 
   All resources are tenant-scoped (attribute multitenancy on `tenant_id`).
   Pass `actor:` and `tenant:` (a `Cloud.Accounts.Tenant` or its id), or a
@@ -67,7 +67,18 @@ defmodule Cloud.Sites do
       define :create_msp_contact, action: :create
       define :list_msp_contacts, action: :read
       define :update_msp_contact, action: :update
+      define :get_msp_contact, action: :read, get_by: [:id]
       define :destroy_msp_contact, action: :destroy
+    end
+
+    resource Cloud.Sites.RequestLink do
+      define :create_request_link, action: :create
+      define :list_request_links, action: :read
+      define :get_request_link, action: :read, get_by: [:id]
+      define :revoke_request_link, action: :revoke
+      define :get_request_link_by_token_hash, action: :by_token_hash, args: [:token_hash]
+      define :lock_request_link, action: :lock, args: [:id]
+      define :touch_request_link, action: :touch
     end
 
     resource Cloud.Sites.PolicyVersion do
