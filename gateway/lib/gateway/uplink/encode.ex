@@ -73,7 +73,9 @@ defmodule Gateway.Uplink.Encode do
   """
   @spec match(term()) :: %{String.t() => json()}
   def match(tool_id) when is_binary(tool_id), do: %{"kind" => "tool", "tag" => tool_id}
-  def match({:site_host, host}), do: %{"kind" => "site_host", "name" => host, "tag" => tag(host)}
+
+  def match({:site_host, host} = tag),
+    do: %{"kind" => "site_host", "name" => host, "tag" => tag(tag)}
 
   def match({:cname, target, tag}),
     do: %{"kind" => "cname", "name" => target, "tag" => tag(tag)}
@@ -86,7 +88,7 @@ defmodule Gateway.Uplink.Encode do
   # a tag as the firewall spells it: the tool id, or "site_host:" <> host
   defp tag({:site_host, host}), do: "site_host:" <> host
   defp tag(tool_id) when is_binary(tool_id), do: tool_id
-  defp tag(host), do: "site_host:" <> to_string(host)
+  defp tag(other), do: inspect(other)
 
   @doc """
   Encodes an enforcer reason (`t:Gateway.Enforcer.reason/0`) through
