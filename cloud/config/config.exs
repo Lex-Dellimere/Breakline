@@ -64,7 +64,13 @@ config :spark,
 config :cloud,
   ecto_repos: [Cloud.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [Cloud.Accounts]
+  ash_domains: [Cloud.Accounts, Cloud.Sites, Cloud.Gateways]
+
+# signs gateway commands. the file signer is for dev and pilots; production replaces it
+# with a kms or hsm backed Cloud.Signer implementation
+config :cloud, :signer, Cloud.Signer.File
+
+config :cloud, Cloud.Signer.File, path: Path.expand("../priv/keys/signer_ed25519.json", __DIR__)
 
 # Configure the endpoint
 config :cloud, CloudWeb.Endpoint,
