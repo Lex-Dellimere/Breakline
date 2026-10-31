@@ -161,17 +161,37 @@ defmodule Cloud.Accounts.StepUps do
   @doc """
   Checks a step-up a trusted caller already consumed in this transaction
   (see `Cloud.Accounts.Changes.RequireStepUp`).
+
+  The struct handed in through the changeset context is never trusted: the
+  row is read again (and locked), and must be verified, not failed, consumed
+  within the step-up lifetime, and match the actor, purpose and subject.
   """
   @spec check_consumed(StepUp.t(), User.t() | nil, atom(), String.t()) ::
           {:ok, StepUp.t()} | {:error, atom()}
-  def check_consumed(%StepUp{} = step_up, actor, purpose, subject_id) do
-    cond do
-      is_nil(step_up.consumed_at) -> {:error, :not_verified}
-      not match?(%User{}, actor) or step_up.user_id != actor.id -> {:error, :wrong_user}
-      step_up.purpose != purpose -> {:error, :wrong_purpose}
-      step_up.subject_id != subject_id -> {:error, :wrong_subject}
-      true -> {:ok, step_up}
+  def check_consumed(%StepUp{id: id}, actor, purpose, subject_id) do
+    unless Cloud.Repo.in_transaction?() do
+      raise ArgumentError, "check_consumed/4 needs an open transaction"
     end
+
+    with {:ok, step_up} <- lock(id) do
+      cond do
+        is_nil(step_up.verified_at) or is_nil(step_up.consumed_at) -> {:error, :not_verified}
+        step_up.failed_at -> {:error, :failed}
+        consumed_too_long_ago?(step_up) -> {:error, :expired}
+        not match?(%User{}, actor) or step_up.user_id != actor.id -> {:error, :wrong_user}
+        step_up.purpose != purpose -> {:error, :wrong_purpose}
+        step_up.subject_id != subject_id -> {:error, :wrong_subject}
+        true -> {:ok, step_up}
+      end
+    end
+  end
+
+  def check_consumed(_not_a_step_up, _actor, _purpose, _subject_id), do: {:error, :not_verified}
+
+  # a consumed step-up only carries over to the other changes of the same operation,
+  # never to a later one
+  defp consumed_too_long_ago?(step_up) do
+    DateTime.diff(DateTime.utc_now(), step_up.consumed_at, :second) > @ttl_seconds
   end
 
   @doc """

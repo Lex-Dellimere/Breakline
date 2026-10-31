@@ -431,6 +431,35 @@ defmodule Cloud.Accounts.StepUpsTest do
                Sites.lift_advisory_lock(lock, Keyword.put(opts, :context, %{step_up: fresh})),
                :not_verified
              )
+
+      # a struct built in memory that claims to be consumed: the row says otherwise
+      forged = %{fresh | consumed_at: DateTime.utc_now()}
+
+      assert rejected?(
+               Sites.lift_advisory_lock(lock, Keyword.put(opts, :context, %{step_up: forged})),
+               :not_verified
+             )
+
+      # a struct for a row that does not exist
+      ghost = %{forged | id: Ecto.UUID.generate()}
+
+      assert rejected?(
+               Sites.lift_advisory_lock(lock, Keyword.put(opts, :context, %{step_up: ghost})),
+               :not_found
+             )
+
+      # consumed for this site, but long ago: it cannot carry over to a later operation
+      stale =
+        verified_step_up!(ctx.admin, :lift_lock, ctx.site.id, %{}, tenant: ctx.tenant)
+        |> Ash.Seed.update!(%{consumed_at: DateTime.add(DateTime.utc_now(), -600, :second)})
+
+      assert rejected?(
+               Sites.lift_advisory_lock(lock, Keyword.put(opts, :context, %{step_up: stale})),
+               :expired
+             )
+
+      assert {:ok, _} = Ash.get(Cloud.Sites.AdvisoryLock, lock.id, opts)
+      refute Ash.get!(Cloud.Sites.AdvisoryLock, lock.id, opts).lifted_at
     end
   end
 
