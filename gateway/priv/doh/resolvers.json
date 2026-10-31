@@ -1,0 +1,132 @@
+{
+  "comment": "public doh/dot resolvers the gateway refuses to resolve (nxdomain) and whose ips the firewall drops. curated by hand from each provider's own docs, not from any third-party blocklist. a hostname starting with '*.' matches any name below it, never the bare suffix.",
+  "verified_at": "2026-10-31",
+  "providers": [
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare 1.1.1.1 and 1.1.1.1 for Families",
+      "hostnames": [
+        "cloudflare-dns.com",
+        "one.one.one.one",
+        "security.cloudflare-dns.com",
+        "family.cloudflare-dns.com",
+        "mozilla.cloudflare-dns.com"
+      ],
+      "ipv4": ["1.1.1.1", "1.0.0.1", "1.1.1.2", "1.0.0.2", "1.1.1.3", "1.0.0.3"],
+      "ipv6": [
+        "2606:4700:4700::1111",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1112",
+        "2606:4700:4700::1002",
+        "2606:4700:4700::1113",
+        "2606:4700:4700::1003"
+      ],
+      "sources": [
+        "https://developers.cloudflare.com/1.1.1.1/ip-addresses/",
+        "https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/",
+        "https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-tls/",
+        "https://developers.cloudflare.com/1.1.1.1/setup/",
+        "https://wiki.mozilla.org/Trusted_Recursive_Resolver"
+      ],
+      "notes": "mozilla.cloudflare-dns.com is the firefox trr endpoint, documented by mozilla rather than cloudflare."
+    },
+    {
+      "id": "google",
+      "name": "Google Public DNS",
+      "hostnames": ["dns.google", "dns.google.com"],
+      "ipv4": ["8.8.8.8", "8.8.4.4"],
+      "ipv6": ["2001:4860:4860::8888", "2001:4860:4860::8844"],
+      "sources": [
+        "https://developers.google.com/speed/public-dns/docs/using",
+        "https://developers.google.com/speed/public-dns/docs/doh",
+        "https://developers.google.com/speed/public-dns/docs/secure-transports"
+      ],
+      "notes": "google's current docs only name dns.google. dns.google.com is the older json api name and is not in the docs any more; it is kept because blocking it costs nothing."
+    },
+    {
+      "id": "quad9",
+      "name": "Quad9",
+      "hostnames": ["dns.quad9.net", "dns10.quad9.net", "dns11.quad9.net"],
+      "ipv4": [
+        "9.9.9.9",
+        "149.112.112.112",
+        "9.9.9.10",
+        "149.112.112.10",
+        "9.9.9.11",
+        "149.112.112.11"
+      ],
+      "ipv6": [
+        "2620:fe::fe",
+        "2620:fe::9",
+        "2620:fe::10",
+        "2620:fe::fe:10",
+        "2620:fe::11",
+        "2620:fe::fe:11"
+      ],
+      "sources": ["https://quad9.net/service/service-addresses-and-features/"],
+      "notes": ""
+    },
+    {
+      "id": "opendns",
+      "name": "OpenDNS / Cisco Umbrella",
+      "hostnames": ["doh.umbrella.com", "doh.opendns.com", "dns.opendns.com"],
+      "ipv4": ["208.67.222.222", "208.67.220.220", "208.67.222.123", "208.67.220.123"],
+      "ipv6": ["2620:119:35::35", "2620:119:53::53"],
+      "sources": [
+        "https://www.opendns.com/setupguide/",
+        "https://www.cisco.com/c/en/us/support/docs/security/umbrella/224705-configure-dns-over-https-doh-with.html",
+        "https://www.cisco.com/c/en/us/support/docs/security/umbrella/225331-understand-umbrella-support-for-ipv6.html"
+      ],
+      "notes": "cisco's doh article documents doh.umbrella.com. doh.opendns.com and dns.opendns.com appear only in cisco community answers (the old support.opendns.com articles now redirect to the forum); kept because blocking them costs nothing. the ipv4 list includes the familyshield pair."
+    },
+    {
+      "id": "adguard",
+      "name": "AdGuard DNS",
+      "hostnames": ["dns.adguard-dns.com", "unfiltered.adguard-dns.com", "family.adguard-dns.com"],
+      "ipv4": [
+        "94.140.14.14",
+        "94.140.15.15",
+        "94.140.14.140",
+        "94.140.14.141",
+        "94.140.14.15",
+        "94.140.15.16"
+      ],
+      "ipv6": [
+        "2a10:50c0::ad1:ff",
+        "2a10:50c0::ad2:ff",
+        "2a10:50c0::1:ff",
+        "2a10:50c0::2:ff",
+        "2a10:50c0::bad1:ff",
+        "2a10:50c0::bad2:ff"
+      ],
+      "sources": ["https://adguard-dns.io/kb/general/dns-providers/"],
+      "notes": ""
+    },
+    {
+      "id": "nextdns",
+      "name": "NextDNS",
+      "hostnames": ["dns.nextdns.io", "*.dns.nextdns.io"],
+      "ipv4": [],
+      "ipv6": [],
+      "sources": ["https://help.nextdns.io/t/y4ykc5r/doh-no-profile"],
+      "notes": "nextdns gives endpoints per profile on the my.nextdns.io setup tab (doh https://dns.nextdns.io/<id>, dot <id>.dns.nextdns.io) and publishes no public ip list, so no ips are listed."
+    }
+  ],
+  "canaries": [
+    {
+      "name": "use-application-dns.net",
+      "source": "https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet",
+      "notes": "nxdomain tells firefox to turn off default-on doh and use the network resolver."
+    },
+    {
+      "name": "mask.icloud.com",
+      "source": "https://developer.apple.com/support/prepare-your-network-for-icloud-private-relay/",
+      "notes": "apple: nxdomain or no-error-no-answer for this name blocks icloud private relay and tells the user."
+    },
+    {
+      "name": "mask-h2.icloud.com",
+      "source": "https://developer.apple.com/support/prepare-your-network-for-icloud-private-relay/",
+      "notes": "same as mask.icloud.com."
+    }
+  ]
+}
