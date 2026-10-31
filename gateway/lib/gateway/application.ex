@@ -12,10 +12,17 @@ defmodule Gateway.Application do
     4. dns - `Gateway.DNS`, whose resolved RMM addresses go to the firewall and whose
        events go to `Gateway.Events`
     5. inbox - `Gateway.Dev.Inbox`, only when `:inbox_dir` is configured (dev)
+    6. uplink - `Gateway.Uplink`, only when `config :gateway, :uplink` is set
 
   A crash in one subtree never restarts another: a DNS crash leaves the firewall
   server and its applied state alone, and a firewall restart is noticed by the
   enforcer, which applies the desired state again.
+
+  The uplink subtree is `:temporary` and restarts its child at most 10 times a
+  minute. Should the uplink keep crashing, its subtree gives up and stays down
+  (logged by the supervisor) instead of spending `Gateway.Supervisor`'s restart
+  intensity, so an uplink crash loop can never take the firewall or the enforcer
+  with it. The gateway keeps enforcing offline either way.
 
   With `config :gateway, start_children: false` (the test config) the application
   starts an empty supervisor and tests start what they need, for example the whole
@@ -75,12 +82,27 @@ defmodule Gateway.Application do
         dir -> [{Gateway.Dev.Inbox, dir: dir}]
       end
 
+    uplink =
+      case Keyword.get(env, :uplink) do
+        nil ->
+          []
+
+        opts ->
+          opts = Keyword.merge([site_id: Keyword.fetch!(env, :site_id), clock: clock], opts)
+
+          [
+            :uplink
+            |> subtree([{Gateway.Uplink, opts}], :one_for_one, max_restarts: 10, max_seconds: 60)
+            |> Map.put(:restart, :temporary)
+          ]
+      end
+
     [
       subtree(:firewall, firewall, :one_for_one),
       {Gateway.Events, capacity: Keyword.get(env, :events_capacity, 10_000)},
       subtree(:enforcer, enforcer, :rest_for_one),
       {Gateway.DNS, dns_opts}
-    ] ++ inbox
+    ] ++ inbox ++ uplink
   end
 
   @doc """
@@ -99,13 +121,14 @@ defmodule Gateway.Application do
     |> Gateway.Firewall.add_resolved()
   end
 
-  defp subtree(id, children, strategy) do
+  defp subtree(id, children, strategy, opts \\ []) do
     name = Module.concat(Gateway, Macro.camelize("#{id}_supervisor"))
+    opts = Keyword.merge([strategy: strategy, name: name], opts)
 
     %{
       id: id,
       type: :supervisor,
-      start: {Supervisor, :start_link, [children, [strategy: strategy, name: name]]}
+      start: {Supervisor, :start_link, [children, opts]}
     }
   end
 end
