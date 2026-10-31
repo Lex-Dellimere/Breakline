@@ -5,7 +5,8 @@ defmodule Breakline.Catalog.Loader do
 
   `Breakline.Catalog` calls this at compile time, so a malformed
   `tools.json` (an invalid domain pattern, port, protocol or CIDR, or a KEV
-  key that is not already normalised) fails the build instead of reaching a
+  key that is not already normalised, or a port scope other than `"any"` or
+  `"tool_ips"`) fails the build instead of reaching a
   gateway.
   """
 
@@ -73,7 +74,14 @@ defmodule Breakline.Catalog.Loader do
         other -> raise ArgumentError, "invalid proto #{inspect(other)} for #{id}"
       end
 
-    %{port: port, proto: proto, source: Map.fetch!(p, "source")}
+    scope =
+      case Map.get(p, "scope") do
+        "any" -> :any
+        "tool_ips" -> :tool_ips
+        other -> raise ArgumentError, "invalid port scope #{inspect(other)} for #{id}"
+      end
+
+    %{port: port, proto: proto, scope: scope, source: Map.fetch!(p, "source")}
   end
 
   defp cidr!(cidr) do

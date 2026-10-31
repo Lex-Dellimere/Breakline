@@ -114,6 +114,25 @@ defmodule Breakline.Catalog do
   end
 
   @doc """
+  Returns the distinct ports of the given tools that only RMM tools use (scope
+  `:any`), sorted by port and protocol. The gateway drops these towards any
+  destination while locked. Unknown ids are ignored.
+
+      iex> Breakline.Catalog.exclusive_ports(["anydesk", "n_central"])
+      [%{port: 6568, proto: :tcp}, %{port: 7070, proto: :tcp}]
+  """
+  @spec exclusive_ports([tool_id()]) :: [%{port: 1..65_535, proto: :tcp | :udp}]
+  def exclusive_ports(tool_ids) do
+    tool_ids
+    |> known_tools()
+    |> Enum.flat_map(& &1.ports)
+    |> Enum.filter(&(&1.scope == :any))
+    |> Enum.map(&Map.take(&1, [:port, :proto]))
+    |> Enum.uniq()
+    |> Enum.sort_by(&{&1.port, &1.proto})
+  end
+
+  @doc """
   Returns the distinct CIDRs of the given tools, sorted. Unknown ids are
   ignored.
   """

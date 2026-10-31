@@ -5,8 +5,11 @@ defmodule Breakline.Catalog.Tool do
   `domains` are the names the gateway answers NXDOMAIN for while the tool is
   locked, each with the source it was taken from and its compiled
   `Breakline.Catalog.DomainPattern`. `ports` are the tool's service ports and
-  `cidrs` any fixed address ranges; ports describe traffic to the tool's
-  resolved IPs and CIDRs and are not meant to be dropped on their own.
+  `cidrs` any fixed address ranges. Each port has a `scope`: `:tool_ips` for a
+  port shared with ordinary traffic (80, 443, 8443 and so on), which only
+  matters towards the tool's own resolved IPs and CIDRs, and `:any` for a port
+  only RMM tools use, which the gateway drops towards any destination while
+  locked.
   `kev_keys` are the normalised CISA KEV vendor and product names that lock
   the tool, where a product of `"*"` matches any product from that vendor.
   `excluded` records patterns the sources list but the catalog deliberately
@@ -19,7 +22,13 @@ defmodule Breakline.Catalog.Tool do
   defstruct @enforce_keys
 
   @type domain :: %{pattern: String.t(), source: String.t(), compiled: DomainPattern.t()}
-  @type port_spec :: %{port: 1..65_535, proto: :tcp | :udp, source: String.t()}
+  @type port_scope :: :any | :tool_ips
+  @type port_spec :: %{
+          port: 1..65_535,
+          proto: :tcp | :udp,
+          scope: port_scope(),
+          source: String.t()
+        }
   @type kev_key :: %{vendor: String.t(), product: String.t()}
   @type excluded :: %{pattern: String.t(), source: String.t(), reason: String.t()}
 

@@ -228,6 +228,46 @@ defmodule Breakline.CatalogTest do
       assert Catalog.ports([]) == []
     end
 
+    test "every port has a scope and only the rmm-only ports are :any" do
+      any =
+        for tool <- Catalog.tools(),
+            p <- tool.ports,
+            p.scope == :any,
+            do: {tool.id, p.port, p.proto}
+
+      assert Enum.sort(any) == [
+               {"anydesk", 6568, :tcp},
+               {"anydesk", 7070, :tcp},
+               {"screenconnect", 8041, :tcp},
+               {"take_control", 3377, :tcp},
+               {"teamviewer", 5938, :tcp},
+               {"teamviewer", 5938, :udp}
+             ]
+
+      for tool <- Catalog.tools(), p <- tool.ports do
+        assert p.scope in [:any, :tool_ips]
+      end
+    end
+
+    test "exclusive_ports returns distinct sorted :any ports only" do
+      assert Catalog.exclusive_ports(Catalog.ids()) == [
+               %{port: 3377, proto: :tcp},
+               %{port: 5938, proto: :tcp},
+               %{port: 5938, proto: :udp},
+               %{port: 6568, proto: :tcp},
+               %{port: 7070, proto: :tcp},
+               %{port: 8041, proto: :tcp}
+             ]
+
+      assert Catalog.exclusive_ports(["teamviewer", "teamviewer", "bogus"]) == [
+               %{port: 5938, proto: :tcp},
+               %{port: 5938, proto: :udp}
+             ]
+
+      assert Catalog.exclusive_ports(["n_central", "ninjaone"]) == []
+      assert Catalog.exclusive_ports([]) == []
+    end
+
     test "cidrs are empty for the seeded tools" do
       assert Catalog.cidrs(Catalog.ids()) == []
     end
@@ -241,7 +281,9 @@ defmodule Breakline.CatalogTest do
         "name" => "T",
         "vendor" => "V",
         "domains" => [%{"pattern" => "a.example.com", "source" => "https://example.com"}],
-        "ports" => [%{"port" => 1, "proto" => "udp", "source" => "https://example.com"}],
+        "ports" => [
+          %{"port" => 1, "proto" => "udp", "scope" => "any", "source" => "https://example.com"}
+        ],
         "cidrs" => ["192.0.2.1/32", "2001:db8::/32"],
         "kev_keys" => [%{"vendor" => "v", "product" => "*"}],
         "excluded" => []
@@ -249,15 +291,29 @@ defmodule Breakline.CatalogTest do
     end
 
     test "parses a valid tool" do
-      assert [%Tool{id: "t", ports: [%{proto: :udp}], cidrs: ["192.0.2.1/32", "2001:db8::/32"]}] =
+      assert [
+               %Tool{
+                 id: "t",
+                 ports: [%{proto: :udp, scope: :any}],
+                 cidrs: ["192.0.2.1/32", "2001:db8::/32"]
+               }
+             ] =
                Loader.parse!(json(base()))
     end
 
     test "rejects invalid entries" do
       bad = [
         put_in(base()["domains"], [%{"pattern" => "*", "source" => "x"}]),
-        put_in(base()["ports"], [%{"port" => 0, "proto" => "tcp", "source" => "x"}]),
-        put_in(base()["ports"], [%{"port" => 443, "proto" => "sctp", "source" => "x"}]),
+        put_in(base()["ports"], [
+          %{"port" => 0, "proto" => "tcp", "scope" => "any", "source" => "x"}
+        ]),
+        put_in(base()["ports"], [
+          %{"port" => 443, "proto" => "sctp", "scope" => "any", "source" => "x"}
+        ]),
+        put_in(base()["ports"], [
+          %{"port" => 443, "proto" => "tcp", "scope" => "everywhere", "source" => "x"}
+        ]),
+        put_in(base()["ports"], [%{"port" => 443, "proto" => "tcp", "source" => "x"}]),
         put_in(base()["cidrs"], ["192.0.2.1/33"]),
         put_in(base()["cidrs"], ["not-an-ip/32"]),
         put_in(base()["kev_keys"], [%{"vendor" => "N-able", "product" => "*"}])

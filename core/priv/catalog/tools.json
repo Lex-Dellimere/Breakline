@@ -1,5 +1,5 @@
 {
-  "comment": "Breakline curated RMM catalog. Domains sourced 'lolrmm:<slug>' come from lolrmm_snapshot.json (LOLRMM, Apache-2.0, see NOTICE); URL sources are vendor documentation. Ports are the tool's service ports and are meant to be combined with the tool's resolved IPs and CIDRs, never dropped on their own.",
+  "comment": "Breakline curated RMM catalog. Domains sourced 'lolrmm:<slug>' come from lolrmm_snapshot.json (LOLRMM, Apache-2.0, see NOTICE); URL sources are vendor documentation. Ports are the tool's service ports. A port with scope 'tool_ips' is shared with ordinary traffic (80, 443, 8443 and so on) and only matters towards the tool's own resolved IPs and CIDRs. A port with scope 'any' is used only by RMM tools, so the gateway drops it towards any destination while locked, which also stops direct peer-to-peer sessions.",
   "tools": {
     "n_central": {
       "name": "N-able N-central",
@@ -20,10 +20,10 @@
         {"pattern": "a33d8yamkwy4nx-ats.iot.ap-southeast-2.amazonaws.com", "source": "lolrmm:n-able-n-central"}
       ],
       "ports": [
-        {"port": 80, "proto": "tcp", "source": "lolrmm:n-able-n-central"},
-        {"port": 443, "proto": "tcp", "source": "lolrmm:n-able-n-central"},
-        {"port": 8088, "proto": "tcp", "source": "lolrmm:n-able-n-central"},
-        {"port": 8443, "proto": "tcp", "source": "lolrmm:n-able-n-central"}
+        {"port": 80, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:n-able-n-central"},
+        {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:n-able-n-central"},
+        {"port": 8088, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:n-able-n-central"},
+        {"port": 8443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:n-able-n-central"}
       ],
       "cidrs": [],
       "kev_keys": [
@@ -64,8 +64,8 @@
         {"pattern": "*.swi-rc.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"}
       ],
       "ports": [
-        {"port": 443, "proto": "tcp", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"},
-        {"port": 3377, "proto": "tcp", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"}
+        {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"},
+        {"port": 3377, "proto": "tcp", "scope": "any", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"}
       ],
       "cidrs": [],
       "kev_keys": [
@@ -84,8 +84,8 @@
         {"pattern": "live.screenconnect.com", "source": "lolrmm:connectwise-control"}
       ],
       "ports": [
-        {"port": 443, "proto": "tcp", "source": "lolrmm:screenconnect"},
-        {"port": 8041, "proto": "tcp", "source": "lolrmm:screenconnect"}
+        {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:screenconnect"},
+        {"port": 8041, "proto": "tcp", "scope": "any", "source": "lolrmm:screenconnect"}
       ],
       "cidrs": [],
       "kev_keys": [
@@ -149,10 +149,10 @@
         {"pattern": "*.net.anydesk.com", "source": "lolrmm:anydesk"}
       ],
       "ports": [
-        {"port": 80, "proto": "tcp", "source": "lolrmm:anydesk"},
-        {"port": 443, "proto": "tcp", "source": "lolrmm:anydesk"},
-        {"port": 6568, "proto": "tcp", "source": "lolrmm:anydesk"},
-        {"port": 7070, "proto": "tcp", "source": "lolrmm:anydesk"}
+        {"port": 80, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:anydesk"},
+        {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:anydesk"},
+        {"port": 6568, "proto": "tcp", "scope": "any", "source": "lolrmm:anydesk"},
+        {"port": 7070, "proto": "tcp", "scope": "any", "source": "lolrmm:anydesk"}
       ],
       "cidrs": [],
       "kev_keys": [
@@ -170,10 +170,10 @@
         {"pattern": "taf.teamviewer.com", "source": "lolrmm:teamviewer"}
       ],
       "ports": [
-        {"port": 443, "proto": "tcp", "source": "lolrmm:teamviewer"},
-        {"port": 5938, "proto": "tcp", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"},
-        {"port": 5938, "proto": "udp", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"},
-        {"port": 80, "proto": "tcp", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"}
+        {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:teamviewer"},
+        {"port": 5938, "proto": "tcp", "scope": "any", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"},
+        {"port": 5938, "proto": "udp", "scope": "any", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"},
+        {"port": 80, "proto": "tcp", "scope": "tool_ips", "source": "https://www.teamviewer.com/en/global/support/knowledge-base/teamviewer-remote/troubleshooting/ports-used-by-teamviewer/"}
       ],
       "cidrs": [],
       "kev_keys": [
