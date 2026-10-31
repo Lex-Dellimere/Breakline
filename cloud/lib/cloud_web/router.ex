@@ -45,30 +45,29 @@ defmodule CloudWeb.Router do
     get "/", PageController, :home
     auth_routes AuthController, Cloud.Accounts.User, path: "/auth"
 
-    sign_out_route AuthController, "/sign-out",
-      overrides: [CloudWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.Default]
+    # all auth pages are our own mishka liveviews (CloudWeb.AuthLive.*);
+    # none of ash_authentication_phoenix's built-in ui is rendered
+    sign_out_route AuthController, "/sign-out", live_view: CloudWeb.AuthLive.SignOut
 
-    # Remove these if you'd like to use your own authentication views
-    sign_in_route register_path: "/register",
-                  reset_path: "/reset",
+    sign_in_route live_view: CloudWeb.AuthLive.SignIn,
                   auth_routes_prefix: "/auth",
-                  on_mount: [{CloudWeb.LiveUserAuth, :live_no_user}],
-                  overrides: [CloudWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.Default]
+                  on_mount: [{CloudWeb.LiveUserAuth, :live_no_user}]
 
-    # Remove this if you do not want to use the reset password feature
-    reset_route auth_routes_prefix: "/auth",
-                overrides: [CloudWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.Default]
+    reset_route live_view: CloudWeb.AuthLive.Reset,
+                auth_routes_prefix: "/auth",
+                on_mount: [{CloudWeb.LiveUserAuth, :live_no_user}]
 
-    # Remove this if you do not use the confirmation strategy
     confirm_route Cloud.Accounts.User, :confirm_new_user,
-      auth_routes_prefix: "/auth",
-      overrides: [CloudWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.Default]
+      live_view: CloudWeb.AuthLive.Confirm,
+      auth_routes_prefix: "/auth"
 
-    # Remove this if you do not use the magic link strategy.
-    magic_sign_in_route(Cloud.Accounts.User, :magic_link,
-      auth_routes_prefix: "/auth",
-      overrides: [CloudWeb.AuthOverrides, AshAuthentication.Phoenix.Overrides.Default]
-    )
+    # sign_in_route takes a single liveview, so registration and the reset
+    # request get their own live session with the same auth assigns
+    ash_authentication_live_session :auth_pages,
+      on_mount: [{CloudWeb.LiveUserAuth, :live_no_user}] do
+      live "/register", AuthLive.Register, :register
+      live "/reset", AuthLive.ResetRequest, :reset_request
+    end
   end
 
   # Other scopes may use custom stacks.
