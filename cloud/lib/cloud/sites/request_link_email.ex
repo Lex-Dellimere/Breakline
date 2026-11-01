@@ -9,8 +9,6 @@ defmodule Cloud.Sites.RequestLinkEmail do
 
   alias Cloud.Sites.RequestLinks
 
-  @from {"Breakline", "noreply@example.com"}
-
   @doc "Builds the email for a contact, a site, a raw token and the link's expiry."
   @spec build(map(), map(), String.t(), DateTime.t()) :: Swoosh.Email.t()
   def build(contact, site, token, expires_at) do
@@ -18,7 +16,7 @@ defmodule Cloud.Sites.RequestLinkEmail do
     expires = Calendar.strftime(expires_at, "%d %b %Y")
 
     new()
-    |> from(@from)
+    |> from(Cloud.Mailer.from())
     |> to({contact.name, to_string(contact.email)})
     |> subject("Request a maintenance window for #{site.name}")
     |> text_body("""

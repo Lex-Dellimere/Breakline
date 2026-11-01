@@ -14,7 +14,7 @@ defmodule CloudWeb.TimelineLiveTest do
     Map.merge(org, %{site: site, conn: log_in_user(conn, admin)})
   end
 
-  defp event!(site, type, at, data \\ %{}) do
+  defp event!(site, type, at, data) do
     Gateways.create_event!(%{site_id: site.id, type: type, at: at, data: data},
       tenant: site.tenant_id,
       authorize?: false

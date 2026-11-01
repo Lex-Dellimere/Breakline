@@ -6,6 +6,8 @@ defmodule Cloud.Accounts.User.Senders.SendNewUserConfirmationEmail do
   use AshAuthentication.Sender
   use CloudWeb, :verified_routes
 
+  require Logger
+
   import Swoosh.Email
 
   alias Cloud.Mailer
@@ -13,11 +15,12 @@ defmodule Cloud.Accounts.User.Senders.SendNewUserConfirmationEmail do
   @impl true
   def send(user, token, opts) do
     new()
-    |> from({"noreply", "noreply@example.com"})
+    |> from(Mailer.from())
     |> to(to_string(user.email))
     |> subject(subject(opts))
     |> html_body(body(token, opts))
-    |> Mailer.deliver!()
+    |> Mailer.deliver()
+    |> log_failure()
   end
 
   # `opts[:confirmation_type]` is `:identity_link` when an OAuth2/OIDC
@@ -50,5 +53,14 @@ defmodule Cloud.Accounts.User.Senders.SendNewUserConfirmationEmail do
         <p><a href="#{url}">#{url}</a></p>
         """
     end
+  end
+
+  # a failed send is logged, not raised: raising would fail the auth action itself
+  # (D45). Cloud.Mailer.NotConfigured has already logged the recipient and subject
+  defp log_failure({:ok, _}), do: :ok
+
+  defp log_failure({:error, reason}) do
+    Logger.warning("auth email not sent: #{inspect(reason)}")
+    :ok
   end
 end

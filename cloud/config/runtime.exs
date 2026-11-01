@@ -238,21 +238,21 @@ if config_env() == :prod do
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
 
-  # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Here is an example configuration for Mailgun:
-  #
-  #     config :cloud, Cloud.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
-  # Most non-SMTP adapters require an API client. Swoosh supports Req, Hackney,
-  # and Finch out-of-the-box. This configuration is typically done at
-  # compile-time in your config/prod.exs:
-  #
-  #     config :swoosh, :api_client, Swoosh.ApiClient.Req
-  #
-  # See https://swoosh.hexdocs.pm/Swoosh.html#module-installation for details.
+  # outbound email (D45). postmark when POSTMARK_API_KEY is set: its adapter only needs
+  # the Req api client set in prod.exs. MAIL_FROM is then required and must be a sender
+  # postmark has verified. without a key, Cloud.Mailer.NotConfigured sends nothing and
+  # logs each email's recipient and subject, so the release still runs for demos
+  case System.get_env("POSTMARK_API_KEY") do
+    nil ->
+      config :cloud, Cloud.Mailer, adapter: Cloud.Mailer.NotConfigured
+
+    api_key ->
+      config :cloud, Cloud.Mailer, adapter: Swoosh.Adapters.Postmark, api_key: api_key
+
+      config :cloud,
+        mail_from:
+          {System.get_env("MAIL_FROM_NAME", "Breakline"),
+           System.get_env("MAIL_FROM") ||
+             raise("environment variable MAIL_FROM is missing (needed with POSTMARK_API_KEY)")}
+  end
 end

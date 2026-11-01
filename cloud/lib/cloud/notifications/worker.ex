@@ -149,9 +149,7 @@ defmodule Cloud.Notifications.Worker do
 
     email =
       new()
-      |> from(
-        Application.get_env(:cloud, :notifications_from, {"Breakline", "noreply@example.com"})
-      )
+      |> from(Application.get_env(:cloud, :notifications_from, Cloud.Mailer.from()))
       |> to(address)
       |> subject(content.subject)
       |> text_body(content.text)
