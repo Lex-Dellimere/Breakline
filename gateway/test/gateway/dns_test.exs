@@ -377,6 +377,37 @@ defmodule Gateway.DNSTest do
     end
   end
 
+  describe "dual-stack listener" do
+    test "bound to ::, it answers ipv4 and ipv6 clients and reports plain ipv4 peers",
+         %{upstream: up} do
+      dns = start_dns([up], ip: {0, 0, 0, 0, 0, 0, 0, 0}, name: :dual_stack)
+      port = Gateway.DNS.port(dns)
+      put(locked?: true, mode: :enforce)
+
+      assert rcode(udp_query(port, "relay-1.net.anydesk.com", :a, 1)) == 3
+      assert_receive {:event, %{type: :blocked, client: @localhost}}
+
+      assert rcode(tcp_query(port, "relay-1.net.anydesk.com", :a, 2)) == 3
+      assert_receive {:event, %{type: :blocked, client: @localhost}}
+
+      {:ok, sock} = :gen_udp.open(0, [:binary, :inet6, active: false])
+
+      :ok =
+        :gen_udp.send(sock, {0, 0, 0, 0, 0, 0, 0, 1}, port, query_packet("example.com", :a, 3))
+
+      assert {:ok, {_, _, reply}} = :gen_udp.recv(sock, 0, 3000)
+      :gen_udp.close(sock)
+      assert id(reply) == 3
+    end
+
+    test "client_ip/1 unmaps ::ffff:a.b.c.d and leaves other addresses alone" do
+      alias Gateway.DNS.Server
+      assert Server.client_ip({0, 0, 0, 0, 0, 0xFFFF, 0x0A0A, 0x0002}) == {10, 10, 0, 2}
+      assert Server.client_ip({10, 10, 0, 2}) == {10, 10, 0, 2}
+      assert Server.client_ip({0xFD00, 0, 0, 0, 0, 0, 0, 2}) == {0xFD00, 0, 0, 0, 0, 0, 0, 2}
+    end
+  end
+
   describe "callbacks" do
     @tag :capture_log
     test "a raising on_event or on_resolved does not break the query", %{upstream: up} do

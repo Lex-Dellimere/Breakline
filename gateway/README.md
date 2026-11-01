@@ -178,7 +178,8 @@ tree through `Gateway.Application.children/1`.
 - `BREAKLINE_UPSTREAMS` (optional, `1.1.1.1,9.9.9.9:53,[2606:4700:4700::1111]:53`)
 - `BREAKLINE_DATA_DIR` (default `/var/lib/breakline`)
 - `BREAKLINE_DEFAULT_MODE` (`monitor` or `enforce`)
-- `BREAKLINE_DNS_IP` (default `0.0.0.0`)
+- `BREAKLINE_DNS_IP` (default `::`, which takes ipv4 and ipv6 clients; `0.0.0.0` on a
+  host without ipv6, but then the ipv6 dns redirect finds nothing listening)
 - `BREAKLINE_UPLINK_URL` (optional, `wss://...`; without it there is no uplink), and
   with it `BREAKLINE_UPLINK_CERT`, `BREAKLINE_UPLINK_KEY`, `BREAKLINE_UPLINK_CA` (pem
   paths) and optionally `BREAKLINE_UPLINK_SERVER_NAME` (the name the server certificate

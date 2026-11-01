@@ -12,6 +12,8 @@ defmodule Gateway.DNS.Server do
 
   use GenServer
 
+  import Bitwise
+
   require Logger
 
   alias Gateway.DNS.{Packet, Resolver}
@@ -111,7 +113,7 @@ defmodule Gateway.DNS.Server do
 
   @impl true
   def handle_info({:udp, sock, ip, port, packet}, %{udp: sock} = state) do
-    ctx = Map.merge(state.ctx, %{client: ip, transport: :udp})
+    ctx = Map.merge(state.ctx, %{client: client_ip(ip), transport: :udp})
 
     _ =
       Task.Supervisor.start_child(state.ctx.task_sup, fn ->
@@ -139,6 +141,15 @@ defmodule Gateway.DNS.Server do
     if state.tcp, do: :gen_tcp.close(state.tcp)
     :gen_udp.close(state.udp)
   end
+
+  @doc false
+  # a socket bound to :: takes ipv4 as well, and those peers show up as ::ffff:a.b.c.d.
+  # events carry the plain ipv4 address, replies still go to the mapped one
+  @spec client_ip(:inet.ip_address()) :: :inet.ip_address()
+  def client_ip({0, 0, 0, 0, 0, 0xFFFF, ab, cd}),
+    do: {ab >>> 8, ab &&& 0xFF, cd >>> 8, cd &&& 0xFF}
+
+  def client_ip(ip), do: ip
 
   @doc false
   # the resolver should never raise, but a bad packet must cost one task at most
@@ -171,7 +182,7 @@ defmodule Gateway.DNS.Server do
   defp start_conn(sock, ctx, idle) do
     client =
       case :inet.peername(sock) do
-        {:ok, {ip, _port}} -> ip
+        {:ok, {ip, _port}} -> client_ip(ip)
         _ -> nil
       end
 

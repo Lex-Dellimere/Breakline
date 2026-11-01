@@ -8,7 +8,8 @@ import Config
 #   BREAKLINE_UPSTREAMS         optional, "1.1.1.1,9.9.9.9:53" (port defaults to 53)
 #   BREAKLINE_DATA_DIR          optional, default /var/lib/breakline
 #   BREAKLINE_DEFAULT_MODE      optional, monitor (default) or enforce
-#   BREAKLINE_DNS_IP            optional, address the resolver binds, default 0.0.0.0
+#   BREAKLINE_DNS_IP            optional, address the resolver binds, default :: (ipv4
+#                               and ipv6; set 0.0.0.0 on a host without ipv6)
 #   BREAKLINE_UPLINK_URL        optional, "wss://host/gateway/socket/websocket"; without
 #                               it the gateway runs with no uplink
 #   BREAKLINE_UPLINK_CERT       required with the url, client certificate (pem)
@@ -130,7 +131,7 @@ if config_env() == :prod do
            unenrolled?: source == :unenrolled
          ] ++ lan_interfaces
 
-  dns = [ip: parse_ip.(System.get_env("BREAKLINE_DNS_IP", "0.0.0.0")), port: 53]
+  dns = [ip: parse_ip.(System.get_env("BREAKLINE_DNS_IP", "::")), port: 53]
   dns = if upstreams, do: Keyword.put(dns, :upstreams, upstreams), else: dns
 
   config :gateway, Gateway.DNS, dns
