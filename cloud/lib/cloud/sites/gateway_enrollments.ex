@@ -98,14 +98,21 @@ defmodule Cloud.Sites.GatewayEnrollments do
   Trusted: enrols the gateway whose certificate DER is `cert_der` with the
   typed `code`. `remote_ip` (a string) is recorded with the use.
 
-  Returns `{:ok, %{site: site, replaced_fingerprint: fp | nil}}` with the
-  site as it is pinned now, or `{:error, :invalid}` for an unknown,
+  Returns `{:ok, %{site: site, replaced_fingerprint: fp | nil, published: version |
+  nil}}` with the site as it is pinned now. A site that has never published gets
+  its first policy version in the same transaction (`published`, broadcast after
+  commit), so the box joins to the site's settings; or `{:error, :invalid}` for an unknown,
   malformed, used, cancelled or expired code, or
   `{:error, :certificate_in_use}` when another site already pins the
   certificate.
   """
   @spec enroll(String.t(), binary(), String.t() | nil) ::
-          {:ok, %{site: Site.t(), replaced_fingerprint: String.t() | nil}}
+          {:ok,
+           %{
+             site: Site.t(),
+             replaced_fingerprint: String.t() | nil,
+             published: Cloud.Sites.PolicyVersion.t() | nil
+           }}
           | {:error, :invalid | :certificate_in_use | term()}
   def enroll(code, cert_der, remote_ip)
       when is_binary(code) and is_binary(cert_der) do
@@ -132,12 +139,24 @@ defmodule Cloud.Sites.GatewayEnrollments do
              Sites.assign_gateway(site, fingerprint,
                authorize?: false,
                return_notifications?: true
-             ) do
-        %{site: pinned, replaced_fingerprint: site.gateway_cert_fingerprint}
+             ),
+           {:ok, published} <- publish_first(pinned) do
+        %{site: pinned, replaced_fingerprint: site.gateway_cert_fingerprint, published: published}
       else
         {:error, reason} -> Cloud.Repo.rollback(reason)
       end
     end)
+    |> case do
+      {:ok, %{published: nil}} = ok ->
+        ok
+
+      {:ok, %{published: version} = result} ->
+        Cloud.Policies.broadcast(version)
+        {:ok, %{result | site: %{result.site | policy_version: version.version}}}
+
+      error ->
+        error
+    end
   end
 
   def enroll(_code, _cert_der, _remote_ip), do: {:error, :invalid}
@@ -222,6 +241,14 @@ defmodule Cloud.Sites.GatewayEnrollments do
       _ -> []
     end
   end
+
+  # a site that has never published (a new site nobody has opened, locked or edited) gets
+  # its first policy with its first box, so the box joins to the site's mode and tools
+  # instead of running on its own defaults
+  defp publish_first(%Site{policy_version: 0} = site),
+    do: Cloud.Policies.publish_in_transaction(site.id, reason: "first gateway enrolled")
+
+  defp publish_first(_site), do: {:ok, nil}
 
   defp config, do: Application.get_env(:cloud, :gateway_enrollment, [])
 

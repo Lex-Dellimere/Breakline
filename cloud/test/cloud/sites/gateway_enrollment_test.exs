@@ -118,10 +118,30 @@ defmodule Cloud.Sites.GatewayEnrollmentTest do
                "actor_id" => nil,
                "gateway_cert_fingerprint" => fp,
                "remote_ip" => "192.0.2.7"
-             } = List.last(actions(ctx.tenant))
+             } = Enum.find(actions(ctx.tenant), &(&1["action"] == "gateway_enrollment.used"))
 
       assert fp == site.gateway_cert_fingerprint
       assert {:error, :invalid} = GatewayEnrollments.enroll(code, der, nil)
+      assert :ok = Cloud.Audit.verify(ctx.tenant.id)
+    end
+
+    test "publishes a site's first policy with its first box, and only then", ctx do
+      assert ctx.site.policy_version == 0
+      {code, _} = enrollment!(ctx.site, ctx.admin)
+      :ok = Phoenix.PubSub.subscribe(Cloud.PubSub, Cloud.Policies.topic(ctx.site.id))
+
+      assert {:ok, %{site: site, published: %{version: 1, reason: "first gateway enrolled"}}} =
+               GatewayEnrollments.enroll(code, :crypto.strong_rand_bytes(100), nil)
+
+      assert site.policy_version == 1
+      assert_receive {:policy_published, _, 1}
+
+      # a replacement box joins to whatever is published, nothing new
+      {again, _} = enrollment!(site, ctx.admin)
+
+      assert {:ok, %{site: %{policy_version: 1}, published: nil}} =
+               GatewayEnrollments.enroll(again, :crypto.strong_rand_bytes(100), nil)
+
       assert :ok = Cloud.Audit.verify(ctx.tenant.id)
     end
 
