@@ -531,3 +531,12 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
 - **Why:** the N-central console launches Take Control sessions, and that is how the August 2026 attackers reached client machines (iTnews, 20 Aug 2026). Before this, a KEV entry for N-central closed N-central's agent hosts only, which would have left the actual attack path open. No other tool in the catalogue is launched from a separate console this way.
 - **ACSC name matches stay per tool:** an ACSC alert that names "N-central" in its text matches `n_central` only. ACSC matches always ask before locking (D30), so a person sees the alert either way. Extending this relation to name matches is later work.
 - **How fast the KEV trigger would have been in August 2026** (CISA's own catalogue entries, `docs/research/buyers-and-channels.md` §5.1): exploitation was seen from 1 Aug. KEV listed CVE-2026-18577 on 3 Aug and CVE-2026-18556 on 4 Aug, and the ACSC High Alert went out on 19 Aug. So a KEV-triggered lock would have come about 2 days after exploitation began, and an ACSC-only trigger about 18 days after. CVE-2026-86218 (the September pre-auth RCE) was listed on 8 Sep, 3 days after Hotfix 4. The first 2 days stay uncovered, which is why closed-by-default matters more than the auto-lock.
+
+### D48. The name stays; no spending until a pilot is agreed
+- **Name:** IP Australia's trade mark register (quick search, 1 Nov 2026) has one hit for "breakline": BREAKLINES, a class 16 newsletter mark, lapsed in 1991. Nothing registered stands in the way of Breakline for software or security services. This is a quick search, not legal advice, and it gets checked again before any filing.
+- **Domains:**
+  - `breakline.au` belongs to an Australian survey-drafting firm that trades as BREAKLINE. That's an unrelated field, so there's no conflict, but it does mean search clutter.
+  - `breakline.com.au` is registered and not serving anything.
+  - `breaklinesecurity.com.au` was free on 1 Nov 2026 and is the pick.
+- **Spending (budget AUD 300 to the 2026-12-29 gate):** buy nothing until an MSP agrees to a pilot. Then buy the domain and a small Sydney VM, and set up Postmark. Each spend needs the owner's yes, with an exact price. Until then, the research interviews go out from the owner's own email, which is honest for a conversation that isn't a pitch.
+- **First targets:** `docs/sales/targets.md` has five MSPs from the research, each with a first email built on something true and public about them.
