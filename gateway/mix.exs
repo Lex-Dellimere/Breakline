@@ -24,6 +24,10 @@ defmodule Gateway.MixProject do
     ]
   end
 
+  def cli do
+    [preferred_envs: ["gateway.package.deb": :prod]]
+  end
+
   def application do
     [
       extra_applications: [:logger, :crypto],
