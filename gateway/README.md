@@ -165,6 +165,7 @@ Restart the gateway and it comes back with the same policy. To start over, stop 
 ```sh
 mix test                      # everything except real nftables
 mix test --only nft_docker    # golden rulesets loaded into nft in a throwaway container
+mix test --only traffic       # real packets through the release, see "Traffic tests"
 ```
 
 The test config starts no children. Tests start what they need, including the whole
@@ -262,3 +263,36 @@ elixir --sname gw -S mix run --no-halt
 
 `config/dev.exs` prefers `tmp/dev_enrolled/enrollment.json` over the `priv/keys/`
 shortcut; remove `tmp/dev_enrolled` to go back.
+
+## Traffic tests
+
+```sh
+mix test --only traffic
+```
+
+Real packets through the prod release (`MIX_ENV=prod mix release`, which the suite
+builds) in throwaway `debian:trixie-slim` containers: `--rm`, `--init`, NET_ADMIN and
+SYS_ADMIN only, no host networking, nothing on the host changed. The scripts are in
+`test/fixtures/traffic/`. Each container holds three network namespaces: `client`
+(the LAN), the container itself (the gateway) and `upstream` (dnsmasq with catalog,
+vanity and plain names on documentation addresses, a rogue resolver on 8.8.8.8, and
+listeners on 80, 443, 853, 5938 and 6568). Three containers run in parallel:
+
+- `router`: LAN and WAN on separate interfaces, the gateway forwards.
+- `bridge`: `br0` with both veths, one subnet, `BREAKLINE_LAN_INTERFACES=br0`, and
+  `net.bridge.bridge-nf-call-iptables` and `-ip6tables` at 1 through
+  `docker run --sysctl` (`/proc/sys` is read-only inside the container).
+- `bridge` with those sysctls at 0, to show what the gateway reports then.
+
+The scenarios: the DNS redirect from any resolver address (udp and tcp, ipv4 and
+ipv6), locked drops, an open window, sessions cut when a window ends or a lock
+arrives, monitor counters, a killed and restarted beam, a flushed ruleset, the WAN
+side of the resolver, and the bridge setups the firewall reports.
+
+Bridge mode needs br_netfilter loaded, both sysctls at 1, and the bridge (not a port)
+as the LAN interface. Otherwise nothing on the bridge is enforced, and
+`Gateway.Enforcer.status().firewall.host_problems` says why.
+
+Not checked: the monitor-mode log lines. The kernel only logs from the init network
+namespace unless `net.netfilter.nf_log_all_netns` is set, so the suite asserts on the
+counters and on the `limit 30/minute burst 10` in the listed rules.
