@@ -185,3 +185,31 @@ tree through `Gateway.Application.children/1`.
   must carry, when it is not the url's host)
 
 In prod the firewall is `NftImpl` and DNS listens on port 53.
+
+## Release and pilot box
+
+The pilot box is Debian 13 amd64 running the release as a hardened systemd service. The
+runbook for whoever installs one is `docs/PILOT.md`.
+
+```sh
+mix gateway.package.deb                 # MIX_ENV=prod; writes _build/prod/breakline-gateway_<vsn>_amd64.deb
+mix test --only deb_docker              # installs it in a debian:trixie-slim container and runs it
+```
+
+Build on Debian 13 amd64: the release bundles the build host's erts. The package sources
+(unit, `/etc/default` file, the `breakline-gateway` wrapper, maintainer scripts and the
+network examples for each install mode) are in `packaging/deb/`.
+
+- **Distribution** is only there for `breakline-gateway status` (`bin/gateway rpc`). There
+  is no epmd: the node is `gateway@127.0.0.1` and listens on 127.0.0.1:4370 only, and rpc
+  clients connect without listening (`rel/vm.args.eex`, `rel/remote.vm.args.eex`).
+- **Cookie:** the build-time cookie is removed from the package. `postinst` writes a
+  per-box one to `/etc/breakline-gateway/cookie` (`breakline`, 0400), and `rel/env.sh.eex`
+  reads it. Without it the release refuses to start.
+- **Unit:** `User=breakline`, only `CAP_NET_ADMIN` (nft) and `CAP_NET_BIND_SERVICE` (:53),
+  `ProtectSystem=strict`, a syscall filter and `MemoryDenyWriteExecute=yes`. The BEAM JIT
+  dual-maps its code, so it runs under the kernel's `PR_SET_MDWE`. State is in
+  `/var/lib/breakline` (`StateDirectory=`). `systemd-analyze security` scores it 1.6.
+- **Wrapper:** `breakline-gateway status` and
+  `breakline-gateway enroll <cloud_url> <code> --ca-sha256 <hex>`, both run as the
+  `breakline` user.
