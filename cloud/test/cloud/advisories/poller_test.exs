@@ -310,7 +310,7 @@ defmodule Cloud.Advisories.PollerTest do
       assert ctx.n_central.id in Enum.map(acted, & &1.site_id)
 
       [%{advisory: advisory}] = site_advisories(ctx.n_central)
-      assert advisory.tool_ids == ["n_central"]
+      assert advisory.tool_ids == ["n_central", "take_control"]
       assert advisory.raw["match"] == %{"names" => [], "kev" => ["CVE-2026-18577"]}
     end
 

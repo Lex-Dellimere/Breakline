@@ -81,10 +81,12 @@ defmodule Breakline.Catalog do
   `vendorProject` and `product` are normalised by trimming, collapsing inner
   whitespace and downcasing, because the feed is inconsistent (N-able appears
   as both `N-Central` and `N-central`). A tool matches when one of its KEV keys
-  names the vendor and either the same product or `"*"`.
+  names the vendor and either the same product or `"*"`. A remote-control tool that
+  another console launches carries that console's key too, so an N-central record
+  also closes Take Control (D47).
 
       iex> Breakline.Catalog.kev_match(%{"vendorProject" => "N-able ", "product" => "N-Central"})
-      ["n_central"]
+      ["n_central", "take_control"]
   """
   @spec kev_match(kev_vuln()) :: [tool_id()]
   def kev_match(%{"vendorProject" => vendor, "product" => product})

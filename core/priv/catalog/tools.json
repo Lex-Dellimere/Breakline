@@ -70,7 +70,8 @@
       "cidrs": [],
       "kev_keys": [
         {"vendor": "n-able", "product": "take control"},
-        {"vendor": "n-able", "product": "take control agent"}
+        {"vendor": "n-able", "product": "take control agent"},
+        {"vendor": "n-able", "product": "n-central"}
       ],
       "excluded": []
     },

@@ -182,9 +182,11 @@ defmodule Breakline.CatalogTest do
       do: %{"cveID" => "CVE-2026-0001", "vendorProject" => vendor, "product" => product}
 
     test "matches realistic kev records" do
-      assert Catalog.kev_match(kev("N-able", "N-Central")) == ["n_central"]
-      assert Catalog.kev_match(kev("N-able", "N-central")) == ["n_central"]
-      assert Catalog.kev_match(kev("N-able ", " N-central ")) == ["n_central"]
+      # an n-central advisory also closes take control: the n-central console launches
+      # take control sessions, which is how the aug 2026 attackers reached clients (D47)
+      assert Catalog.kev_match(kev("N-able", "N-Central")) == ["n_central", "take_control"]
+      assert Catalog.kev_match(kev("N-able", "N-central")) == ["n_central", "take_control"]
+      assert Catalog.kev_match(kev("N-able ", " N-central ")) == ["n_central", "take_control"]
       assert Catalog.kev_match(kev("ConnectWise", "ScreenConnect")) == ["screenconnect"]
       assert Catalog.kev_match(kev("ConnectWise ", "ScreenConnect ")) == ["screenconnect"]
       assert Catalog.kev_match(kev("TeamViewer", "Desktop")) == ["teamviewer"]

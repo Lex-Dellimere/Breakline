@@ -100,9 +100,9 @@ defmodule Cloud.Advisories.ParsingTest do
       by_cve = Map.new(entries, &{&1.external_id, &1})
       assert map_size(by_cve) == 8
 
-      assert by_cve["CVE-2026-18556"].tool_ids == ["n_central"]
+      assert by_cve["CVE-2026-18556"].tool_ids == ["n_central", "take_control"]
       assert by_cve["CVE-2025-8875"].product == "N-Central"
-      assert by_cve["CVE-2025-8875"].tool_ids == ["n_central"]
+      assert by_cve["CVE-2025-8875"].tool_ids == ["n_central", "take_control"]
       assert by_cve["CVE-2024-1709"].tool_ids == ["screenconnect"]
       assert by_cve["CVE-2019-18988"].tool_ids == ["teamviewer"]
       assert by_cve["CVE-2020-10148"].tool_ids == []
@@ -130,7 +130,7 @@ defmodule Cloud.Advisories.ParsingTest do
       assert {:ok, [entry]} = KEV.parse(body)
       assert entry.external_id == "CVE-2026-55555"
       assert entry.vendor == "N-able"
-      assert entry.tool_ids == ["n_central"]
+      assert entry.tool_ids == ["n_central", "take_control"]
     end
 
     test "rejects a document that is not the catalogue" do
