@@ -20,7 +20,7 @@ optimise for a working, demo-able slice, not completeness.
 | `core/` | `:breakline` | `Breakline.*` | pure lib: policy, schedule, catalog, signed commands, audit chain. No processes, IO or global config; pass `Breakline.time_zone_database/0` explicitly |
 | `cloud/` | `:cloud` | `Cloud.*`, `CloudWeb.*` | Phoenix 1.8 + LiveView + Ash 3 + AshPostgres. Read `cloud/AGENTS.md` (usage rules) before working there |
 | `gateway/` | `:gateway` | `Gateway.*` | OTP app: dns resolver, firewall, uplink, enforcer. Runs on a Linux host in dev, Nerves later |
-| `firmware/` | | | Nerves project wrapping gateway (phase 6, not started) |
+| `firmware/` | | | Nerves project wrapping gateway (phase 7, after the pilots, not started) |
 
 `cloud` and `gateway` depend on `core` by path.
 
@@ -55,7 +55,11 @@ optimise for a working, demo-able slice, not completeness.
   `cloud/README.md`.
 - Tests: `mix test` in `core/`, `gateway/` and `cloud/`.
 - `nft` is not installed on the dev host. Firewall code is tested through the fake impl and golden
-  `nft -j` json; real nftables runs come later in a netns or VM.
+  `nft -j` json, and for real in throwaway `debian:trixie-slim` containers (never host networking):
+  `mix test --only nft_docker` (the rulesets load), `--only traffic` (real packets, router and
+  bridge) and `--only deb_docker` (the pilot box package).
+- Pilot box: `mix gateway.package.deb`, runbook in `docs/PILOT.md`. Cloud release and hosting:
+  `docs/DEPLOY.md`.
 - Binding :53 needs root, so the dev gateway resolver listens on 127.0.0.1:5300. The local demo
   (sign a policy into the dev inbox, then `dig`) is in `gateway/README.md`.
 
