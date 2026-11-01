@@ -176,7 +176,7 @@ tree through `Gateway.Application.children/1`.
 - `BREAKLINE_PUBLIC_KEYS` (`key_id=base64url,...`)
 - `BREAKLINE_LAN_INTERFACES` (`eth1,...`)
 - `BREAKLINE_UPSTREAMS` (optional, `1.1.1.1,9.9.9.9:53,[2606:4700:4700::1111]:53`)
-- `BREAKLINE_DATA_DIR` (default `/data/breakline`)
+- `BREAKLINE_DATA_DIR` (default `/var/lib/breakline`)
 - `BREAKLINE_DEFAULT_MODE` (`monitor` or `enforce`)
 - `BREAKLINE_DNS_IP` (default `0.0.0.0`)
 - `BREAKLINE_UPLINK_URL` (optional, `wss://...`; without it there is no uplink), and
@@ -213,3 +213,49 @@ network examples for each install mode) are in `packaging/deb/`.
 - **Wrapper:** `breakline-gateway status` and
   `breakline-gateway enroll <cloud_url> <code> --ca-sha256 <hex>`, both run as the
   `breakline` user.
+
+## Enrolment
+
+A box gets its site, the cloud's signing key and its uplink by enrolling, not from a
+CA. An admin clicks **Enrol gateway** on the site page (after a passkey prompt) and gets
+a one-time code, valid 30 minutes, and the command to run on the box:
+
+```sh
+sudo breakline-gateway enroll https://gw.example.com:4011 ABCD-EFGH-...-WXYZ --ca-sha256 <hex>
+```
+
+The package wraps it as `bin/gateway eval 'Gateway.Enroll.run_from_env()'` with
+`BREAKLINE_ENROLL_URL`, `BREAKLINE_ENROLL_CODE`, `BREAKLINE_ENROLL_CA_SHA256` and
+`BREAKLINE_DATA_DIR`. It prints one line and exits 0 on success, 1 on failure.
+
+`Gateway.Enroll` makes the box's identity once, an EC P-256 key and a self-signed
+certificate, and keeps it. It connects to the url with that certificate, trusting the
+server only through `--ca-sha256` (the sha256 of the CA certificate's
+SubjectPublicKeyInfo, as kubeadm does) and the url's host name, and posts the code. The
+cloud pins the certificate of that TLS session on the site. Files, under the data
+directory (default `/var/lib/breakline`):
+
+- `identity/gateway_cert.pem`, `identity/gateway_key.pem` (0600, directory 0700)
+- `server_ca.pem`: the CA of the cloud's gateway endpoint, checked against the pin
+- `enrollment.json`: site id, public keys, uplink url, server name, cloud url,
+  fingerprint
+
+At the next boot `config/runtime.exs` uses them for everything the `BREAKLINE_*`
+variables do not set (leave `BREAKLINE_SITE_ID`, `BREAKLINE_PUBLIC_KEYS` and the
+`BREAKLINE_UPLINK_*` variables unset on an enrolled box). With `BREAKLINE_SITE_ID` set,
+the environment alone configures the gateway, as before. A box that is not enrolled
+boots without raising: no site, no trusted key and no uplink, so it stays locked, and it
+logs that it is not enrolled. `BREAKLINE_LAN_INTERFACES` is still needed to start it.
+
+Enrolling again (a new code from the site page) keeps the identity; enrolling a new box
+moves the site's pin to it, and the old box is disconnected and locked out.
+
+In dev, against a local cloud (see "Gateway enrolment" in `cloud/README.md`):
+
+```sh
+mix gateway.enroll https://localhost:4011 <code> --ca-sha256 <hex>   # into tmp/dev_enrolled
+elixir --sname gw -S mix run --no-halt
+```
+
+`config/dev.exs` prefers `tmp/dev_enrolled/enrollment.json` over the `priv/keys/`
+shortcut; remove `tmp/dev_enrolled` to go back.

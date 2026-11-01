@@ -51,22 +51,52 @@ cloud_site_id =
     _ -> nil
   end
 
-if cloud_site_id do
-  # the cloud site's state lives apart from the inbox demo's dev-site state, whose
-  # version floor (unix time versions) would refuse the cloud's policy versions
-  uplink_dir = Path.expand("../tmp/dev_uplink", __DIR__)
+enrolled_dir = Path.expand("../tmp/dev_enrolled", __DIR__)
 
-  config :gateway,
-    site_id: cloud_site_id,
-    public_keys:
-      Map.merge(public_keys, read_key.(Path.join(keys_dir, "cloud_signer.public.json"))),
-    data_dir: uplink_dir,
-    inbox_dir: Path.join(uplink_dir, "inbox")
+# a dev box enrolled with `mix gateway.enroll` (the real handshake) wins over the
+# priv/keys shortcut. its state lives in the enrolment's own directory
+enrollment =
+  with {:ok, bytes} <- File.read(Path.join(enrolled_dir, "enrollment.json")),
+       {:ok, %{"site_id" => id} = e} when is_binary(id) and id != "" <- JSON.decode(bytes) do
+    e
+  else
+    _ -> nil
+  end
 
-  config :gateway, :uplink,
-    url: "wss://localhost:4011/gateway/socket/websocket",
-    certfile: Path.join(keys_dir, "gateway_cert.pem"),
-    keyfile: Path.join(keys_dir, "gateway_key.pem"),
-    cacertfile: Path.join(keys_dir, "ca_cert.pem"),
-    server_name: "localhost"
+cond do
+  enrollment ->
+    config :gateway,
+      site_id: enrollment["site_id"],
+      public_keys: Map.merge(public_keys, enrollment["public_keys"] || %{}),
+      data_dir: enrolled_dir,
+      inbox_dir: Path.join(enrolled_dir, "inbox")
+
+    config :gateway, :uplink,
+      url: enrollment["uplink_url"],
+      certfile: Path.join(enrolled_dir, "identity/gateway_cert.pem"),
+      keyfile: Path.join(enrolled_dir, "identity/gateway_key.pem"),
+      cacertfile: Path.join(enrolled_dir, "server_ca.pem"),
+      server_name: enrollment["server_name"]
+
+  cloud_site_id ->
+    # the cloud site's state lives apart from the inbox demo's dev-site state, whose
+    # version floor (unix time versions) would refuse the cloud's policy versions
+    uplink_dir = Path.expand("../tmp/dev_uplink", __DIR__)
+
+    config :gateway,
+      site_id: cloud_site_id,
+      public_keys:
+        Map.merge(public_keys, read_key.(Path.join(keys_dir, "cloud_signer.public.json"))),
+      data_dir: uplink_dir,
+      inbox_dir: Path.join(uplink_dir, "inbox")
+
+    config :gateway, :uplink,
+      url: "wss://localhost:4011/gateway/socket/websocket",
+      certfile: Path.join(keys_dir, "gateway_cert.pem"),
+      keyfile: Path.join(keys_dir, "gateway_key.pem"),
+      cacertfile: Path.join(keys_dir, "ca_cert.pem"),
+      server_name: "localhost"
+
+  true ->
+    :ok
 end

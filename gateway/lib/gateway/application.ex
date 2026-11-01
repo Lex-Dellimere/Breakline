@@ -27,6 +27,10 @@ defmodule Gateway.Application do
   enforcer, and the uplink always comes back. The gateway keeps enforcing offline
   either way.
 
+  A box that is not enrolled (`config :gateway, unenrolled?: true`, set by
+  `config/runtime.exs`) starts the same tree with no site, no trusted key and no
+  uplink, so it stays locked, and logs a warning saying so.
+
   With `config :gateway, start_children: false` (the test config) the application
   starts an empty supervisor and tests start what they need, for example the whole
   tree from `children/1`.
@@ -34,8 +38,17 @@ defmodule Gateway.Application do
 
   use Application
 
+  require Logger
+
   @impl true
   def start(_type, _args) do
+    if Application.get_env(:gateway, :unenrolled?, false) do
+      Logger.warning(
+        "gateway is not enrolled: no site, no trusted key and no uplink, staying locked. " <>
+          "enrol it with the command from the site page (see Gateway.Enroll)"
+      )
+    end
+
     children = if Application.get_env(:gateway, :start_children, true), do: children(), else: []
     Supervisor.start_link(children, strategy: :one_for_one, name: Gateway.Supervisor)
   end
