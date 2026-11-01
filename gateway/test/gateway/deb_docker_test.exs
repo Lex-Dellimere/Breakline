@@ -120,7 +120,9 @@ defmodule Gateway.DebDockerTest do
   end
 
   test "it binds :53, applies its nft table and answers dig", %{s: s} do
-    assert s["listening"] =~ "udp 0.0.0.0:53"
+    # the default bind is :: (dual-stack), which ss lists as *:53
+    assert s["listening"] =~ "udp *:53"
+    assert s["listening"] =~ "tcp *:53"
 
     %{"nftables" => objects} = JSON.decode!(s["nft"])
 

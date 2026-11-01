@@ -36,7 +36,7 @@
 # start in monitor.
 BREAKLINE_DEFAULT_MODE=monitor
 
-# optional. the address the dns resolver binds on port 53, default 0.0.0.0.
+# optional. the address the dns resolver binds on port 53, default :: (ipv4 and ipv6).
 # dns-only: set it to the box's lan address (the one dhcp hands out as dns).
 #BREAKLINE_DNS_IP=192.168.1.53
 
