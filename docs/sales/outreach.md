@@ -58,7 +58,7 @@ of theirs). Send at most 5 a week, so every reply gets a fast, personal answer.
 
 ## 4. On the call
 
-- Use the MSP script in section 10.2 of the market scan, then the three offer questions in
+- Use the MSP script in section 10.2 of the market scan (`docs/research/market-scan.html`), then the three offer questions in
   `docs/STRATEGY.md`, in that order.
 - Write down what they **did** last time, any money they spent, and any commitment they make
   (an intro, a pilot, another meeting). Opinions about the idea count for little.

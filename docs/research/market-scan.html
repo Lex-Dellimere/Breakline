@@ -1,0 +1,1261 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Breakline Market Scan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  /* layout: a research brief. sticky contents rail on wide screens, one reading column, tables scroll in place */
+  :root {
+    --bg: #f5f7f8;
+    --surface: #ffffff;
+    --ink: #0f1a1f;
+    --muted: #4d5d65;
+    --line: #d5dee2;
+    --teal: #0b7c8c;
+    --teal-soft: #d8eff2;
+    --red: #b42318;
+    --red-soft: #fbe4e1;
+    --green: #12715b;
+    --green-soft: #dcf2ea;
+    --amber: #92590a;
+    --amber-soft: #fbefd6;
+    --row-alt: #f8fafb;
+    --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --step-0: 1rem;
+    --step-1: 1.2rem;
+    --step-2: 1.5rem;
+    --step-3: clamp(1.9rem, 4.2vw, 2.7rem);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1317;
+      --surface: #111c21;
+      --ink: #e4eef1;
+      --muted: #9bb0b7;
+      --line: #22343b;
+      --teal: #4cc3d2;
+      --teal-soft: #0f3038;
+      --red: #ff8a7a;
+      --red-soft: #3a1714;
+      --green: #5fd4ae;
+      --green-soft: #0f3127;
+      --amber: #f2bb5c;
+      --amber-soft: #36270d;
+      --row-alt: #0e181c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1317;
+    --surface: #111c21;
+    --ink: #e4eef1;
+    --muted: #9bb0b7;
+    --line: #22343b;
+    --teal: #4cc3d2;
+    --teal-soft: #0f3038;
+    --red: #ff8a7a;
+    --red-soft: #3a1714;
+    --green: #5fd4ae;
+    --green-soft: #0f3127;
+    --amber: #f2bb5c;
+    --amber-soft: #36270d;
+    --row-alt: #0e181c;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    line-height: 1.6;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 64px;
+  }
+  a { color: var(--teal); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 3px; }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .masthead {
+    grid-column: 1 / -1;
+    padding-block: 56px 28px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    gap: 14px;
+  }
+  .eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-stretch: 112%;
+    font-weight: 750;
+    font-size: var(--step-3);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    max-width: 22ch;
+  }
+  .lede { margin: 0; max-width: 64ch; font-size: var(--step-1); color: var(--muted); }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-size: 0.86rem;
+    color: var(--muted);
+    align-items: center;
+  }
+  .legend span.item { display: inline-flex; gap: 6px; align-items: center; }
+
+  .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; padding-top: 32px; }
+  .toc p {
+    margin: 0 0 10px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .toc a {
+    display: flex;
+    gap: 10px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+  .toc a:hover { background: var(--teal-soft); }
+  .toc-n { font-family: var(--font-mono); color: var(--muted); min-width: 1.6em; font-variant-numeric: tabular-nums; }
+
+  main { min-width: 0; padding-top: 24px; }
+  .sec { padding-block: 28px; border-bottom: 1px solid var(--line); }
+  .sec:last-child { border-bottom: 0; }
+  .sec > * { max-width: 70ch; }
+  .sec > .table-wrap { max-width: none; }
+  h2 {
+    font-family: var(--font-display);
+    font-stretch: 108%;
+    font-weight: 700;
+    font-size: var(--step-2);
+    line-height: 1.2;
+    margin: 0 0 14px;
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    text-wrap: balance;
+    scroll-margin-top: 24px;
+  }
+  .sec { scroll-margin-top: 16px; }
+  .sec-n { font-family: var(--font-mono); font-size: 0.95rem; font-weight: 500; color: var(--teal); font-variant-numeric: tabular-nums; }
+  h3 { font-family: var(--font-display); font-weight: 650; font-size: var(--step-1); margin: 26px 0 8px; text-wrap: balance; }
+  p, ul, ol { margin: 0 0 12px; }
+  li { margin: 4px 0; }
+  li > ul, li > ol { margin: 4px 0 0; }
+  code { font-family: var(--font-mono); font-size: 0.88em; background: var(--teal-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+  strong { font-weight: 600; }
+
+  .verdict {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--teal);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+    margin-top: 8px;
+  }
+  .verdict ol { padding-left: 1.3em; display: grid; gap: 8px; }
+  .verdict li::marker { font-family: var(--font-mono); color: var(--teal); }
+
+  .note h2 { font-size: var(--step-1); }
+  .note-lede { color: var(--muted); font-style: italic; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 14px 0 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; line-height: 1.45; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.74rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--row-alt);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td { min-width: 9em; font-variant-numeric: tabular-nums; }
+  td:first-child { font-weight: 600; min-width: 8em; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35em;
+    height: 1.35em;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    vertical-align: 0.1em;
+    border: 1px solid currentColor;
+    cursor: help;
+  }
+  .tag-f { color: var(--green); background: var(--green-soft); }
+  .tag-x { color: var(--teal); background: var(--teal-soft); }
+  .tag-s { color: var(--amber); background: var(--amber-soft); }
+
+  .lvl {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .lvl-low { background: var(--green-soft); color: var(--green); }
+  .lvl-lowmed { background: var(--teal-soft); color: var(--teal); }
+  .lvl-med { background: var(--amber-soft); color: var(--amber); }
+  .lvl-high { background: var(--red-soft); color: var(--red); }
+
+  .unv { color: var(--amber); font-weight: 600; text-decoration: underline dotted; text-underline-offset: 3px; }
+
+  #sources li { overflow-wrap: anywhere; font-size: 0.88rem; }
+  #interviews ol li { margin: 7px 0; }
+
+  footer { grid-column: 1 / -1; color: var(--muted); font-size: 0.85rem; padding-top: 12px; }
+
+  @media (max-width: 960px) {
+    .page { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .masthead { padding-block: 36px 22px; }
+    .toc { position: static; padding-top: 20px; }
+    .toc ol { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+    .verdict { padding: 18px 16px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">Breakline · desk research · Australia · 31 Oct 2026</p>
+    <h1>Is Breakline new, and will it make money in Australia?</h1>
+    <p class="lede">The packaging is new; the idea has close relatives in OT and healthcare vendor access. The risk is real and current. The money is plausible but small, and it runs through MSPs. Nothing found yet shows that anyone will pay.</p>
+    <div class="legend">
+      <span>Source tags:</span>
+      <span class="item"><span class="tag tag-f">F</span> page opened</span>
+      <span class="item"><span class="tag tag-x">X</span> search excerpt</span>
+      <span class="item"><span class="tag tag-s">S</span> search summary only</span>
+      <span class="item"><span class="unv">unverified</span> could not be confirmed</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+<li><a href="#verdict"><span class="toc-n">1</span>Verdict</a></li>
+<li><a href="#new"><span class="toc-n">2</span>Is it new?</a></li>
+<li><a href="#problem"><span class="toc-n">3</span>Problem evidence</a></li>
+<li><a href="#competitors"><span class="toc-n">4</span>Competitors</a></li>
+<li><a href="#buyers"><span class="toc-n">5</span>Buyers and market size</a></li>
+<li><a href="#regulation"><span class="toc-n">6</span>Regulation and insurance</a></li>
+<li><a href="#channel"><span class="toc-n">7</span>Channel</a></li>
+<li><a href="#pricing"><span class="toc-n">8</span>Pricing and unit economics</a></li>
+<li><a href="#risks"><span class="toc-n">9</span>Risks</a></li>
+<li><a href="#interviews"><span class="toc-n">10</span>Interview scripts</a></li>
+<li><a href="#next"><span class="toc-n">11</span>Next steps</a></li>
+<li><a href="#sources"><span class="toc-n">12</span>Sources</a></li>
+    </ol>
+  </nav>
+
+  <main>
+<section id="verdict" class="sec verdict">
+<h2><span class="sec-n">1</span>Verdict</h2>
+<ol>
+<li><strong>New in packaging, not in concept.</strong> I found no product that sells client-held, scheduled or approved gating of <em>any</em> MSP RMM tool as an SMB network box. Close analogues exist (Imprivata Customer PAM "Gatekeeper", OT vendor-access gates, Microsoft Customer Lockbox), so "nobody has built this" is not true. "Nobody sells it to Australian clinics" may be true, and may also mean there is no demand.</li>
+<li><strong>The problem is real and current.</strong> ASD's ACSC issued an alert on 19 Aug 2026 for N-central exploitation in Australia, and the chain kept going into September. That is evidence of <em>risk</em>. I found <strong>no evidence of willingness to pay</strong>.</li>
+<li><strong>Money is plausible but small and channel-bound.</strong> At AUD 149/site/month you need about 68 sites for AUD 10k MRR and about 672 for AUD 100k MRR (about 0.5% of the 68,325 Australian businesses with 20-199 staff, if they average 2 sites; the 2-sites figure is my assumption). Clinics are tiny (dental averages 3.1 staff) and the MSP controls the network edge, so distribution is the hard part, not the box.</li>
+<li><strong>Two product risks could kill it:</strong> blocking the RMM channel outside windows breaks the 24/7 patching and monitoring that MSPs sell, so MSPs may veto it (my inference, untested); and DNS plus firewall gating is bypassable (the N-central attackers dropped Cloudflare tunnels).</li>
+<li><strong>Recommendation:</strong> treat it as unproven. Run about 10 interviews (section 10) and a traffic measurement with 1-2 MSPs before building more. I would not expect AUD 100k MRR from direct-to-clinic sales. AUD 10k MRR through 3-5 MSP partners is the realistic first target. That last line is my judgement, not a sourced fact.</li>
+</ol>
+</section>
+<section id="checked" class="sec note">
+<h2>Re-checked on 1 Nov 2026</h2>
+<p>After the scan came back, I opened three of the sources it leans on hardest.</p>
+<ul>
+<li><strong>ABS Counts of Australian Businesses</strong> (released 18 Aug 2026): 2,814,778 actively trading businesses, 68,325 with 20-199 staff, 5,366 with 200+. These match the report.</li>
+<li><strong>iTnews, 20 Aug 2026:</strong> ASD's ACSC warned of active exploitation of N-able N-central within Australia, and attackers used Take Control to reach managed devices and registered Cloudflare tunnels to keep access. This matches the report.</li>
+<li>The ACSC alert page itself and the Imprivata Gatekeeper manual page did not load for me (timeout and 404). Those two points rest on the scan's own reading.</li>
+</ul>
+</section>
+
+<section id="build" class="sec note">
+<h2>What it means for the build</h2>
+<p class="note-lede">My reading of the findings, not part of the research.</p>
+<ul>
+<li><strong>Lead with closed-by-default, not with auto-close.</strong> In the N-central case the ACSC alert came about 19 days after N-able noticed the problem, so a feed-triggered close would have been late. What would have protected a client is that the channel was already closed outside booked windows.</li>
+<li><strong>The biggest open product question is MSP automation.</strong> If a tool's patching and monitoring use the same names as its remote control, closing the channel stops patching too. The monitor-only pilots should measure exactly this: how much RMM traffic happens outside windows, and to which hosts. A per-tool split between management and remote control may be needed.</li>
+<li><strong>Breakline narrows the attacker's window; it does not remove a foothold.</strong> The tunnels in the N-central campaign kept access after the RMM was cut off. Sales material should say this plainly.</li>
+<li><strong>Phase 6 is the right next build.</strong> The scan says to run interviews and a traffic measurement before building more. Phase 6 produces the monitor-only pilot box that measurement needs; features beyond it should wait for the interviews.</li>
+</ul>
+</section>
+
+<section id="new" class="sec">
+<h2><span class="sec-n">2</span>Is it new?</h2>
+<p><strong>What Breakline combines</strong> (from <code>docs/BRIEF.md</code> and <code>docs/THREAT_MODEL.md</code>): a client-owned off switch for <em>any</em> RMM or remote-control tool; DNS NXDOMAIN plus firewall drop at the edge (no endpoint agent); booked windows plus passkey approval; auto-close on CISA KEV or ACSC advisories; a hash-chained audit log exported as PDF; the MSP needs to install nothing.</p>
+<p><strong>What already exists, by closeness:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Closest analogue</th>
+<th>What it does</th>
+<th>Gap versus Breakline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Imprivata Customer PAM "Gatekeeper"</td>
+<td>The <em>customer</em> installs a Gatekeeper and controls when the vendor can connect: enable or disable now, for N hours, until a date, or on a weekly access schedule. Vendors can request access and the customer approves, denies or time-limits it by email. Source: <span class="tag tag-x" title="search excerpt of the page">X</span> Imprivata docs.</td>
+<td>Software, not an appliance. The vendor must connect <em>through</em> Imprivata, so it cannot gate an arbitrary RMM the MSP already runs. Enterprise-priced healthcare product. This is the best proof the concept is valid.</td>
+</tr>
+<tr>
+<td>IXON "Access request and approval"</td>
+<td>Customer approves each supplier request by email, with start time and duration. Source: <span class="tag tag-x" title="search excerpt of the page">X</span> IXON support article dated 16 Jul 2026.</td>
+<td>Industrial machine access, only for IXON's own gateways.</td>
+</tr>
+<tr>
+<td>Secomea SiteManager and Ewon Cosy</td>
+<td>Customer keeps local control with a key switch or digital input that enables or disables remote access. Secomea can also set access time frames. Source: <span class="tag tag-s" title="search summary only">S</span> Ewon FAQ and a Secomea knowledge-base article.</td>
+<td>OT, own cloud only.</td>
+</tr>
+<tr>
+<td>Trout Access Gate, Xertified XoT-Lock, BifrostConnect</td>
+<td>Appliances or hardware that give vendors time-boxed, approved, recorded access. BifrostConnect's attended unit does nothing until someone on site presses a button. Source: <span class="tag tag-x" title="search excerpt of the page">X</span> vendor pages.</td>
+<td>OT and industrial focus, own session broker.</td>
+</tr>
+<tr>
+<td>12Port, CoreZT ZTXGate, Twingate, Tailscale</td>
+<td>Just-in-time, request-and-approve access with time limits. Source: <span class="tag tag-x" title="search excerpt of the page">X</span> vendor pages.</td>
+<td>The MSP's own identity and access layer. Not a client-held gate over the RMM the MSP already has.</td>
+</tr>
+<tr>
+<td>Microsoft Customer Lockbox</td>
+<td>The customer approves Microsoft engineers' access to tenant content. Granted access is capped at 4 hours, and a request left unanswered for 12 hours expires. Source: <span class="tag tag-x" title="search excerpt of the page">X</span> Microsoft Learn.</td>
+<td>Different asset. Shows enterprises already accept the pattern.</td>
+</tr>
+<tr>
+<td>AccessMonk</td>
+<td>On-demand support sessions where the customer approves the technician by name. Source: <span class="tag tag-x" title="search excerpt of the page">X</span> vendor page.</td>
+<td>Attended sessions only, its own RMM.</td>
+</tr>
+<tr>
+<td>RMM built-ins (ScreenConnect, Take Control, NinjaOne, AnyDesk, TeamViewer, Level)</td>
+<td>Consent prompts and allowlists. See section 4.</td>
+<td>Configured in the console the MSP (or an attacker with admin) controls.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Verdict on novelty (my judgement):</strong>
+- <em>Novel:</em> the specific combination of generic RMM catalogue, edge enforcement with no endpoint agent, client-owned switch, and KEV-triggered auto-close, aimed at Australian SMBs. I did not find that combination.
+- <em>Not novel:</em> client-controlled, time-boxed, approved vendor access. It is a known pattern in OT, healthcare vendor management and Microsoft's own cloud.
+- <em>Where "new" is weakest:</em> the incumbents that would be easiest to extend are the RMM vendors, Huntress or Blackpoint (client-facing "approve my MSP" console), and Imprivata.</p>
+<p><strong>Search limits.</strong> My web search tool is US-centric. I did not search Australian distributor catalogues (Dicker Data, Ingram Micro), Crunchbase or Product Hunt, or open the Fortinet and Meraki feature documentation. A small Australian vendor could exist that I missed. Do those checks before telling anyone "nobody does this".</p>
+</section>
+<section id="problem" class="sec">
+<h2><span class="sec-n">3</span>Problem evidence</h2>
+<h3>3.1 RMM and MSP supply-chain abuse, 2021 to 2026</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>When</th>
+<th>What</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jul 2021</td>
+<td>Kaseya VSA zero-day (CVE-2021-30116). REvil hit about 60 MSPs. Kaseya put downstream impact at 800 to 1,500 businesses.</td>
+<td><span class="tag tag-s" title="search summary only">S</span> Wikipedia; <span class="tag tag-s" title="search summary only">S</span> TechTarget</td>
+</tr>
+<tr>
+<td>Feb 2024</td>
+<td>ScreenConnect auth bypass CVE-2024-1709 (CVSS 10.0) added to CISA KEV on 22 Feb 2024. LockBit, Black Basta and Bl00dy were reported exploiting it.</td>
+<td><span class="tag tag-s" title="search summary only">S</span> Security Affairs; <span class="tag tag-s" title="search summary only">S</span> BleepingComputer</td>
+</tr>
+<tr>
+<td>Jan to Feb 2025</td>
+<td>SimpleHelp CVE-2024-57727 added to KEV on 13 Feb 2025. DragonForce used an MSP's SimpleHelp to deploy ransomware to its customers (Sophos, 27 May 2025). CISA published advisory AA25-163A on 12 Jun 2025.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> CISA; <span class="tag tag-x" title="search excerpt of the page">X</span> Sophos</td>
+</tr>
+<tr>
+<td>Jan 2025</td>
+<td>Qilin affiliates spear-phished an MSP's ScreenConnect admin and attacked its customers.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> Sophos</td>
+</tr>
+<tr>
+<td>May 2025 (disclosed)</td>
+<td>ConnectWise said a suspected nation-state actor compromised ScreenConnect <em>cloud</em> instances of "a very small number" of customers. A source told BleepingComputer the breach occurred in August, with the year not shown in the excerpt I saw (<span class="unv">unverified</span>), and was found in May 2025.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> BleepingComputer; <span class="tag tag-x" title="search excerpt of the page">X</span> Help Net Security</td>
+</tr>
+<tr>
+<td>Aug 2025</td>
+<td>N-able N-central CVE-2025-8875 and CVE-2025-8876 added to KEV on 13 Aug 2025.</td>
+<td><span class="tag tag-s" title="search summary only">S</span> The Hacker News; <span class="tag tag-s" title="search summary only">S</span> CISA bulletin</td>
+</tr>
+<tr>
+<td>Dec 2025 to Jan 2026</td>
+<td>Blackpoint tracked a campaign using illicit access to cloud-hosted ScreenConnect instances to push a ScreenConnect wrapper to many hosts. Campaign likely began about 17 Dec 2025.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> Blackpoint LinkedIn post, 14 Jan 2026</td>
+</tr>
+<tr>
+<td><strong>Aug to Sep 2026</strong></td>
+<td><strong>N-central auth bypass, verified (below).</strong></td>
+<td><span class="tag tag-f" title="opened the page">F</span> ACSC; <span class="tag tag-f" title="opened the page">F</span> iTnews; <span class="tag tag-x" title="search excerpt of the page">X</span> Huntress</td>
+</tr>
+<tr>
+<td>Sep 2026</td>
+<td>Microsoft saw phishing campaigns in July 2026 that installed an MSP360 RMM and then dropped ScreenConnect. The RMMs themselves were not exploited.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> Microsoft Security Blog, 29 Sep 2026</td>
+</tr>
+</tbody>
+</table></div>
+<h3>3.2 The Aug to Sep 2026 N-central campaign: verified</h3>
+<ul>
+<li><strong>ACSC alert, first published 19 Aug 2026 <span class="tag tag-f" title="opened the page">F</span>.</strong> ASD's ACSC "has observed the targeting of vulnerabilities affecting the N-able N-central product within Australia". CVE-2026-18556 and CVE-2026-18577 are authentication bypasses affecting all current versions including 2026.3. Patches came out on 1 Aug 2026 and Hotfix 2 on 6 Aug. The alert says it has no information that a specific industry is targeted, and tells small and medium business to ask their MSP whether it uses N-central.</li>
+<li><strong>Attacker behaviour <span class="tag tag-f" title="opened the page">F</span> iTnews, 20 Aug 2026:</strong> the attackers connected to managed devices with Take Control and registered Cloudflare tunnel services to keep access after N-central access was revoked. A search summary of Help Net Security says Huntress saw one self-hosted instance affecting one partner and nine downstream client organisations, and that targets included domain controllers and backup servers <strong><span class="tag tag-s" title="search summary only">S</span>; second-hand</strong>.</li>
+<li><strong>It kept going into September <span class="tag tag-x" title="search excerpt of the page">X</span> Huntress, updated 6 Sep 2026:</strong> N-able issued Hotfix 4 for CVE-2026-86218, an actively exploited pre-auth RCE rated CVSS 10.0. Huntress also published a proof of concept for a further chain (CVE-2026-86206 and CVE-2026-86207). The Huntress post says "a compromised N-central server can be used to run scripts, push tools, and open remote sessions across every downstream endpoint it manages".</li>
+<li><strong>KEV listing of the 2026 CVEs: unverified.</strong> One search summary says CVE-2026-18577 is in KEV. I did not check the catalogue or the date. Feed latency matters for Breakline's auto-close: the ACSC alert came about 19 days after N-able noticed licensing anomalies on 31 Jul 2026 <span class="tag tag-s" title="search summary only">S</span>, so an ACSC-triggered close would have been late. The earlier Aug 2025 N-central KEV entry was added on 13 Aug 2025 <span class="tag tag-s" title="search summary only">S</span>, reported as the day of the patch.</li>
+<li><strong>The threat model's "Aug-Sep 2026 N-central campaign" is supported.</strong> Its statement that attackers "used the RMM's own remote-control feature to reach client machines" is supported by iTnews and Huntress.</li>
+</ul>
+<h3>3.3 Australian incidents involving an MSP or remote-access tool</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Incident</th>
+<th>Detail</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Auto-IT, Sep 2026</strong></td>
+<td>Australian dealer-management software firm. It confirmed that "the unauthorised use of a third-party remote monitoring and management tool" affected a small number of customer environments. Storm ransomware then listed car dealers (Sharp Motor Group, Penfold Motors and Macquarrie confirmed third-party incidents). The article does <strong>not</strong> name the RMM and does <strong>not</strong> link it to N-central.</td>
+<td><span class="tag tag-f" title="opened the page">F</span> Cyber Daily, 15 Sep 2026</td>
+</tr>
+<tr>
+<td>Vertel, Jun 2025</td>
+<td>Sydney MSP listed by the Space Bears ransomware gang. Vertel said service delivery was not affected.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> Cyber Daily</td>
+</tr>
+<tr>
+<td>ACSC investigation of APT10</td>
+<td>Compromise of the Australian arm of a multinational through an administrator account provisioned to its MSP (2016-17). Old, but it is the ACSC's own case study.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> ACSC report</td>
+</tr>
+<tr>
+<td>Medibank, 2022</td>
+<td>Attackers used an IT contractor's stolen admin credentials. The OAIC alleges remote access had no MFA. This is third-party access, not an RMM.</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span> ABC; <span class="tag tag-x" title="search excerpt of the page">X</span> Piper Alderman</td>
+</tr>
+</tbody>
+</table></div>
+<p>I found <strong>no public Australian case naming a clinic, accounting or law firm compromised through an MSP's RMM</strong>. The ACSC alert says no sector is specifically targeted. That limits the "clinics are the victims" story to inference.</p>
+<h3>3.4 Costs and breach statistics</h3>
+<ul>
+<li><strong>ASD Annual Cyber Threat Report 2024-25, average self-reported cost per report:</strong> small business AUD 56,600 (up 14%), medium AUD 97,200 (up 55%), large AUD 202,700 (up 219%), all businesses AUD 80,850 (up 50%). I could not open the ASD factsheet (timeout); the numbers come from search summaries quoting it plus Cyber Daily. <strong><span class="tag tag-s" title="search summary only">S</span> secondary</strong></li>
+<li><strong>OAIC Notifiable Data Breaches, Jan to Jun 2026 <span class="tag tag-f" title="opened the page">F</span>:</strong> 667 notifications. Health service providers were the top sector with 149 notifications, 72 of them malicious cyberattacks. No supply-chain or third-party figure for this period was published in the article I opened.</li>
+<li><strong>Rogue-RMM share of incidents (about attacker-installed tools, not a hijacked MSP RMM):</strong> Huntress says 32% of incidents it saw "this year" could have been prevented by blocking rogue RMM tools [X, 3 Aug 2026]. Blackpoint says RMM abuse was 30.3% of identifiable SOC incidents in 2025 <span class="tag tag-x" title="search excerpt of the page">X</span>. These are vendor numbers and do not measure what Breakline prevents. A catalogue-based default-lock might incidentally block some rogue RMM traffic, but the brief lists rogue-RMM inventory as a non-goal.</li>
+</ul>
+<h3>3.5 ACSC guidance on MSPs</h3>
+<ul>
+<li>ACSC publication "How to manage your network security when engaging a Managed Service Provider" (created Dec 2018, updated Oct 2021) has sections "Control MSP access to your network", "Ensure visibility of MSP actions on your network" and "Mitigate the impact of stolen or abused credentials". <strong><span class="tag tag-f" title="opened the page">F</span> Digital Health Implementer Hub listing.</strong> I could not load the cyber.gov.au page itself, so the detailed recommendations are not read.</li>
+<li>ACSC also runs the voluntary MSP Partner Program (MSP3) with eight Better Practice Principles <span class="tag tag-x" title="search excerpt of the page">X</span>.</li>
+<li><strong>Policy hook:</strong> the ACSC already tells customers to control MSP access. It does not tell them to buy a box to do it.</li>
+</ul>
+</section>
+<section id="competitors" class="sec">
+<h2><span class="sec-n">4</span>Competitor table</h2>
+<p>"Client-owned, time-boxed MSP gating?" means: can the <em>client</em> (not the MSP) hold the switch, with schedule or approval, over an MSP's existing remote tools? Prices are as found; USD figures are marked.</p>
+<h3>4.1 DNS and network filtering</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>What it does</th>
+<th>Client-owned, time-boxed gating?</th>
+<th>Price</th>
+<th>Australia</th>
+<th>Threat to Breakline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNSFilter</td>
+<td>Cloud DNS filtering, MSP console</td>
+<td>No. The MSP runs the console. Schedules or approvals not found.</td>
+<td>USD 1.00 / 2.10 / 2.70 per user/month annual (Basic/Pro/Enterprise), minimum monthly spend, MSP plans from USD 150/month <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Not found</td>
+<td><span class="lvl lvl-low">Low</span> Commodity DNS, the MSP controls it.</td>
+</tr>
+<tr>
+<td>Cisco Umbrella</td>
+<td>Enterprise DNS and secure web gateway</td>
+<td>No. Enterprise or MSP console.</td>
+<td>Not published. Third-party estimates USD 2-4 per user/month, <span class="unv">unverified</span> <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Unverified (large vendor)</td>
+<td><span class="lvl lvl-low">Low</span> Same ownership problem, quote-based.</td>
+</tr>
+<tr>
+<td>NextDNS</td>
+<td>Cheap DNS filtering</td>
+<td>No evidence of scheduled or approved gating</td>
+<td>Business USD 19.90/month per 50 employees (third-party figures) <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Not found</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+<tr>
+<td>Fortinet application control</td>
+<td>NGFW can block named apps and apply policy schedules (general product knowledge; <span class="unv">unverified</span>, I did not open the docs)</td>
+<td>In theory a client-owned FortiGate could do it. In practice the MSP administers it. No approval workflow.</td>
+<td>FG-40F hardware AUD 928-959 (retailers, one out of stock); bundle price in AUD not found <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Yes, AU retailers</td>
+<td><span class="lvl lvl-med">Medium</span> A DIY substitute inside many mid-sized sites.</td>
+</tr>
+<tr>
+<td>Firewalla</td>
+<td>Prosumer firewall, "MSP" portal</td>
+<td>Portal is for update windows, not technician access <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Not found</td>
+<td>Not found</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+<tr>
+<td>Ubiquiti UniFi</td>
+<td>Cheap gateways; firewall and traffic rules, scheduling per third-party guide (domain-level scheduling <span class="unv">unverified</span>)</td>
+<td>No approval or audit; the admin holds the keys</td>
+<td>UCG-Ultra AUD 172.61 ex GST (PB Tech AU), AUD 184-217 elsewhere <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Yes, AU retailers</td>
+<td><span class="lvl lvl-med">Medium</span> A buyer can get "good enough" gating hardware for about AUD 190, which anchors the price of the box.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.2 Endpoint allowlisting and ringfencing</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>What it does</th>
+<th>Client-owned, time-boxed gating?</th>
+<th>Price</th>
+<th>Australia</th>
+<th>Threat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ThreatLocker</td>
+<td>Default-deny application control, Network Control (dynamic ACLs that open ports on demand and close after 5 minutes idle). Vendor blog says it blocks remote-access tools not explicitly trusted. A May 2026 report says it added port-less remote access <span class="tag tag-s" title="search summary only">S</span>.</td>
+<td>Not client-held. The MSP runs the console, and the agent is an endpoint dependency.</td>
+<td>Not published. Anecdotal USD 5-11 per endpoint/month <span class="tag tag-s" title="search summary only">S</span> <span class="unv">unverified</span></td>
+<td>Yes. Sydney data centre (Mar 2024), Brisbane office (Sep 2025) <span class="tag tag-s" title="search summary only">S</span></td>
+<td><span class="lvl lvl-med">Medium</span> Already sold by AU MSPs and marketed against Essential Eight.</td>
+</tr>
+<tr>
+<td>Airlock Digital</td>
+<td>Application allowlisting, Adelaide-based</td>
+<td>No</td>
+<td>Not found (quote only) <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Yes, HQ Adelaide. AustCyber AUD 1.3M, partly to reach customers through MSPs/MSSPs <span class="tag tag-s" title="search summary only">S</span></td>
+<td><span class="lvl lvl-lowmed">Low-Medium</span></td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.3 Privileged and vendor remote access</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>What it does</th>
+<th>Client-owned gating?</th>
+<th>Price</th>
+<th>Australia</th>
+<th>Threat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BeyondTrust Privileged Remote Access</td>
+<td>Vendor and third-party sessions with approvals and JIT elevation (vendor page claims approvals "from anywhere") <span class="tag tag-x" title="search excerpt of the page">X</span></td>
+<td>Customer-run broker; vendors must use it</td>
+<td>Not published. Third-party estimate USD 1,200-3,500 per concurrent session/year <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Unverified</td>
+<td><span class="lvl lvl-low">Low</span> Enterprise cost and deployment.</td>
+</tr>
+<tr>
+<td>CyberArk (incl. vendor PAM)</td>
+<td>PAM and secure access</td>
+<td>Customer-run</td>
+<td>Not found. Third-party figures range by orders of magnitude, so I do not use them</td>
+<td>Unverified</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+<tr>
+<td>Delinea</td>
+<td>PAM and privileged remote access</td>
+<td>Customer-run</td>
+<td>Not found</td>
+<td>Unverified</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+<tr>
+<td>Zscaler Privileged Remote Access</td>
+<td>ZTNA-based privileged access</td>
+<td>Customer-run</td>
+<td>Not published; one source says included with platform purchases over 500 users <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Unverified</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+<tr>
+<td>Xage, Cyolo, Claroty Secure Access</td>
+<td>OT and industrial remote access with approvals</td>
+<td>Yes, in OT</td>
+<td>Not found. Integrity360 G-Cloud lists a Claroty-based remote-access service at GBP 3,600 per instance <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Unverified</td>
+<td><span class="lvl lvl-low">Low</span> Wrong buyer and price.</td>
+</tr>
+<tr>
+<td><strong>Imprivata Customer PAM / Vendor PAM</strong></td>
+<td>See section 2</td>
+<td><strong>Yes, closest analogue</strong></td>
+<td>UK G-Cloud: GBP 238.35 per vendor/month, minimum 5 <span class="tag tag-s" title="search summary only">S</span>. US pricing quote-only</td>
+<td>Not verified</td>
+<td><span class="lvl lvl-med">Medium (as proof of concept)</span> Dangerous only if it moves down-market or gets an MSP-friendly edition.</td>
+</tr>
+<tr>
+<td>KeeperPAM for MSPs, ManageEngine PAM360 MSP, Securden, CyberQP</td>
+<td>MSP-side JIT and approval for technicians</td>
+<td>Approvals sit with MSP admins, not the client</td>
+<td>Not found</td>
+<td>Unverified</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+<tr>
+<td>Twingate and Tailscale</td>
+<td>JIT access requests with approval</td>
+<td>MSP or IT admin as approver</td>
+<td>Twingate Teams USD 5 and Business USD 10 per user/month; Tailscale JIT is Enterprise-only <span class="tag tag-x" title="search excerpt of the page">X</span></td>
+<td>Not found</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.4 Consent and approval built into the RMMs</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What the feature does</th>
+<th>Why it is not Breakline</th>
+<th>Threat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ConnectWise ScreenConnect</td>
+<td>"Prompt guest for consent" setting. Community threads say it is global rather than per host, can auto-connect after a countdown, and can skip when no user process is running <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Setting lives in the MSP's console. Behaviour has built-in bypasses.</td>
+<td><span class="lvl lvl-high">High as a "good enough" objection</span></td>
+</tr>
+<tr>
+<td>N-able Take Control / N-central</td>
+<td>"Request User Permission" can be set as the default. The KB article was last modified in 2020 <span class="tag tag-s" title="search summary only">S</span>. Take Control 7.70.00 (16 Sep 2026) adds a pre-authorisation pop-up for other Terminal Services sessions <span class="tag tag-x" title="search excerpt of the page">X</span>.</td>
+<td>Same. In the Aug 2026 incident attackers reached the console with admin-level access and used Take Control. Whether they could change the consent default is my inference, not verified.</td>
+<td><span class="lvl lvl-high">High (objection)</span></td>
+</tr>
+<tr>
+<td>NinjaOne</td>
+<td>"Ask the end-user for a confirmation" with a timeout. Can allow if no user is logged in or no response <span class="tag tag-s" title="search summary only">S</span>.</td>
+<td>Same, and timeout means silence can equal consent.</td>
+<td><span class="lvl lvl-high">High (objection)</span></td>
+</tr>
+<tr>
+<td>Kaseya VSA and Datto RMM</td>
+<td>Not found</td>
+<td><strong>Unverified</strong></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>TeamViewer</td>
+<td>Allowlist, "Confirm all" incoming control, Conditional Access (Tensor licence, add-on status conflicting) <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Admin-configured.</td>
+<td><span class="lvl lvl-med">Medium</span></td>
+</tr>
+<tr>
+<td>AnyDesk</td>
+<td>Access Control List (allowlist) and interactive-access settings <span class="tag tag-s" title="search summary only">S</span></td>
+<td>Admin-configured.</td>
+<td><span class="lvl lvl-lowmed">Low-Medium</span></td>
+</tr>
+<tr>
+<td>Level</td>
+<td>"Require approval" mode that denies on timeout <span class="tag tag-x" title="search excerpt of the page">X</span></td>
+<td>MSP-configured.</td>
+<td><span class="lvl lvl-low">Low</span></td>
+</tr>
+</tbody>
+</table></div>
+<p>None of these hands the switch to the client. They are the likely objection from MSPs: "we already have consent prompts".</p>
+<h3>4.5 MSP-side detection</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>What it does</th>
+<th>Price</th>
+<th>Australia</th>
+<th>Threat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Huntress RMM Guard</td>
+<td>Inventories RMMs on endpoints and blocks any not approved, including attacker-run copies of approved tools. Made free to Huntress customers with an agent in Aug 2026; blocking mode is rolling out (support article dated 9 Oct 2026) <span class="tag tag-x" title="search excerpt of the page">X</span>.</td>
+<td>Huntress pricing not found</td>
+<td>Not found</td>
+<td><span class="lvl lvl-med">Medium</span> It owns the MSP's security budget and could add a client-facing control. Today it is endpoint-side and MSP-run.</td>
+</tr>
+<tr>
+<td>Blackpoint</td>
+<td>Managed detection; publishes RMM-abuse telemetry and recommends application control <span class="tag tag-x" title="search excerpt of the page">X</span></td>
+<td>Not found</td>
+<td>Not found</td>
+<td><span class="lvl lvl-lowmed">Low-Medium</span></td>
+</tr>
+</tbody>
+</table></div>
+<h3>4.6 Direct competitors: what I found</h3>
+<p>No product that is <strong>client-held, scheduled or approved, generic across RMM tools, and delivered as a network appliance for SMBs.</strong> The nearest are Imprivata CPAM (software, vendor must adopt it) and the OT gates in section 2. Treat the absence with caution: see "Search limits" in section 2.</p>
+</section>
+<section id="buyers" class="sec">
+<h2><span class="sec-n">5</span>Buyers and market size</h2>
+<h3>5.1 Counts</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Segment</th>
+<th>Count</th>
+<th>Source and caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All actively trading businesses, 30 Jun 2026</td>
+<td>2,814,778</td>
+<td>ABS Counts of Australian Businesses, released 18 Aug 2026 <span class="tag tag-f" title="opened the page">F</span></td>
+</tr>
+<tr>
+<td>Businesses with 20-199 employees</td>
+<td><strong>68,325</strong></td>
+<td>ABS, same release <span class="tag tag-f" title="opened the page">F</span>. (The June 2025 figure was 67,857 <span class="tag tag-s" title="search summary only">S</span>.)</td>
+</tr>
+<tr>
+<td>Businesses with 200+ employees</td>
+<td>5,366</td>
+<td>ABS, same release <span class="tag tag-f" title="opened the page">F</span></td>
+</tr>
+<tr>
+<td>Businesses with 1-19 employees</td>
+<td>922,512 (derived: 689,600 + 232,912)</td>
+<td>ABS <span class="tag tag-f" title="opened the page">F</span>, derived by the page summary</td>
+</tr>
+<tr>
+<td>GP practices</td>
+<td>7,132 accredited general practices</td>
+<td>RACGP Health of the Nation 2025 <span class="tag tag-s" title="search summary only">S</span>; I did not open the PDF. IBISWorld lists 52,569 "General Practice Medical Services" <em>businesses</em> (2025), a different definition <span class="tag tag-s" title="search summary only">S</span>.</td>
+</tr>
+<tr>
+<td>Dental</td>
+<td>20,347 (2025) / 20,919 (2026); average 3.1 employees per business</td>
+<td>IBISWorld <span class="tag tag-s" title="search summary only">S</span>; the two pages disagree</td>
+</tr>
+<tr>
+<td>Veterinary</td>
+<td>3,605 to 3,793</td>
+<td>IBISWorld <span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>Accounting services</td>
+<td>37,231 (2026)</td>
+<td>IBISWorld <span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>Legal services</td>
+<td>23,699 to 25,260 (2025)</td>
+<td>IBISWorld, two pages disagree <span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>The five verticals above, combined</td>
+<td>about 92,000 to 94,000 businesses</td>
+<td>My sum of the IBISWorld figures with RACGP 7,132 for GPs. <strong>Includes many sole practitioners.</strong></td>
+</tr>
+<tr>
+<td>Multi-site retail, multi-site businesses</td>
+<td><span class="unv">Not found</span></td>
+<td>ABS counts are by ABN and industry, not by sites</td>
+</tr>
+<tr>
+<td>Number of Australian MSPs</td>
+<td><span class="unv">Not found</span></td>
+<td>One MSP blog claims "over 10,000 IT service providers" with no source: <span class="unv">unverified</span> <span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>What this means (my reading):</strong>
+- Dental averages 3.1 staff. Most clinics and small offices are micro-businesses that probably do not have a dedicated MSP or the budget for a site box. The sweet spot (20-199 staff, 2+ sites, an MSP) is a subset of the 68,325, and <strong>I could not size that subset</strong>. This is the biggest gap in the market sizing.
+- Illustrative arithmetic, not a forecast: 1% of the 68,325 (683 businesses) at an assumed 2 sites and AUD 149/month is about AUD 2.44M ARR (about AUD 203k MRR). Treat the 1% and the 2 sites as pure assumptions.</p>
+<h3>5.2 Who decides the purchase</h3>
+<ul>
+<li><strong>RACGP Standards 6th edition, criterion F8 <span class="tag tag-f" title="opened the page">F</span>:</strong> a practice needs a person, either a team member or a <em>contracted provider</em>, with primary responsibility for the security of its electronic systems. If that person is external, a team member must hold digital governance. Contracts should set out the provider's obligations "including for remote access", and practices should use standard letters of agreement signed by ICT providers.</li>
+<li>Reading: the decision usually sits with the practice owner or manager <em>on paper</em>, but the technical authority is often the MSP. A vendor blog says the MSP supplies the technical answers on insurance forms while the owner signs <strong><span class="tag tag-s" title="search summary only">S</span>, secondary</strong>.</li>
+<li><strong>Hypothesis to test in interviews, not a finding:</strong> the practice manager or owner holds the budget, and the MSP holds a veto in practice because it controls the network edge, the RMM and the support relationship.</li>
+</ul>
+</section>
+<section id="regulation" class="sec">
+<h2><span class="sec-n">6</span>Regulation and insurance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Driver</th>
+<th>What I found</th>
+<th>Does it push anyone to buy this?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Privacy Act, 2024 amendments</strong></td>
+<td>Royal Assent 10 Dec 2024. OAIC can issue infringement and compliance notices. APP 11 "reasonable steps" now expressly include technical and organisational measures <span class="tag tag-s" title="search summary only">S</span>. Statutory tort for serious invasions of privacy in force since 10 Jun 2025 <span class="tag tag-s" title="search summary only">S</span>. Health service providers are covered regardless of the AUD 3M turnover exemption; the exemption itself remains for most small businesses <span class="tag tag-s" title="search summary only">S</span>. All via law-firm and compliance blogs. <strong>Check against OAIC and the Act before quoting.</strong></td>
+<td>Raises the stakes for health. Does not mandate gating of vendor access.</td>
+</tr>
+<tr>
+<td><strong>OAIC Notifiable Data Breaches</strong></td>
+<td>H1 2026: 667 notifications, health top sector with 149 (72 malicious) <span class="tag tag-f" title="opened the page">F</span></td>
+<td>Context.</td>
+</tr>
+<tr>
+<td><strong>Cyber Security Act 2024: ransomware payment reporting</strong></td>
+<td>Report to ASD within 72 hours of making or becoming aware of a ransomware payment, for entities with turnover over AUD 3M, from 30 May 2025 <span class="tag tag-s" title="search summary only">S</span>. Civil penalty 60 penalty units. The date penalties began is <span class="unv">unverified</span> (sources conflict: 1 Jun 2026 versus vague "since January 2026").</td>
+<td>Only covers businesses over AUD 3M turnover. Reports a payment <em>after</em> the fact. No link to remote access.</td>
+</tr>
+<tr>
+<td><strong>SOCI Act</strong></td>
+<td>For healthcare, only critical hospitals with a general ICU are currently covered, per CISC <span class="tag tag-s" title="search summary only">S</span></td>
+<td><strong>Not a driver</strong> for clinics, accountants or retail.</td>
+</tr>
+<tr>
+<td><strong>Essential Eight</strong></td>
+<td>Voluntary for the private sector. The eight strategies are application control, patching, MFA, admin privileges, backups and similar. None is a network gate on a vendor channel. (I verified part of the list from the FAQ <span class="tag tag-s" title="search summary only">S</span>; the rest is general knowledge.) ThreatLocker markets directly against it.</td>
+<td>Indirect. Breakline would be a non-Essential-Eight control.</td>
+</tr>
+<tr>
+<td><strong>RACGP standards</strong></td>
+<td>5th ed. C6.4: document remote access policies <span class="tag tag-s" title="search summary only">S</span>. 6th ed. F8: contracts with ICT providers should state remote-access obligations <span class="tag tag-f" title="opened the page">F</span>.</td>
+<td>Paperwork obligations, not technical gating. An exportable audit log could help evidence.</td>
+</tr>
+<tr>
+<td><strong>ACSC MSP guidance</strong></td>
+<td>See 3.5.</td>
+<td>Best narrative hook, but not a mandate.</td>
+</tr>
+<tr>
+<td><strong>Cyber insurance</strong></td>
+<td>An AIG Australia ransomware supplementary form asks how remote access is secured (options from password-only to MFA for all) and asks separately about remote access for employees and vendors, plus a section on third parties and managed service providers <span class="tag tag-s" title="search summary only">S</span>. An ACP SME portal form (dated 04/21, possibly outdated) says cover is unavailable if MFA is not in place for all remote users <span class="tag tag-s" title="search summary only">S</span>. One blog says forms ask how the MSP's own access is secured: secondary commentary, not form text.</td>
+<td>Insurers ask about MFA on remote access. <strong>I found no form that asks about, or gives credit for, a client-held gate on MSP access.</strong> Today the control would not move a premium.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Bottom line:</strong> the regulatory drivers are soft. They create <em>awareness</em> (ACSC alert, OAIC stats, RACGP contract language) but none requires or rewards the control. That is a demand weakness unless an insurer or accreditor adopts it.</p>
+</section>
+<section id="channel" class="sec">
+<h2><span class="sec-n">7</span>Channel</h2>
+<p><strong>Via MSPs.</strong>
+- Precedents that MSP-led security distribution works in Australia: Guardz launched in ANZ in Feb 2024 to let MSPs "secure and insure" SMBs <span class="tag tag-s" title="search summary only">S</span>; Cyber Threat Insure launched an MSP distribution model in Apr 2025, citing only about 20% of Australian SMBs holding standalone cyber policies (its own claim) <span class="tag tag-s" title="search summary only">S</span>; Airlock's AustCyber grant targets MSP/MSSP reach <span class="tag tag-s" title="search summary only">S</span>; ThreatLocker has MSP bundles <span class="tag tag-s" title="search summary only">S</span>; Twingate and Tailscale run MSP programmes <span class="tag tag-x" title="search excerpt of the page">X</span>.
+- <strong>Why MSPs may resist (my inference, no MSP evidence found):</strong> the product's trust model is that the MSP is an adversary or a risk. It could break unattended automation (patching, scripts, monitoring), add approval latency to after-hours fixes, and expose the MSP's access to audit. My searches returned <strong>no MSP statements either way</strong> about client-held gating. This is the key unknown.
+- <strong>Why MSPs might sell it:</strong> after N-central, "ask your MSP if they use N-central" is ACSC's own advice to SMBs. Vendors frame approval and zero standing access as good practice (Microsoft frames MSP zero standing access this way; several guides recommend customer sign-off, silence not counting as approval) <span class="tag tag-s" title="search summary only">S</span>. An MSP could use the box to prove it is not the weak link. I found <strong>no survey or case study</strong> showing MSPs win business this way.
+- <strong>Deployment dependency:</strong> a two-port inline box that redirects client DNS and drops traffic sits at the network edge, which the MSP usually manages. A client-bought box probably still needs the MSP's cooperation to install. This is my inference and should be tested.</p>
+<p><strong>Direct to client.</strong> The practice manager or owner would have to buy and install a network box against their MSP's advice. No evidence found that clients are asking for this.</p>
+<p><strong>Brokers and associations.</strong> Cyber insurance brokers and underwriting agencies are the strongest theoretical channel <em>if</em> an insurer rewards the control (not currently found). RACGP, state GP bodies and Primary Health Networks publish cyber guidance for practices (the search surfaced a South Western Sydney PHN page on RACGP resources <span class="tag tag-s" title="search summary only">S</span>). Whether any would endorse or distribute a commercial box is <span class="unv">unverified</span>. Practice-management associations, ADA, AVA, CPA Australia and the law societies are untested hypotheses.</p>
+</section>
+<section id="pricing" class="sec">
+<h2><span class="sec-n">8</span>Pricing and unit economics</h2>
+<h3>8.1 Reference prices</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Figure</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Australian managed IT, per user</td>
+<td>AUD 100-250 per user/month typical (range AUD 75-400); small teams often pay a monthly minimum of AUD 1,000-5,000</td>
+<td><span class="tag tag-s" title="search summary only">S</span> KM Tech and other AU MSP pricing guides, which are MSP marketing, not independent benchmarks</td>
+</tr>
+<tr>
+<td>Example: 25-user business, full security and backup</td>
+<td>AUD 3,500-6,000/month</td>
+<td><span class="tag tag-s" title="search summary only">S</span> same guides</td>
+</tr>
+<tr>
+<td>Security add-ons</td>
+<td>Licences usually extra (e.g. Microsoft 365 Business Premium about AUD 32.20 per user)</td>
+<td><span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>DNS filtering</td>
+<td>USD 1-3 per user/month (DNSFilter), USD 19.90/month per 50 staff (NextDNS)</td>
+<td><span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>Vendor-access gating, enterprise</td>
+<td>BeyondTrust PRA USD 1,200-3,500 per concurrent session/year (third party); Imprivata GBP 238.35 per vendor/month (UK G-Cloud)</td>
+<td><span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>Twingate (JIT approvals)</td>
+<td>USD 5 or USD 10 per user/month</td>
+<td><span class="tag tag-x" title="search excerpt of the page">X</span></td>
+</tr>
+<tr>
+<td>DIY gateway hardware</td>
+<td>UniFi UCG-Ultra AUD 172-217; FortiGate 40F hardware AUD 928-959</td>
+<td><span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+<tr>
+<td>Two-port fanless mini PC, Australia</td>
+<td>HUNSN RX11 (J4125, 4 Intel ports) AUD 433.40; HUNSN RJ63 (N100, 2x2.5GbE plus 2 SFP+, 8 GB/256 GB) AUD 567.60; both Newegg AU, ships from Hong Kong or China, GST-inclusive. A plain 2x2.5GbE N100 box with an AUD price: <span class="unv">not found</span></td>
+<td><span class="tag tag-s" title="search summary only">S</span> Newegg AU</td>
+</tr>
+<tr>
+<td>Protectli Vault (VP2410, 1GbE)</td>
+<td>USD 429 starting price without memory; VP2420 (2.5GbE) GBP 569 at one UK retailer; AUD <span class="unv">not found</span></td>
+<td><span class="tag tag-s" title="search summary only">S</span></td>
+</tr>
+</tbody>
+</table></div>
+<h3>8.2 Proposed pricing (my proposal, not sourced)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Plan</th>
+<th>Price (AUD ex GST)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilot (monitor-only, 90 days)</td>
+<td>AUD 0 subscription, box loaned</td>
+<td>Matches the brief's goal. Collect would-block data, which is also the evidence that the product works.</td>
+</tr>
+<tr>
+<td>Single site</td>
+<td><strong>AUD 149/site/month</strong> (range AUD 129-199) + hardware</td>
+<td>Hardware either bundled into a 36-month term or AUD 495 up front (about 1x the landed box cost, including provisioning and shipping).</td>
+</tr>
+<tr>
+<td>5+ sites</td>
+<td>AUD 99-129/site/month</td>
+<td>Multi-site is the target segment.</td>
+</tr>
+<tr>
+<td>MSP wholesale</td>
+<td>25-35% off list, MSP bills the client</td>
+<td>Needed if the MSP channel is the route.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Why this range:</strong>
+- It sits at about 3-7% of a 20-user client's AUD 2,000-5,000 monthly MSP bill (AUD 100-250 x 20 users, ratios computed).
+- It is above commodity DNS filtering (about USD 20-60 per month for 20 users) and far below enterprise vendor-access gating.
+- The ceiling is the DIY alternative: about AUD 190 of UniFi hardware once. The buyer has to believe the client-owned switch, the audit PDF and the auto-close are worth AUD 1,800 per year.
+- <strong>Unverified willingness to pay.</strong> I found no evidence of what an SMB would pay for this.</p>
+<h3>8.3 Sites needed</h3>
+<p>MRR = sites x price. Ceiling of 10,000 or 100,000 divided by price. Excludes hardware revenue, GST, churn and CAC.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Price per site/month</th>
+<th>Sites for AUD 10k MRR</th>
+<th>Sites for AUD 100k MRR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AUD 99</td>
+<td>102</td>
+<td>1,011</td>
+</tr>
+<tr>
+<td><strong>AUD 149</strong></td>
+<td><strong>68</strong></td>
+<td><strong>672</strong></td>
+</tr>
+<tr>
+<td>AUD 199</td>
+<td>51</td>
+<td>503</td>
+</tr>
+<tr>
+<td>AUD 249</td>
+<td>41</td>
+<td>402</td>
+</tr>
+<tr>
+<td>AUD 149 via MSP at 30% off (AUD 104.30 net)</td>
+<td>96</td>
+<td>959</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>672 sites at an assumed 2 sites per client is 336 clients, or <strong>0.49%</strong> of the 68,325 firms with 20-199 staff (assumption: 2 sites per client).</li>
+<li><strong>Illustrative margin (assumptions, not sourced):</strong> landed hardware AUD 450-650 including shipping and provisioning; cloud, SMS and PDF cost about AUD 5-10 per site per month; payment fees about 2%. Hardware payback is about 3-4 months at AUD 149. The real cost is support and onboarding, which I cannot estimate yet. A 3-year site life at 90% gross margin would give about AUD 4,800 gross profit per site, which caps sensible CAC at roughly AUD 1,200-1,600. That is a rule of thumb, not an analysis.</li>
+<li><strong>Ceiling check:</strong> the ABS-based arithmetic suggests an Australian-only business of a few million AUD ARR if penetration is 1% or less. That is a good lifestyle business and a thin venture case. Say so to any investor.</li>
+</ul>
+</section>
+<section id="risks" class="sec">
+<h2><span class="sec-n">9</span>Risks (why this could fail to make money)</h2>
+<ol>
+<li><strong>No demonstrated demand.</strong> No survey, pilot or competitor revenue evidence. The absence of direct competitors may mean no buyers.</li>
+<li><strong>MSP veto.</strong> The MSP controls the edge, the RMM and the client relationship. A box that locks it out outside windows has to be framed as a benefit, and no evidence supports that yet.</li>
+<li><strong>Breaks the MSP service.</strong> RMM agents do patching, scripts and monitoring around the clock. Gating the RMM channel outside windows stops that. If remote-control relays cannot be separated from agent check-in for a tool (e.g. ScreenConnect's relay is shared), the gate is all-or-nothing. <strong>Inference, to be measured with real traffic.</strong></li>
+<li><strong>Bypassable.</strong> The N-central attackers installed Cloudflare tunnels for persistence (iTnews). A catalogue-based DNS and firewall gate only covers tools and domains in the catalogue. The threat model already lists this as residual risk (T1, T2, T15).</li>
+<li><strong>Auto-close latency.</strong> KEV and ACSC feeds lag. In the 2026 incident the ACSC alert came about 19 days after the vendor noticed exploitation (see 3.2). KEV timing for the 2026 CVEs is unverified.</li>
+<li><strong>Tiny buyers.</strong> Clinics average a few staff, with no IT budget and no dedicated security owner. The mid-sized multi-site subset is not sized.</li>
+<li><strong>Weak regulatory pull.</strong> Nothing mandates or rewards this control; insurers ask about MFA, not about client-held gating.</li>
+<li><strong>Good-enough substitutes.</strong> RMM consent prompts, UniFi/Fortinet rules, ThreatLocker, Huntress RMM Guard (free to Huntress customers). Any one lets the MSP say "we have that".</li>
+<li><strong>Incumbent response.</strong> An RMM vendor, Huntress or Imprivata can ship a client-facing approval layer faster than a startup can sell hardware.</li>
+<li><strong>Hardware logistics.</strong> Shipping, site installs, returns, and support across multiple sites. This costs money in a market where the buyer will compare against a AUD 190 gateway.</li>
+<li><strong>Trust and liability.</strong> If the box fails closed on an emergency (a vendor needs urgent access), or fails open, the founder carries blame. Pilot terms need to be explicit.</li>
+<li><strong>Unverified key facts.</strong> AU presence of several vendors, Kaseya/Datto consent features, ACSC MSP-guide specifics, Privacy Act details from law-firm blogs.</li>
+</ol>
+</section>
+<section id="interviews" class="sec">
+<h2><span class="sec-n">10</span>Interview scripts</h2>
+<p>Mom Test rules for both: ask about the last time something happened, not about opinions of Breakline. Do not describe the product until the end, and then only if they ask. Ask for specifics (names, dates, dollars). Seek commitments (time, intros, money), not compliments. Take notes on what they <em>did</em>.</p>
+<h3>10.1 Clinic practice manager or owner (about 30 minutes)</h3>
+<ol>
+<li>Tell me about the last time someone outside your practice (IT provider, software vendor, anyone) needed to get into your computers. Who, how, and when was it?</li>
+<li>How does IT support work day to day here? Who do you call, who signed the contract, and when does it renew?</li>
+<li>Last time your IT provider connected remotely, did you know beforehand? How did you find out?</li>
+<li>Do you know which remote tools your IT provider and your software vendors use to connect? How would you find out?</li>
+<li>Who in the practice decides what an outside provider can and cannot access? Walk me through the last time that came up.</li>
+<li>Have you ever had an IT security scare, outage or breach, or heard of one nearby? What happened, what did it cost, and what did you change after?</li>
+<li>Did anyone (IT provider, insurer, software vendor, peers) contact you about the N-central or other remote-tool news this year? What did you do?</li>
+<li>The last time you renewed cyber insurance, who filled in the form? What did it ask about remote access or IT providers? Did anything change in the premium or conditions?</li>
+<li>Last accreditation or privacy review: what was asked about IT security? Who prepared the evidence, and how long did it take?</li>
+<li>Have you ever limited, paused or asked to approve your IT provider's access? Tell me what happened. If not, what stopped you?</li>
+<li>What have you paid for in the last 12 months to improve security (tools, audits, training, hardware)? How was it chosen, who approved it, and what did it cost?</li>
+<li>When something needs to be plugged into your network (firewall, wifi, backup), how is it decided and installed? Who does the work?</li>
+<li>Last time you needed IT fixed after hours or urgently, what happened and how long did it take?</li>
+<li>Who else has remote access to your systems (practice software, imaging, pathology, phones)? Can I see how that is arranged? Who else should I talk to?</li>
+</ol>
+<h3>10.2 MSP owner or service manager (about 30-40 minutes)</h3>
+<ol>
+<li>Tell me about your client base: how many clients and sites, which sectors, and what RMM and remote tools you run. How did you choose them?</li>
+<li>Walk me through the last time you remoted into a client site. How was it started, how did the client know, and where is it logged?</li>
+<li>Roughly what share of your RMM activity is automated (patching, scripts, monitoring) versus a technician starting a session? How do you know?</li>
+<li>What did you do when the N-central advisory landed in August, or the last time any RMM advisory hit you? Who found out, how long did patching take, and did clients contact you?</li>
+<li>Has a client ever asked you to restrict your access, approve sessions, or show session logs? What happened?</li>
+<li>Last time a client's insurer, auditor or accreditor asked about your access controls, how did you answer, and how long did it take?</li>
+<li>Have you lost or won a client over a security question? Tell me the specific case.</li>
+<li>What sits at your clients' network edge (firewall brand), who owns the admin credentials, and who is allowed to change it? Last time you installed a new device at a client, what was the process, time and cost?</li>
+<li>What security tools did you add in the last 12 months? How did you decide, what did it cost you, and what did you charge clients?</li>
+<li>How do you price security add-ons (bundled or line item)? What happened the last time you raised prices?</li>
+<li>How often do you need urgent access outside planned maintenance windows? Describe the last time.</li>
+<li>Have you worked with any client-side restriction on your access (client VPN approval, bastion host, change windows, GDAP/PIM)? What was the friction, and how did you handle it?</li>
+<li>How do you evaluate and onboard a new product (trial, pilot, requirements, margin)? What was the last one you said yes to, and what tipped it?</li>
+<li>Who else do you rely on for advice or purchasing (distributor, vendor reps, peer group)? Who would you introduce me to?</li>
+</ol>
+<h3>10.3 Recruiting the first 10 interviews in Australia (plan, not yet done)</h3>
+<ul>
+<li><strong>Mix:</strong> 5 MSPs and 5 clinics or professional offices. Start with 3 MSPs (they are gatekeepers and will surface the objections), then the clinics, then the remaining MSPs. Aim for at least 2 states and a mix of clinic types (GP, dental, vet, allied health) plus 1-2 accountants or law firms to test breadth.</li>
+<li><strong>Qualifying filters:</strong> clinics with roughly 10+ staff, 2+ sites or a dedicated IT provider; MSPs with 20+ clients that include clinics or professional services. Prefer at least two MSPs that use N-central or ScreenConnect.</li>
+<li><strong>Sources:</strong>
+  1. The founder's own network and the MSP the founder already uses, then ask each interviewee for two introductions.
+  2. LinkedIn searches for "practice manager" at clinic groups and "MSP owner" or "service delivery manager" in Sydney, Melbourne, Brisbane, Adelaide and Perth.
+  3. Primary Health Networks and state GP or dental bodies that already circulate cyber guidance. Ask for an introduction, not an endorsement. Whether they will help is <span class="unv">unverified</span>.
+  4. MSP communities and vendor user groups (N-able, ConnectWise, Kaseya, Ninja user groups; r/msp), and Australian cyber and channel events. Specific groups and dates are <span class="unv">unverified</span>.
+  5. Practice-management and accounting-industry networks (names to be checked before outreach).</li>
+<li><strong>Message:</strong> "Researching how clinics and their IT providers handle remote access after this year's N-central news. 20-30 minutes, nothing to buy, no pitch. Happy to share what I learn." Offer a gift card or a summary of findings. Do not mention Breakline in the invite.</li>
+<li><strong>Logging and decisions:</strong> record what they <em>did</em> last time, any money spent, any commitments (intro, pilot offer, repeat meeting), and quotes about objections. Review after 5 interviews and again after 10.</li>
+<li><strong>Ethics:</strong> do not collect patient data, do not share other interviewees' names, and tell people what you will do with notes.</li>
+</ul>
+</section>
+<section id="next" class="sec">
+<h2><span class="sec-n">11</span>Next steps for validation</h2>
+<ol>
+<li><strong>Do the 10 interviews</strong> (section 10) before more build. Suggested decision signals (my proposals):
+   - <em>Continue</em> if at least 3 of 5 MSPs say they would accept a client-held gate in some form, and at least 3 of 5 clients have changed or spent something after an RMM or MSP scare.
+   - <em>Rethink the product</em> if 3+ MSPs say the RMM traffic outside business hours is mostly automation they will not pause.
+   - <em>Stop or pivot</em> if nobody has paid for anything comparable and nobody will commit time to a pilot.</li>
+<li><strong>Measure real traffic.</strong> Run monitor-only on 1-2 MSP offices and the MSP's own sites. The key number is what share of RMM traffic happens outside business hours and what it does.</li>
+<li><strong>Close the desk-research gaps:</strong>
+   - Check the CISA KEV date for CVE-2026-18577 and the other 2026 N-central CVEs, to size feed latency.
+   - Read the ACSC "engaging an MSP" guide in full.
+   - Check Imprivata CPAM availability, pricing and any Australian reseller.
+   - Check Fortinet and UniFi documentation for domain-based scheduled policies.
+   - Check Kaseya VSA and Datto RMM consent features.
+   - Find a primary source for the RACGP practice count and for the AU presence of DNSFilter, Cisco, BeyondTrust, CyberArk, Delinea and Zscaler.
+   - Look at Dicker Data and Ingram Micro catalogues for anything similar.</li>
+<li><strong>Test the insurance angle.</strong> Ask 2-3 brokers or underwriting agencies whether any insurer would reduce a premium or change a question for a client-held gate on MSP access. This could change the channel picture.</li>
+<li><strong>Test the price.</strong> In interviews, ask what they paid for their last security add-on rather than asking what they would pay for this.</li>
+<li><strong>Decide the kill date.</strong> If interviews and the traffic test do not show a buyer within about 8 weeks, stop building for sale and keep the repo as a research artefact.</li>
+</ol>
+</section>
+<section id="sources" class="sec">
+<h2><span class="sec-n">12</span>Sources</h2>
+<p>All accessed 31 Oct 2026. Tags: <span class="tag tag-f" title="opened the page">F</span> opened, <span class="tag tag-x" title="search excerpt of the page">X</span> excerpt of page text returned by search, <span class="tag tag-s" title="search summary only">S</span> search-result summary only.</p>
+<p><strong>Problem evidence</strong>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://www.cyber.gov.au/about-us/view-all-content/alerts-and-advisories/active-exploitation-of-remote-monitoring-and-management-platform-within-australia" rel="noopener noreferrer">https://www.cyber.gov.au/about-us/view-all-content/alerts-and-advisories/active-exploitation-of-remote-monitoring-and-management-platform-within-australia</a>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://www.itnews.com.au/news/asd-warns-of-australian-attacks-on-n-able-n-central-rmm-628282" rel="noopener noreferrer">https://www.itnews.com.au/news/asd-warns-of-australian-attacks-on-n-able-n-central-rmm-628282</a>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://cybersecurity.com.au/asd-acsc-two-high-alerts-august-2026/" rel="noopener noreferrer">https://cybersecurity.com.au/asd-acsc-two-high-alerts-august-2026/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.huntress.com/blog/n-able-vulnerability-exploitation" rel="noopener noreferrer">https://www.huntress.com/blog/n-able-vulnerability-exploitation</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.helpnetsecurity.com/2026/08/03/cve-2026-18577-n-able-n-central/" rel="noopener noreferrer">https://www.helpnetsecurity.com/2026/08/03/cve-2026-18577-n-able-n-central/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://thehackernews.com/2025/08/cisa-adds-two-n-able-n-central-flaws-to.html" rel="noopener noreferrer">https://thehackernews.com/2025/08/cisa-adds-two-n-able-n-central-flaws-to.html</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://content.govdelivery.com/accounts/USDHSCISA/bulletins/3edc589" rel="noopener noreferrer">https://content.govdelivery.com/accounts/USDHSCISA/bulletins/3edc589</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://en.wikipedia.org/wiki/Kaseya_VSA_ransomware_attack" rel="noopener noreferrer">https://en.wikipedia.org/wiki/Kaseya_VSA_ransomware_attack</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.techtarget.com/searchsecurity/news/252503605/Kaseya-1500-organizations-affected-by-REvil-attacks" rel="noopener noreferrer">https://www.techtarget.com/searchsecurity/news/252503605/Kaseya-1500-organizations-affected-by-REvil-attacks</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://securityaffairs.com/159511/hacking/cisa-connectwise-screenconnect-known-exploited-vulnerabilities-catalog.html" rel="noopener noreferrer">https://securityaffairs.com/159511/hacking/cisa-connectwise-screenconnect-known-exploited-vulnerabilities-catalog.html</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.bleepingcomputer.com/news/security/black-basta-bl00dy-ransomware-gangs-join-screenconnect-attacks/" rel="noopener noreferrer">https://www.bleepingcomputer.com/news/security/black-basta-bl00dy-ransomware-gangs-join-screenconnect-attacks/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-163a" rel="noopener noreferrer">https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-163a</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.sophos.com/en-us/blog/dragonforce-actors-target-simplehelp-vulnerabilities-to-attack-msp-customers" rel="noopener noreferrer">https://www.sophos.com/en-us/blog/dragonforce-actors-target-simplehelp-vulnerabilities-to-attack-msp-customers</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.sophos.com/en-us/blog/sophos-mdr-tracks-ongoing-campaign-by-qilin-affiliates-targeting-screenconnect" rel="noopener noreferrer">https://www.sophos.com/en-us/blog/sophos-mdr-tracks-ongoing-campaign-by-qilin-affiliates-targeting-screenconnect</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.bleepingcomputer.com/news/security/connectwise-breached-in-cyberattack-linked-to-nation-state-hackers/" rel="noopener noreferrer">https://www.bleepingcomputer.com/news/security/connectwise-breached-in-cyberattack-linked-to-nation-state-hackers/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.helpnetsecurity.com/2025/06/02/attackers-breached-connectwise-compromised-customer-screenconnect-instances/" rel="noopener noreferrer">https://www.helpnetsecurity.com/2025/06/02/attackers-breached-connectwise-compromised-customer-screenconnect-instances/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.linkedin.com/posts/blackpoint_cybersecurity-msp-mssp-activity-7417336295523262464-9DRG" rel="noopener noreferrer">https://www.linkedin.com/posts/blackpoint_cybersecurity-msp-mssp-activity-7417336295523262464-9DRG</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://blackpointcyber.com/blog/msp-clients-protected-5-attack-vectors-2026/" rel="noopener noreferrer">https://blackpointcyber.com/blog/msp-clients-protected-5-attack-vectors-2026/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.microsoft.com/en-us/security/blog/2026/09/29/phishing-abuses-rmm-tools-persistent-access/" rel="noopener noreferrer">https://www.microsoft.com/en-us/security/blog/2026/09/29/phishing-abuses-rmm-tools-persistent-access/</a>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://www.cyberdaily.au/security/14188-exclusive-aussie-software-firm-auto-it-confirms-customers-compromised-by-storm-ransomware-attack" rel="noopener noreferrer">https://www.cyberdaily.au/security/14188-exclusive-aussie-software-firm-auto-it-confirms-customers-compromised-by-storm-ransomware-attack</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.cyberdaily.au/security/12262-exclusive-aussie-msp-vertel-confirms-direwolf-ransomware-attack" rel="noopener noreferrer">https://www.cyberdaily.au/security/12262-exclusive-aussie-msp-vertel-confirms-direwolf-ransomware-attack</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.cyber.gov.au/sites/default/files/2023-03/msp_investigation_report.pdf" rel="noopener noreferrer">https://www.cyber.gov.au/sites/default/files/2023-03/msp_investigation_report.pdf</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.abc.net.au/news/2024-06-22/medibank-alerts-australia-cybersecurity-breach/104003576" rel="noopener noreferrer">https://www.abc.net.au/news/2024-06-22/medibank-alerts-australia-cybersecurity-breach/104003576</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://piperalderman.com.au/insight/how-to-take-reasonable-steps-to-protect-personal-information-early-learnings-from-the-information-commissioners-civil-penalty-enforcement-action-against-medibank-private-limited/" rel="noopener noreferrer">https://piperalderman.com.au/insight/how-to-take-reasonable-steps-to-protect-personal-information-early-learnings-from-the-information-commissioners-civil-penalty-enforcement-action-against-medibank-private-limited/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.cyber.gov.au/sites/default/files/2025-10/Annual%20Cyber%20Threat%20Report%202024-25%20factsheet%20for%20businesses%20and%20organisations.pdf" rel="noopener noreferrer">https://www.cyber.gov.au/sites/default/files/2025-10/Annual%20Cyber%20Threat%20Report%202024-25%20factsheet%20for%20businesses%20and%20organisations.pdf</a> (fetch timed out; numbers via search summaries)
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.cyberdaily.au/security/12768-annual-cyber-threat-report-2024-2025-by-the-numbers" rel="noopener noreferrer">https://www.cyberdaily.au/security/12768-annual-cyber-threat-report-2024-2025-by-the-numbers</a>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://www.cyberdaily.au/security/14350-stat-dump-data-breaches-impacting-aussies-continue-to-rise-oaic-says" rel="noopener noreferrer">https://www.cyberdaily.au/security/14350-stat-dump-data-breaches-impacting-aussies-continue-to-rise-oaic-says</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.huntress.com/blog/managed-espm-app-control-rmm-protection" rel="noopener noreferrer">https://www.huntress.com/blog/managed-espm-app-control-rmm-protection</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://support.huntress.io/hc/en-us/articles/55408652576147-How-RMM-Guard-Blocking-Works" rel="noopener noreferrer">https://support.huntress.io/hc/en-us/articles/55408652576147-How-RMM-Guard-Blocking-Works</a>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://implementer.digitalhealth.gov.au/standards/how-to-manage-your-security-when-engaging-a-managed-service-provider" rel="noopener noreferrer">https://implementer.digitalhealth.gov.au/standards/how-to-manage-your-security-when-engaging-a-managed-service-provider</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.dewr.gov.au/download/13653/managing-third-parties-resources/27366/document/pdf" rel="noopener noreferrer">https://www.dewr.gov.au/download/13653/managing-third-parties-resources/27366/document/pdf</a></p>
+<p><strong>Competitors and analogues</strong>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://docs.imprivata.com/cpam/content/topics/usermanual/gatekeeperinterface.html" rel="noopener noreferrer">https://docs.imprivata.com/cpam/content/topics/usermanual/gatekeeperinterface.html</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://assets.applytosupply.digitalmarketplace.service.gov.uk/g-cloud-15/documents/584424/130519903895325-pricing-document-2026-01-30-0935.pdf" rel="noopener noreferrer">https://assets.applytosupply.digitalmarketplace.service.gov.uk/g-cloud-15/documents/584424/130519903895325-pricing-document-2026-01-30-0935.pdf</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://support.ixon.cloud/s/article/Give-customers-control-over-remote-machine-access-with-Access-request-and-approval" rel="noopener noreferrer">https://support.ixon.cloud/s/article/Give-customers-control-over-remote-machine-access-with-Access-request-and-approval</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.stercontrol.pl/attachments/data//eWON/cosy/faq_remote_access.pdf" rel="noopener noreferrer">https://www.stercontrol.pl/attachments/data//eWON/cosy/faq_remote_access.pdf</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://singerinstruments.zendesk.com/hc/en-gb/articles/210530523-Secomea-Information-for-IT-experts" rel="noopener noreferrer">https://singerinstruments.zendesk.com/hc/en-gb/articles/210530523-Secomea-Information-for-IT-experts</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.trout.software/solutions/remote-access" rel="noopener noreferrer">https://www.trout.software/solutions/remote-access</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://xertified.com/solutions/remote-access/" rel="noopener noreferrer">https://xertified.com/solutions/remote-access/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://linkedin.com/company/bifrostconnect" rel="noopener noreferrer">https://linkedin.com/company/bifrostconnect</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.12port.com/solutions/third-party-remote-access/" rel="noopener noreferrer">https://www.12port.com/solutions/third-party-remote-access/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.corezt.com/ztxgate" rel="noopener noreferrer">https://www.corezt.com/ztxgate</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://learn.microsoft.com/en-us/purview/customer-lockbox-requests" rel="noopener noreferrer">https://learn.microsoft.com/en-us/purview/customer-lockbox-requests</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://accessmonk.com/" rel="noopener noreferrer">https://accessmonk.com/</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.beyondtrust.com/solutions/remote-access-management" rel="noopener noreferrer">https://www.beyondtrust.com/solutions/remote-access-management</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://vendorbenchmark.com/vendors/beyondtrust-pricing" rel="noopener noreferrer">https://vendorbenchmark.com/vendors/beyondtrust-pricing</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://techvendorindex.pages.dev/software/identity-access-management/beyondtrust-pra/" rel="noopener noreferrer">https://techvendorindex.pages.dev/software/identity-access-management/beyondtrust-pra/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.venn.com/learn/zscaler-pricing/" rel="noopener noreferrer">https://www.venn.com/learn/zscaler-pricing/</a> (Zscaler PRA bundling claim came via search summary)
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.applytosupply.digitalmarketplace.service.gov.uk/g-cloud-14/services/852894443364635" rel="noopener noreferrer">https://www.applytosupply.digitalmarketplace.service.gov.uk/g-cloud-14/services/852894443364635</a> (Claroty reseller)
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.twingate.com/pricing" rel="noopener noreferrer">https://www.twingate.com/pricing</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.twingate.com/msp" rel="noopener noreferrer">https://www.twingate.com/msp</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://tailscale.com/blog/jit-access-ga" rel="noopener noreferrer">https://tailscale.com/blog/jit-access-ga</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://www.keepersecurity.com/msp-privileged-access-manager/" rel="noopener noreferrer">https://www.keepersecurity.com/msp-privileged-access-manager/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://zeronetworks.com/use-cases/apply-mfa-to-anything" rel="noopener noreferrer">https://zeronetworks.com/use-cases/apply-mfa-to-anything</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://dnsfilter.com/pricing" rel="noopener noreferrer">https://dnsfilter.com/pricing</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.dnsfilter.com/msp" rel="noopener noreferrer">https://www.dnsfilter.com/msp</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://dope.security/post/cisco-umbrella-pricing-2026" rel="noopener noreferrer">https://dope.security/post/cisco-umbrella-pricing-2026</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.techradar.com/reviews/nextdns" rel="noopener noreferrer">https://www.techradar.com/reviews/nextdns</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://help.firewalla.com/hc/en-us/articles/4409866753427-Firewalla-Managed-Security-Portal-MSP-Introduction" rel="noopener noreferrer">https://help.firewalla.com/hc/en-us/articles/4409866753427-Firewalla-Managed-Security-Portal-MSP-Introduction</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.pbtech.com/au/product/NETUBI2208/Ubiquiti-UniFi-UCG-Ultra-Cloud-Gateway-Ultra-25GbE" rel="noopener noreferrer">https://www.pbtech.com/au/product/NETUBI2208/Ubiquiti-UniFi-UCG-Ultra-Cloud-Gateway-Ultra-25GbE</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.priceme.com.au/Ubiquiti-UCG-Ultra/p-923510694.aspx" rel="noopener noreferrer">https://www.priceme.com.au/Ubiquiti-UCG-Ultra/p-923510694.aspx</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.nanobytesolutions.com.au/fortinet-5-x-ge-rj45-ports-including-1-x-wan-port-4-x-internal-ports-fg-40f.html" rel="noopener noreferrer">https://www.nanobytesolutions.com.au/fortinet-5-x-ge-rj45-ports-including-1-x-wan-port-4-x-internal-ports-fg-40f.html</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.iptrading.com.au/products/fortinet-fg-40f-usg-fortigate-40f-5-x-ge-rj45-ports-1-x-wan-port" rel="noopener noreferrer">https://www.iptrading.com.au/products/fortinet-fg-40f-usg-fortigate-40f-5-x-ge-rj45-ports-1-x-wan-port</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.threatlocker.com/blog/threatlocker-expands-endpoint-security-services-and-data-infrastructure-to-australia" rel="noopener noreferrer">https://www.threatlocker.com/blog/threatlocker-expands-endpoint-security-services-and-data-infrastructure-to-australia</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.threatlocker.com/platform-archive/network-control-archive" rel="noopener noreferrer">https://www.threatlocker.com/platform-archive/network-control-archive</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://rallied.pages.dev/blog/threatlocker-pricing/" rel="noopener noreferrer">https://rallied.pages.dev/blog/threatlocker-pricing/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.msspalert.com/investments/australias-airlock-digital-adds-1-3m/" rel="noopener noreferrer">https://www.msspalert.com/investments/australias-airlock-digital-adds-1-3m/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.g2.com/products/airlock-digital/pricing" rel="noopener noreferrer">https://www.g2.com/products/airlock-digital/pricing</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://screenconnect.product.connectwise.com/communities/1/topics/3066-prompt-user-for-permission-for-remote-support-per-host" rel="noopener noreferrer">https://screenconnect.product.connectwise.com/communities/1/topics/3066-prompt-user-for-permission-for-remote-support-per-host</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://documentation.n-able.com/N-central/troubleshooting/Content/kb/Configure-Take-Control-integrated-in-N-able-N-central-with-Request-User-Permission-by-default.htm" rel="noopener noreferrer">https://documentation.n-able.com/N-central/troubleshooting/Content/kb/Configure-Take-Control-integrated-in-N-able-N-central-with-Request-User-Permission-by-default.htm</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://status.n-able.com/2026/09/16/take-control-release-new-standalone-agent-and-applet-7-70-00/" rel="noopener noreferrer">https://status.n-able.com/2026/09/16/take-control-release-new-standalone-agent-and-applet-7-70-00/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.ninjaone.com/docs/endpoint-management/remote-control/user-confirmation/" rel="noopener noreferrer">https://www.ninjaone.com/docs/endpoint-management/remote-control/user-confirmation/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://support.anydesk.com/docs/settings.md" rel="noopener noreferrer">https://support.anydesk.com/docs/settings.md</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://community.teamviewer.com/English/kb/articles/108687-restrict-access" rel="noopener noreferrer">https://community.teamviewer.com/English/kb/articles/108687-restrict-access</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.teamviewer.com/en/campaign/ecosystem-security-with-conditional-access" rel="noopener noreferrer">https://www.teamviewer.com/en/campaign/ecosystem-security-with-conditional-access</a>
+- <span class="tag tag-x" title="search excerpt of the page">X</span> <a href="https://docs.level.io/en/articles/9927385-remote-control-approval" rel="noopener noreferrer">https://docs.level.io/en/articles/9927385-remote-control-approval</a></p>
+<p><strong>Buyers</strong>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://www.abs.gov.au/statistics/economy/business-indicators/counts-australian-businesses-including-entries-and-exits/latest-release" rel="noopener noreferrer">https://www.abs.gov.au/statistics/economy/business-indicators/counts-australian-businesses-including-entries-and-exits/latest-release</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.racgp.org.au/FSDEDEV/media/documents/Health-of-the-Nation-2025.pdf" rel="noopener noreferrer">https://www.racgp.org.au/FSDEDEV/media/documents/Health-of-the-Nation-2025.pdf</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://img3.ibisworld.com/australia/number-of-businesses/dental-services/613" rel="noopener noreferrer">https://img3.ibisworld.com/australia/number-of-businesses/dental-services/613</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.ibisworld.com/australia/industry/dental-services-in-australia/613/" rel="noopener noreferrer">https://www.ibisworld.com/australia/industry/dental-services-in-australia/613/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.ibisworld.com/australia/number-of-businesses/veterinary-services/623/" rel="noopener noreferrer">https://www.ibisworld.com/australia/number-of-businesses/veterinary-services/623/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.ibisworld.com/au/number-of-businesses/accounting-services/561/" rel="noopener noreferrer">https://www.ibisworld.com/au/number-of-businesses/accounting-services/561/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.ibisworld.com/australia/number-of-businesses/legal-services/560" rel="noopener noreferrer">https://www.ibisworld.com/australia/number-of-businesses/legal-services/560</a>
+- <span class="tag tag-f" title="opened the page">F</span> <a href="https://www.racgp.org.au/running-a-practice/practice-standards/standards-6th-edition/the-standards-for-general-practices-6th-edition/foundations-of-general-practice-standard/f8-information-security" rel="noopener noreferrer">https://www.racgp.org.au/running-a-practice/practice-standards/standards-6th-edition/the-standards-for-general-practices-6th-edition/foundations-of-general-practice-standard/f8-information-security</a></p>
+<p><strong>Regulation and insurance</strong>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.racgp.org.au/running-a-practice/practice-standards/standards-5th-edition/standards-for-general-practices-5th-ed/core-standards/core-standard-6/criterion-c6-4-information-security" rel="noopener noreferrer">https://www.racgp.org.au/running-a-practice/practice-standards/standards-5th-edition/standards-for-general-practices-5th-ed/core-standards/core-standard-6/criterion-c6-4-information-security</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.minterellison.com/articles/new-ransomware-payment-reporting-obligations-in-australia" rel="noopener noreferrer">https://www.minterellison.com/articles/new-ransomware-payment-reporting-obligations-in-australia</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.clydeco.com/en/insights/2025/09/introduction-of-the-mandatory-ransomware-and-cyber" rel="noopener noreferrer">https://www.clydeco.com/en/insights/2025/09/introduction-of-the-mandatory-ransomware-and-cyber</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.minterellison.com/articles/first-tranche-of-privacy-reforms-passed" rel="noopener noreferrer">https://www.minterellison.com/articles/first-tranche-of-privacy-reforms-passed</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://jws.com.au/what-we-think/changes-to-australian-privacy-laws-now-in-force/" rel="noopener noreferrer">https://jws.com.au/what-we-think/changes-to-australian-privacy-laws-now-in-force/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.epicit.com.au/?p=15345" rel="noopener noreferrer">https://www.epicit.com.au/?p=15345</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.cisc.gov.au:443/information-for-your-industry/healthcare-and-medical/legislation-regulation-and-compliance/soci-act-2018" rel="noopener noreferrer">https://www.cisc.gov.au:443/information-for-your-industry/healthcare-and-medical/legislation-regulation-and-compliance/soci-act-2018</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model-faq" rel="noopener noreferrer">https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model-faq</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.aig.com.au/content/dam/aig/apac/australia/documents-new/financial-lines/cyber/aig-au-cyberedge-ransomware-supplementary-proposal-form.pdf.coredownload.pdf" rel="noopener noreferrer">https://www.aig.com.au/content/dam/aig/apac/australia/documents-new/financial-lines/cyber/aig-au-cyberedge-ransomware-supplementary-proposal-form.pdf.coredownload.pdf</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://abcyberpro.com.au/documents/ACP-SME-Portal-Cyber-Proposal-12-20-FV.pdf" rel="noopener noreferrer">https://abcyberpro.com.au/documents/ACP-SME-Portal-Cyber-Proposal-12-20-FV.pdf</a></p>
+<p><strong>Channel and pricing</strong>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://channellife.com.au/story/cyber-threat-insure-launches-new-model-for-msps-in-aust" rel="noopener noreferrer">https://channellife.com.au/story/cyber-threat-insure-launches-new-model-for-msps-in-aust</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.aap.com.au/aapreleases/cision20240206ae30176/" rel="noopener noreferrer">https://www.aap.com.au/aapreleases/cision20240206ae30176/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://mspsuccess.com/threatlocker-new-bundle-option-for-msps/" rel="noopener noreferrer">https://mspsuccess.com/threatlocker-new-bundle-option-for-msps/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://swsphn.com.au/news/racgp-release-new-cyber-security-resources-for-general-practice/" rel="noopener noreferrer">https://swsphn.com.au/news/racgp-release-new-cyber-security-resources-for-general-practice/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://kmtech.com.au/information-centre/managed-service-provider-rates-comprehensive-pricing-guide/" rel="noopener noreferrer">https://kmtech.com.au/information-centre/managed-service-provider-rates-comprehensive-pricing-guide/</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.newegg.com/global/au-en/p/22Z-007C-00VH9" rel="noopener noreferrer">https://www.newegg.com/global/au-en/p/22Z-007C-00VH9</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://www.newegg.com/global/au-en/p/22Z-007C-00D08" rel="noopener noreferrer">https://www.newegg.com/global/au-en/p/22Z-007C-00D08</a>
+- <span class="tag tag-s" title="search summary only">S</span> <a href="https://protectli.com/product-category/vaults/" rel="noopener noreferrer">https://protectli.com/product-category/vaults/</a></p>
+</section>
+  </main>
+
+  <footer>Prices are AUD ex GST unless marked USD or GBP. Desk research only: no one was contacted and nothing was signed up for.</footer>
+</div>
+
+</body></html>
