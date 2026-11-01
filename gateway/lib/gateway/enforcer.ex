@@ -31,6 +31,10 @@ defmodule Gateway.Enforcer do
   or when `Breakline.Schedule.explain/2` says so. Without a policy the mode is the
   configured `:default_mode` and every catalog tool is covered.
 
+  An open state's `Desired` carries `locks_at`, the instant the schedule locks again
+  (`Breakline.Schedule.next_lock/2`), so the firewall closes the channel at that
+  instant by itself, even when the BEAM is down.
+
   Each evaluation builds a `Gateway.Firewall.Desired` and applies it when it differs
   from the last successful apply, or when the firewall server's pid changed (a
   restarted server holds no desired state of its own). It publishes a
@@ -209,7 +213,7 @@ defmodule Gateway.Enforcer do
     verifier = Verifier.new(site_id: config.site_id, public_keys: config.public_keys)
 
     # fail at boot, not on the first evaluation, when the firewall config is unusable
-    {:ok, _} = build_desired(config, true, config.default_mode, Catalog.ids(), [])
+    {:ok, _} = build_desired(config, true, config.default_mode, Catalog.ids(), [], nil)
 
     {verifier, verifier_note} = load_verifier(verifier, config.store)
     {policy, key_id, boot_note} = load_policy(verifier, config.store)
@@ -410,7 +414,10 @@ defmodule Gateway.Enforcer do
     {block_hosts, hostnames} = split_site_hosts(if policy, do: policy.site_hosts, else: [])
     next_change = if synced? and policy, do: Schedule.next_change(policy, now)
 
-    {:ok, desired} = build_desired(c, locked?, mode, tool_ids, block_hosts)
+    # an open state carries the instant it locks again, so the firewall can close
+    # the channel on time even if this process is not around to apply the lock
+    locks_at = if not locked? and synced? and policy, do: Schedule.next_lock(policy, now)
+    {:ok, desired} = build_desired(c, locked?, mode, tool_ids, block_hosts, locks_at)
 
     snapshot = %Snapshot{
       locked?: locked?,
@@ -432,9 +439,10 @@ defmodule Gateway.Enforcer do
     schedule(s, delay)
   end
 
-  defp build_desired(c, locked?, mode, tool_ids, block_hosts) do
+  defp build_desired(c, locked?, mode, tool_ids, block_hosts, locks_at) do
     Desired.new(
       locked?: locked?,
+      locks_at: locks_at,
       mode: mode,
       lan_interfaces: c.lan_interfaces,
       dns_port: c.dns_port,

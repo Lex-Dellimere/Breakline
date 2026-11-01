@@ -34,6 +34,7 @@ defmodule Gateway.Firewall.NftImplTest do
     %{
       "enforce_locked" => desired([]),
       "enforce_open" => desired(locked?: false),
+      "enforce_open_until" => desired(locked?: false, locks_at: ~U[2026-11-02 07:00:00Z]),
       "monitor_locked" => desired(mode: :monitor),
       "empty_lists" => desired(block_cidrs: [], exclusive_ports: [], doh_ips: []),
       "ipv6" =>
@@ -77,7 +78,14 @@ defmodule Gateway.Firewall.NftImplTest do
   end
 
   describe "golden documents" do
-    for name <- ["enforce_locked", "enforce_open", "monitor_locked", "empty_lists", "ipv6"] do
+    for name <- [
+          "enforce_locked",
+          "enforce_open",
+          "enforce_open_until",
+          "monitor_locked",
+          "empty_lists",
+          "ipv6"
+        ] do
       test name do
         name = unquote(name)
         d = Map.fetch!(cases(), name)
@@ -151,11 +159,35 @@ defmodule Gateway.Firewall.NftImplTest do
 
     test "an open lock never emits rmm, block or exclusive port rules" do
       for d <- random_desired(300) do
-        rules = forward_rules(Ruleset.build(%{d | locked?: false}))
+        rules = forward_rules(Ruleset.build(%{d | locked?: false, locks_at: nil}))
         text = JSON.encode!(rules)
         refute text =~ "@rmm"
         refute text =~ "@block"
         assert length(rules) == 6
+      end
+    end
+
+    test "an open state with locks_at has the locked rules, each behind the time guard" do
+      guard = fn at ->
+        %{"match" => %{"op" => ">=", "left" => %{"meta" => %{"key" => "time"}}, "right" => at}}
+      end
+
+      for d <- random_desired(300) do
+        open = %{d | locked?: false, locks_at: ~U[2026-11-02 07:00:00Z]}
+        locked = %{d | locked?: true, locks_at: nil}
+        always = forward_rules(Ruleset.build(%{open | locks_at: nil}))
+        [_ | _] = guarded = forward_rules(Ruleset.build(open)) -- always
+
+        # the dot and doh rules are the same, the rest are the locked rules plus the guard
+        assert forward_rules(Ruleset.build(open)) == always ++ guarded
+
+        assert guarded ==
+                 Enum.map(
+                   forward_rules(Ruleset.build(locked)) -- always,
+                   &[guard.(1_793_602_800) | &1]
+                 )
+
+        refute JSON.encode!(Ruleset.build(locked)) =~ ~s("time")
       end
     end
 
@@ -243,29 +275,29 @@ defmodule Gateway.Firewall.NftImplTest do
     end
   end
 
+  test "the resolver port is dropped on every interface but loopback and the lan" do
+    for d <- random_desired(100) do
+      rules =
+        for %{"add" => %{"rule" => %{"chain" => "input", "expr" => expr}}} <-
+              Ruleset.build(d)["nftables"],
+            do: expr
 
-    test "the resolver port is dropped on every interface but loopback and the lan" do
-      for d <- random_desired(100) do
-        rules =
-          for %{"add" => %{"rule" => %{"chain" => "input", "expr" => expr}}} <-
-                Ruleset.build(d)["nftables"],
-              do: expr
+      assert length(rules) == 2
 
-        assert length(rules) == 2
+      for {expr, proto} <- Enum.zip(rules, ["udp", "tcp"]) do
+        assert [
+                 %{"match" => %{"op" => "!=", "right" => %{"set" => ["lo" | lan]}}},
+                 %{"match" => %{"left" => %{"payload" => %{"protocol" => ^proto}}} = port},
+                 %{"counter" => nil},
+                 %{"drop" => nil}
+               ] = expr
 
-        for {expr, proto} <- Enum.zip(rules, ["udp", "tcp"]) do
-          assert [
-                   %{"match" => %{"op" => "!=", "right" => %{"set" => ["lo" | lan]}}},
-                   %{"match" => %{"left" => %{"payload" => %{"protocol" => ^proto}}} = port},
-                   %{"counter" => nil},
-                   %{"drop" => nil}
-                 ] = expr
-
-          assert lan == d.lan_interfaces
-          assert port["right"] == d.dns_port
-        end
+        assert lan == d.lan_interfaces
+        assert port["right"] == d.dns_port
       end
     end
+  end
+
   describe "execution" do
     test "runs nft -j -f with a temp file and removes it" do
       test = self()
@@ -442,7 +474,9 @@ defmodule Gateway.Firewall.NftImplTest do
               do: %{port: :rand.uniform(65_535), proto: Enum.random([:tcp, :udp])}
             )
             |> Enum.drop(1),
-          doh_ips: for(_ <- 0..:rand.uniform(4)//1, do: random_ip()) |> Enum.drop(1)
+          doh_ips: for(_ <- 0..:rand.uniform(4)//1, do: random_ip()) |> Enum.drop(1),
+          locks_at:
+            Enum.random([nil, DateTime.from_unix!(1_793_000_000 + :rand.uniform(10_000_000))])
         )
 
       d

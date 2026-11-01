@@ -18,6 +18,24 @@ defmodule Gateway.Firewall.DesiredTest do
     assert d.block4 == [] and d.block6 == [] and d.doh4 == [] and d.doh6 == []
   end
 
+  test "locks_at is utc in whole seconds when open, and always nil when locked" do
+    sydney =
+      DateTime.shift_zone!(
+        ~U[2026-11-02 07:00:00.123456Z],
+        "Australia/Sydney",
+        Tz.TimeZoneDatabase
+      )
+
+    assert {:ok, %{locks_at: ~U[2026-11-02 07:00:00Z]}} =
+             Desired.new(base(locked?: false, locks_at: sydney))
+
+    assert {:ok, %{locks_at: nil}} = Desired.new(base(locked?: true, locks_at: sydney))
+    assert {:ok, %{locks_at: nil}} = Desired.new(base(locked?: false))
+
+    assert {:error, [{:locks_at, "soon", :not_a_datetime}]} =
+             Desired.new(base(locked?: false, locks_at: "soon"))
+  end
+
   test "accepts a map as well as a keyword list" do
     assert Desired.new(base()) == Desired.new(Map.new(base()))
   end

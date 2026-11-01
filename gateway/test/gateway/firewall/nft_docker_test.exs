@@ -13,7 +13,14 @@ defmodule Gateway.Firewall.NftDockerTest do
 
   @fixtures Path.expand("../../fixtures/nft", __DIR__)
   @image "debian:trixie-slim"
-  @rulesets ["enforce_locked", "enforce_open", "monitor_locked", "empty_lists", "ipv6"]
+  @rulesets [
+    "enforce_locked",
+    "enforce_open",
+    "enforce_open_until",
+    "monitor_locked",
+    "empty_lists",
+    "ipv6"
+  ]
 
   defp docker(script, extra_mounts \\ []) do
     mounts =
@@ -79,6 +86,9 @@ defmodule Gateway.Firewall.NftDockerTest do
       |> Enum.map(fn {:ok, r} -> r end)
 
     for {name, status, out} <- results do
+      # libnftables lists meta time back as local time; only its presence is checked
+      guarded? = name == "enforce_open_until"
+
       assert status == 0, "#{name}: nft failed (exit #{status}):\n#{out}"
       listing = sections(out) |> Map.fetch!(name)
       expected = expected_rules(name)
@@ -111,6 +121,24 @@ defmodule Gateway.Firewall.NftDockerTest do
           refute Enum.any?(rule["expr"], &match?(%{"match" => %{"left" => %{"ct" => _}}}, &1))
           assert "drop" in keys
         end
+
+        time? =
+          Enum.any?(
+            rule["expr"],
+            &match?(%{"match" => %{"left" => %{"meta" => %{"key" => "time"}}}}, &1)
+          )
+
+        if not guarded?, do: refute(time?)
+      end
+
+      if guarded? do
+        timed =
+          for rule <- objects(listing, "rule"),
+              %{"match" => %{"left" => %{"meta" => %{"key" => "time"}}, "op" => ">="}} <-
+                rule["expr"],
+              do: rule
+
+        assert length(timed) == expected["forward"] - expected_rules("enforce_open")["forward"]
       end
     end
   end

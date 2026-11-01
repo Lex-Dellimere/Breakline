@@ -27,6 +27,11 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
     * forward, when locked: daddr `@rmm4` / `@rmm6`; daddr `@block4` / `@block6`; tcp and
       udp dport in the exclusive ports. There is no conntrack state match before these,
       so established sessions are cut as soon as the lock starts.
+    * forward, when open with a known `locks_at`: the same locked rules, each behind
+      `meta time >= <locks_at>` (unix seconds). Until then they never match; from then
+      on the kernel enforces the lock by itself, even when nothing applies it. When
+      the enforcer applies the locked state at that instant, one transaction swaps the
+      guarded rules for plain ones, which already match, so there is no gap.
 
   Every drop rule has a counter. In `:enforce` mode there is no conntrack match, so
   every packet is counted and dropped. In `:monitor` (pilot) mode a drop rule has no
@@ -176,10 +181,10 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
         drop(d, "doh", [match(payload(l3, "daddr"), set), match(payload(proto, "dport"), 443)])
       end
 
-    if d.locked? do
-      dot ++ doh ++ locked_rules(d)
-    else
-      dot ++ doh
+    cond do
+      d.locked? -> dot ++ doh ++ locked_rules(d)
+      d.locks_at -> dot ++ doh ++ Enum.map(locked_rules(d), &[time_guard(d.locks_at) | &1])
+      true -> dot ++ doh
     end
   end
 
@@ -206,6 +211,11 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
       end)
 
     addr ++ ports
+  end
+
+  # nft takes unix seconds for meta time and lists them back in local time
+  defp time_guard(at) do
+    %{"match" => %{"op" => ">=", "left" => meta("time"), "right" => DateTime.to_unix(at)}}
   end
 
   defp drop(%Desired{mode: :enforce}, _reason, matches),

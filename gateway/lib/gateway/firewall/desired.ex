@@ -25,6 +25,11 @@ defmodule Gateway.Firewall.Desired do
       destination while locked (see `Breakline.Catalog.exclusive_ports/1`).
     * `doh_ips` - IPv4 and IPv6 addresses of known public DoH resolvers, always
       dropped on tcp and udp 443.
+    * `locks_at` - for an open state, the instant (UTC, whole seconds) the schedule
+      locks again, or nil when it is not known. The firewall then also loads the
+      locked rules behind a kernel time guard, so the channel closes on time even
+      when nothing applies the locked state (the BEAM is down). Always nil when
+      locked.
 
   `new/1` normalises everything so equal inputs give equal structs: lists are
   deduplicated and sorted, CIDR host bits are cleared (which can only widen a block),
@@ -45,6 +50,7 @@ defmodule Gateway.Firewall.Desired do
             block_cidrs: [],
             exclusive_ports: [],
             doh_ips: [],
+            locks_at: nil,
             block4: [],
             block6: [],
             doh4: [],
@@ -61,6 +67,7 @@ defmodule Gateway.Firewall.Desired do
           block_cidrs: [String.t()],
           exclusive_ports: [port_spec()],
           doh_ips: [String.t()],
+          locks_at: DateTime.t() | nil,
           block4: [String.t()],
           block6: [String.t()],
           doh4: [String.t()],
@@ -70,7 +77,16 @@ defmodule Gateway.Firewall.Desired do
   @typedoc "A validation failure: the field, the offending value and why."
   @type reason :: {atom(), term(), atom()}
 
-  @fields [:locked?, :mode, :lan_interfaces, :dns_port, :block_cidrs, :exclusive_ports, :doh_ips]
+  @fields [
+    :locked?,
+    :mode,
+    :lan_interfaces,
+    :dns_port,
+    :block_cidrs,
+    :exclusive_ports,
+    :doh_ips,
+    :locks_at
+  ]
 
   @doc """
   Validates and normalises a desired state given as a map or keyword list with the
@@ -106,6 +122,7 @@ defmodule Gateway.Firewall.Desired do
         check(attrs, :locked?, &is_boolean/1, :not_boolean) ++
         check(attrs, :mode, &(&1 in [:enforce, :monitor]), :invalid_mode) ++
         check(attrs, :dns_port, &port?/1, :invalid_port) ++
+        check(attrs, :locks_at, &(is_nil(&1) or is_struct(&1, DateTime)), :not_a_datetime) ++
         interfaces(attrs) ++ block_errors ++ doh_errors ++ port_errors
 
     if errors == [] do
@@ -121,6 +138,7 @@ defmodule Gateway.Firewall.Desired do
          block_cidrs: Enum.map(block4 ++ block6, & &1.text),
          exclusive_ports: ports,
          doh_ips: Enum.map(doh4 ++ doh6, & &1.text),
+         locks_at: locks_at(attrs),
          block4: Enum.map(block4, & &1.text),
          block6: Enum.map(block6, & &1.text),
          doh4: Enum.map(doh4, & &1.text),
@@ -132,6 +150,15 @@ defmodule Gateway.Firewall.Desired do
   end
 
   def new(other), do: {:error, [{:attrs, other, :not_a_map}]}
+
+  # utc and whole seconds, which is what the kernel guard compares against
+  defp locks_at(%{locked?: false, locks_at: %DateTime{} = at}),
+    do:
+      at
+      |> DateTime.shift_zone!("Etc/UTC", Breakline.time_zone_database())
+      |> DateTime.truncate(:second)
+
+  defp locks_at(_), do: nil
 
   defp check(attrs, key, ok?, reason) do
     case Map.fetch(attrs, key) do

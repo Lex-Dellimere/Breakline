@@ -286,8 +286,14 @@ listeners on 80, 443, 853, 5938 and 6568). Three containers run in parallel:
 
 The scenarios: the DNS redirect from any resolver address (udp and tcp, ipv4 and
 ipv6), locked drops, an open window, sessions cut when a window ends or a lock
-arrives, monitor counters, a killed and restarted beam, a flushed ruleset, the WAN
-side of the resolver, and the bridge setups the firewall reports.
+arrives, monitor counters, a killed and restarted beam, a window that ends while the
+beam is down, a flushed ruleset, the WAN side of the resolver, and the bridge setups
+the firewall reports.
+
+An open state with a known end also loads the locked rules behind `meta time >= end`
+(unix seconds; `nft list` shows them in local time), so the kernel closes the window
+on time when the beam is not there to apply the lock. When it is, it swaps in the
+plain locked rules at that instant, in one transaction.
 
 Bridge mode needs br_netfilter loaded, both sysctls at 1, and the bridge (not a port)
 as the LAN interface. Otherwise nothing on the bridge is enforced, and

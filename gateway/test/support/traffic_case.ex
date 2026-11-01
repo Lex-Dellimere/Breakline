@@ -181,6 +181,8 @@ defmodule Gateway.TrafficCase do
         learn!(ctx)
         until = open!(ctx, 15)
         sessions = [start_session!(ctx, @rmm4, 443), start_session!(ctx, @rmm6, 443)]
+        # the open state already holds the lock rules, behind meta time
+        assert JSON.encode!(forward_rules(ctx)) =~ ~s("time")
 
         await_status(ctx, &(&1.state == :locked), 30_000)
         ends = DateTime.to_unix(until)
@@ -191,6 +193,15 @@ defmodule Gateway.TrafficCase do
           assert last > ends - 1.0, "#{out} stopped #{ends - last}s before the window ended"
           assert last < ends + 3.0, "#{out} was cut #{last - ends}s after the window ended"
         end
+
+        # the enforcer swapped in the plain locked rules, which drop as the guarded ones did
+        await(
+          fn -> not (JSON.encode!(forward_rules(ctx)) =~ ~s("time")) end,
+          5_000,
+          "plain rules"
+        )
+
+        assert_probes(ctx, %{{:tcp, @rmm4, 443} => :drop, {:tcp, @rmm6, 443} => :drop})
       end
 
       test "a lock policy cuts established rmm sessions at once", %{ctx: ctx} do
@@ -298,15 +309,26 @@ defmodule Gateway.TrafficCase do
         assert %{status: :noerror, answers: [@web4]} = dig(ctx, "8.8.8.8", @web)
         assert_probes(ctx, %{{:tcp, @rmm4, 443} => :drop, {:tcp, @any4, 6568} => :drop})
 
-        # a window that ends while the beam is down stays open until it is back
-        until = open!(ctx, 8)
+        # a window that ends while the beam is down: the kernel closes it on time,
+        # from the rules guarded by meta time that the open state loaded
+        until = open!(ctx, 10)
+        ends = DateTime.to_unix(until)
+        sessions = [start_session!(ctx, @rmm4, 443), start_session!(ctx, @any4, 6568)]
         kill_gateway!(ctx)
-        ended = DateTime.add(until, 1)
-        await(fn -> DateTime.after?(DateTime.utc_now(), ended) end, 15_000, "the window to end")
-        assert_probes(ctx, %{{:tcp, @rmm4, 443} => :pass, {:tcp, @any4, 6568} => :pass})
+        assert now() < ends, "the beam died after the window ended"
+
+        for out <- sessions do
+          last = await_cut(ctx, out)
+          stop_session(ctx, out)
+          assert last > ends - 1.0, "#{out} stopped #{ends - last}s before the window ended"
+          assert last < ends + 3.0, "#{out} was cut #{last - ends}s after the window ended"
+        end
+
+        assert_probes(ctx, %{{:tcp, @rmm4, 443} => :drop, {:tcp, @any4, 6568} => :drop})
 
         start_gateway!(ctx)
-        await_status(ctx, &(&1.state == :locked))
+        await_status(ctx, &(&1.state == :locked and &1.firewall.in_sync?))
+        refute JSON.encode!(forward_rules(ctx)) =~ ~s("time")
         assert_probes(ctx, %{{:tcp, @rmm4, 443} => :drop, {:tcp, @any4, 6568} => :drop})
       end
 

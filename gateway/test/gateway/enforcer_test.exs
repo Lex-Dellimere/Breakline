@@ -378,6 +378,16 @@ defmodule Gateway.EnforcerTest do
     eventually(fn -> Enforcer.status().state == :open end, 3000)
   end
 
+  test "an open state tells the firewall when it locks again, a locked one does not", ctx do
+    submit!(ctx, 1, monday_window(~T[10:00:00], ~T[12:00:00]))
+    assert %{state: :open} = Enforcer.status()
+    assert %Desired{locked?: false, locks_at: locks_at} = fake_desired()
+    assert locks_at == local(~D[2026-11-02], ~T[12:00:00])
+
+    at_local(~D[2026-11-02], ~T[12:00:00])
+    assert %Desired{locked?: true, locks_at: nil} = fake_desired()
+  end
+
   test "a ruleset removed behind the firewall's back is applied again" do
     flag = start_supervised!({Agent, fn -> true end})
     old = Process.whereis(Gateway.Firewall.Server)
