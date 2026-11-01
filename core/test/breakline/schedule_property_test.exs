@@ -282,6 +282,33 @@ defmodule Breakline.SchedulePropertyTest do
     end
   end
 
+  property "next_lock is locked, the state is open before it, and nil while locked" do
+    check all(
+            policy <- full_policy(),
+            at <- instant(),
+            fractions <- list_of(integer(1..999_999), length: 8),
+            max_runs: 300
+          ) do
+      case {Schedule.state_at(policy, at), Schedule.next_lock(policy, at)} do
+        {:locked, lock} ->
+          assert lock == nil
+
+        {:open, nil} ->
+          :ok
+
+        {:open, lock} ->
+          assert DateTime.compare(lock, at) == :gt
+          assert DateTime.diff(lock, at) <= 14 * 24 * 60 * 60
+          assert Schedule.state_at(policy, lock) == :locked
+          span = DateTime.diff(lock, at)
+
+          for offset <- Enum.map(fractions, &div(&1 * span, 1_000_000)), offset > 0 do
+            assert Schedule.state_at(policy, DateTime.add(at, offset)) == :open
+          end
+      end
+    end
+  end
+
   property "state is constant from an instant until next_change" do
     check all(
             policy <- full_policy(),

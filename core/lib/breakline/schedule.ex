@@ -125,6 +125,33 @@ defmodule Breakline.Schedule do
     |> Enum.min(DateTime, fn -> nil end)
   end
 
+  @doc """
+  For a policy open at `at`, returns the instant it locks again, following
+  `next_change/2` past the changes that leave it open (break-glass ending inside
+  a window, back-to-back windows). The state is open on all of
+  `[at, next_lock(policy, at))`.
+
+  Returns nil when the policy is locked at `at`, or stays open for more than the
+  14 days it looks ahead.
+  """
+  @spec next_lock(Policy.t(), DateTime.t()) :: DateTime.t() | nil
+  def next_lock(%Policy{} = policy, %DateTime{} = at) do
+    if state_at(policy, at) == :open do
+      horizon = DateTime.add(at, @horizon_seconds, :second)
+      find_lock(policy, next_change(policy, at), horizon)
+    end
+  end
+
+  defp find_lock(_policy, nil, _horizon), do: nil
+
+  defp find_lock(policy, t, horizon) do
+    cond do
+      DateTime.compare(t, horizon) == :gt -> nil
+      state_at(policy, t) == :locked -> t
+      true -> find_lock(policy, next_change(policy, t), horizon)
+    end
+  end
+
   defp lock_active?(%AdvisoryLock{expires_at: nil}, _at), do: true
   defp lock_active?(%AdvisoryLock{expires_at: e}, at), do: DateTime.compare(at, e) == :lt
 

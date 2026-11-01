@@ -235,6 +235,52 @@ defmodule Breakline.ScheduleTest do
     end
   end
 
+  describe "next_lock/2" do
+    test "is the window end, past a break-glass that ends inside the window" do
+      p =
+        policy("Australia/Brisbane",
+          one_off_windows: [one_off("patch", ~N[2026-11-02 10:00:00], ~N[2026-11-02 12:00:00])],
+          break_glass: %{until: ~U[2026-11-02 01:00:00Z], approved_by: "approver"}
+        )
+
+      # break-glass opens it at 23:30z, the window takes over at 00:00z and ends at 02:00z
+      at = ~U[2026-11-01 23:30:00Z]
+      assert Schedule.next_change(p, at) == ~U[2026-11-02 00:00:00Z]
+      assert Schedule.next_lock(p, at) == ~U[2026-11-02 02:00:00Z]
+    end
+
+    test "is the break-glass end when nothing else keeps it open" do
+      p =
+        policy("Australia/Sydney",
+          break_glass: %{until: ~U[2026-11-02 01:00:00Z], approved_by: "a"}
+        )
+
+      assert Schedule.next_lock(p, ~U[2026-11-02 00:00:00Z]) == ~U[2026-11-02 01:00:00Z]
+    end
+
+    test "is nil when the policy stays open past the horizon, or never changes" do
+      p =
+        policy("Australia/Sydney",
+          one_off_windows: [
+            one_off("migration", ~N[2026-11-01 00:00:00], ~N[2026-11-30 00:00:00])
+          ]
+        )
+
+      assert Schedule.next_lock(p, ~U[2026-11-02 00:00:00Z]) == nil
+      assert Schedule.next_lock(policy("Australia/Sydney"), ~U[2026-11-02 00:00:00Z]) == nil
+    end
+
+    test "is nil while locked" do
+      p =
+        policy("Australia/Brisbane",
+          one_off_windows: [one_off("patch", ~N[2026-11-02 10:00:00], ~N[2026-11-02 12:00:00])]
+        )
+
+      assert Schedule.next_lock(p, ~U[2026-11-01 00:00:00Z]) == nil
+      assert Schedule.next_lock(p, ~U[2026-11-02 01:00:00Z]) == ~U[2026-11-02 02:00:00Z]
+    end
+  end
+
   describe "next_change/2" do
     test "returns the next window edge strictly after the instant" do
       p =
