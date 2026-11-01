@@ -218,6 +218,29 @@ defmodule Gateway.Firewall.NftImplTest do
     end
   end
 
+
+    test "the resolver port is dropped on every interface but loopback and the lan" do
+      for d <- random_desired(100) do
+        rules =
+          for %{"add" => %{"rule" => %{"chain" => "input", "expr" => expr}}} <-
+                Ruleset.build(d)["nftables"],
+              do: expr
+
+        assert length(rules) == 2
+
+        for {expr, proto} <- Enum.zip(rules, ["udp", "tcp"]) do
+          assert [
+                   %{"match" => %{"op" => "!=", "right" => %{"set" => ["lo" | lan]}}},
+                   %{"match" => %{"left" => %{"payload" => %{"protocol" => ^proto}}} = port},
+                   %{"counter" => nil},
+                   %{"drop" => nil}
+                 ] = expr
+
+          assert lan == d.lan_interfaces
+          assert port["right"] == d.dns_port
+        end
+      end
+    end
   describe "execution" do
     test "runs nft -j -f with a temp file and removes it" do
       test = self()

@@ -84,12 +84,14 @@ defmodule Gateway.Firewall.NftDockerTest do
       expected = expected_rules(name)
       assert rule_count(listing, "prerouting") == expected["prerouting"], name
       assert rule_count(listing, "forward") == expected["forward"], name
+      assert rule_count(listing, "input") == expected["input"], name
 
       names = objects(listing, "set") |> Enum.map(& &1["name"]) |> Enum.sort()
       assert names == ~w(block4 block6 doh4 doh6 rmm4 rmm6), name
 
       chains = Map.new(objects(listing, "chain"), &{&1["name"], &1})
       assert %{"type" => "nat", "hook" => "prerouting", "prio" => -100} = chains["prerouting"]
+      assert %{"type" => "filter", "hook" => "input", "prio" => -10} = chains["input"]
 
       assert %{"type" => "filter", "hook" => "forward", "prio" => -10, "policy" => "accept"} =
                chains["forward"]

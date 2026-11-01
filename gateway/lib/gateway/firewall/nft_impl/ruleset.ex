@@ -10,14 +10,18 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
       addresses survive every apply.
     * the static sets `block4` / `block6` (`flags interval`) and `doh4` / `doh6`, added,
       flushed and refilled.
-    * the base chains `prerouting` (nat, hook prerouting, priority dstnat = -100) and
-      `forward` (filter, hook forward, priority filter - 10 = -10, policy accept), added,
-      flushed and rebuilt.
+    * the base chains `prerouting` (nat, hook prerouting, priority dstnat = -100),
+      `input` (filter, hook input, priority filter - 10 = -10, policy accept) and
+      `forward` (filter, hook forward, priority filter - 10 = -10, policy accept),
+      added, flushed and rebuilt.
 
   Rules:
 
     * prerouting: udp and tcp dport 53 arriving on a LAN interface is redirected to
       the gateway resolver's port, in both modes.
+    * input: udp and tcp to the resolver's port arriving on any other interface
+      (loopback aside) is dropped, in both modes, so the resolver is never an open
+      resolver on the WAN side.
     * forward, always: tcp and udp dport 853 (DoT, DoQ); tcp and udp dport 443 to
       `@doh4` / `@doh6`.
     * forward, when locked: daddr `@rmm4` / `@rmm6`; daddr `@block4` / `@block6`; tcp and
@@ -46,7 +50,7 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
 
   # numeric values of the named priorities: dstnat is -100, filter is 0.
   @prio_dstnat -100
-  @prio_forward -10
+  @prio_filter -10
 
   @doc "The nftables table family this module manages."
   @spec family() :: String.t()
@@ -68,6 +72,7 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
         static_sets(d) ++
         chains() ++
         Enum.map(prerouting_rules(d), &add(rule("prerouting", &1))) ++
+        Enum.map(input_rules(d), &add(rule("input", &1))) ++
         Enum.map(forward_rules(d), &add(rule("forward", &1)))
 
     %{"nftables" => commands}
@@ -127,8 +132,10 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
   defp chains do
     [
       add(%{"chain" => chain_obj("prerouting", "nat", "prerouting", @prio_dstnat)}),
-      add(%{"chain" => chain_obj("forward", "filter", "forward", @prio_forward)}),
+      add(%{"chain" => chain_obj("input", "filter", "input", @prio_filter)}),
+      add(%{"chain" => chain_obj("forward", "filter", "forward", @prio_filter)}),
       %{"flush" => %{"chain" => chain_ref("prerouting")}},
+      %{"flush" => %{"chain" => chain_ref("input")}},
       %{"flush" => %{"chain" => chain_ref("forward")}}
     ]
   end
@@ -140,6 +147,23 @@ defmodule Gateway.Firewall.NftImpl.Ruleset do
         match(payload(proto, "dport"), 53),
         counter(),
         %{"redirect" => %{"port" => d.dns_port}}
+      ]
+    end
+  end
+
+  defp input_rules(d) do
+    for proto <- ["udp", "tcp"] do
+      [
+        %{
+          "match" => %{
+            "op" => "!=",
+            "left" => meta("iifname"),
+            "right" => %{"set" => ["lo" | d.lan_interfaces]}
+          }
+        },
+        match(payload(proto, "dport"), d.dns_port),
+        counter(),
+        %{"drop" => nil}
       ]
     end
   end

@@ -96,6 +96,19 @@
       "add": {
         "chain": {
           "family": "inet",
+          "hook": "input",
+          "name": "input",
+          "policy": "accept",
+          "prio": -10,
+          "table": "breakline",
+          "type": "filter"
+        }
+      }
+    },
+    {
+      "add": {
+        "chain": {
+          "family": "inet",
           "hook": "forward",
           "name": "forward",
           "policy": "accept",
@@ -106,6 +119,7 @@
       }
     },
     {"flush": {"chain": {"family": "inet", "name": "prerouting", "table": "breakline"}}},
+    {"flush": {"chain": {"family": "inet", "name": "input", "table": "breakline"}}},
     {"flush": {"chain": {"family": "inet", "name": "forward", "table": "breakline"}}},
     {
       "add": {
@@ -155,6 +169,60 @@
             },
             {"counter": null},
             {"redirect": {"port": 5353}}
+          ],
+          "family": "inet",
+          "table": "breakline"
+        }
+      }
+    },
+    {
+      "add": {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "match": {
+                "left": {"meta": {"key": "iifname"}},
+                "op": "!=",
+                "right": {"set": ["lo", "eth1", "wlan0"]}
+              }
+            },
+            {
+              "match": {
+                "left": {"payload": {"field": "dport", "protocol": "udp"}},
+                "op": "==",
+                "right": 5353
+              }
+            },
+            {"counter": null},
+            {"drop": null}
+          ],
+          "family": "inet",
+          "table": "breakline"
+        }
+      }
+    },
+    {
+      "add": {
+        "rule": {
+          "chain": "input",
+          "expr": [
+            {
+              "match": {
+                "left": {"meta": {"key": "iifname"}},
+                "op": "!=",
+                "right": {"set": ["lo", "eth1", "wlan0"]}
+              }
+            },
+            {
+              "match": {
+                "left": {"payload": {"field": "dport", "protocol": "tcp"}},
+                "op": "==",
+                "right": 5353
+              }
+            },
+            {"counter": null},
+            {"drop": null}
           ],
           "family": "inet",
           "table": "breakline"
