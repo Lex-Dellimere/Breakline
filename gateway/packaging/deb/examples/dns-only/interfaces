@@ -1,0 +1,25 @@
+# /etc/network/interfaces for dns-only monitor mode (ifupdown, debian's default).
+#
+# the box is an ordinary host on the site lan with one cable. the site's dhcp hands
+# out this box's address as the dns server, so give it a fixed address: either a
+# static one outside the dhcp pool, as here, or a dhcp reservation.
+#
+# check the nic name with `ip -br link` (i226-v nics on a mini pc are usually
+# enp1s0 and enp2s0). the second nic stays unplugged.
+
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+auto enp1s0
+iface enp1s0 inet static
+    address 192.168.1.53/24
+    gateway 192.168.1.1
+
+# the box itself resolves through the upstreams directly (/etc/resolv.conf), never
+# through its own resolver, so it can still reach apt and the cloud when the
+# gateway is down. e.g. /etc/resolv.conf:
+#
+#   nameserver 1.1.1.1
+#   nameserver 9.9.9.9

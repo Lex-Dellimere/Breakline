@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+# an upgrade keeps the gateway running until postinst restarts it
+if [ "$1" = "remove" ] && [ -d /run/systemd/system ]; then
+  deb-systemd-invoke stop breakline-gateway.service >/dev/null || true
+fi
+
+exit 0

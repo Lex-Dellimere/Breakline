@@ -1,0 +1,115 @@
+#!/bin/sh
+# breakline-gateway: the admin command for a breakline pilot box.
+#
+#   breakline-gateway status
+#   breakline-gateway enroll <cloud_url> <code> --ca-sha256 <hex>
+#
+# both run the release as the breakline user. run them as root (sudo).
+set -eu
+
+# the BREAKLINE_*_BIN, _ENV_FILE and _USER overrides exist for the package tests
+gateway_bin="${BREAKLINE_GATEWAY_BIN:-/opt/breakline-gateway/bin/gateway}"
+systemctl_bin="${BREAKLINE_SYSTEMCTL_BIN:-systemctl}"
+env_file="${BREAKLINE_ENV_FILE:-/etc/default/breakline-gateway}"
+service_user="${BREAKLINE_USER:-breakline}"
+service=breakline-gateway
+data_dir=/var/lib/breakline
+
+usage() {
+  cat >&2 <<EOF
+usage: breakline-gateway status
+       breakline-gateway enroll <cloud_url> <code> --ca-sha256 <hex>
+EOF
+  exit 2
+}
+
+die() {
+  echo "breakline-gateway: $*" >&2
+  exit 1
+}
+
+# runs "$@" as the service user, from root or from that user itself
+as_service_user() {
+  if [ "$(id -un)" = "$service_user" ]; then
+    "$@"
+  elif [ "$(id -u)" -eq 0 ]; then
+    setpriv --reuid="$service_user" --regid="$service_user" --init-groups -- "$@"
+  else
+    die "run this as root, e.g. sudo breakline-gateway $command"
+  fi
+}
+
+# the release writes its runtime sys.config under RELEASE_TMP; give each run its own
+with_release_tmp() {
+  tmp="$(as_service_user mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  RELEASE_TMP="$tmp"
+  export RELEASE_TMP
+}
+
+load_env_file() {
+  if [ -r "$env_file" ]; then
+    set -a
+    # shellcheck disable=SC1090
+    . "$env_file"
+    set +a
+  fi
+}
+
+status() {
+  [ $# -eq 0 ] || usage
+  with_release_tmp
+  if ! as_service_user "$gateway_bin" rpc 'Gateway.Status.print()'; then
+    die "could not reach the gateway; is it running? try: systemctl status $service"
+  fi
+}
+
+enroll() {
+  [ $# -eq 4 ] || usage
+  [ "$3" = "--ca-sha256" ] || usage
+  url="$1"
+  code="$2"
+  ca_sha256="$(printf '%s' "$4" | tr 'A-F' 'a-f')"
+
+  case "$url" in
+    https://?*) ;;
+    *) die "the cloud url must start with https://" ;;
+  esac
+
+  case "$url$code" in
+    *[[:space:]]*) die "the cloud url and the code can't contain spaces" ;;
+  esac
+
+  [ -n "$code" ] || die "the enrolment code is empty"
+
+  if ! printf '%s' "$ca_sha256" | grep -Eq '^[0-9a-f]{64}$'; then
+    die "--ca-sha256 must be the 64 hex digit sha256 of the cloud's ca certificate"
+  fi
+
+  load_env_file
+  with_release_tmp
+
+  BREAKLINE_ENROLL_URL="$url"
+  BREAKLINE_ENROLL_CODE="$code"
+  BREAKLINE_ENROLL_CA_SHA256="$ca_sha256"
+  BREAKLINE_DATA_DIR="$data_dir"
+  export BREAKLINE_ENROLL_URL BREAKLINE_ENROLL_CODE BREAKLINE_ENROLL_CA_SHA256 BREAKLINE_DATA_DIR
+
+  if ! as_service_user "$gateway_bin" eval 'Gateway.Enroll.run_from_env()'; then
+    die "enrolment failed, nothing was changed on the service"
+  fi
+
+  "$systemctl_bin" restart "$service"
+  echo "enrolled; $service restarted"
+}
+
+[ $# -ge 1 ] || usage
+command="$1"
+shift
+
+case "$command" in
+  status) status "$@" ;;
+  enroll) enroll "$@" ;;
+  -h | --help | help) usage ;;
+  *) usage ;;
+esac

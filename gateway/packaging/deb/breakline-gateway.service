@@ -1,0 +1,67 @@
+[Unit]
+Description=Breakline site gateway
+Documentation=file:///usr/share/doc/breakline-gateway/PILOT.md
+# the enforcer locks rmm while the clock is unsynced, so start once ntp is up if it can
+Wants=network-online.target time-sync.target
+After=network-online.target time-sync.target
+
+[Service]
+Type=exec
+User=breakline
+Group=breakline
+# the data dir is fixed by StateDirectory below; the env file comes after and can't
+# usefully move it
+Environment=BREAKLINE_DATA_DIR=/var/lib/breakline
+Environment=RELEASE_TMP=/run/breakline-gateway
+Environment=ERL_CRASH_DUMP=/var/lib/breakline/erl_crash.dump
+Environment=HOME=/var/lib/breakline
+EnvironmentFile=/etc/default/breakline-gateway
+ExecStart=/opt/breakline-gateway/bin/gateway start
+WorkingDirectory=/var/lib/breakline
+StateDirectory=breakline
+StateDirectoryMode=0700
+RuntimeDirectory=breakline-gateway
+RuntimeDirectoryMode=0700
+UMask=0077
+Restart=always
+RestartSec=5s
+# the vm shuts down on sigterm; give it time to flush the audit log
+TimeoutStopSec=30s
+
+# nft (a child process, the netlink socket) needs CAP_NET_ADMIN, the resolver on
+# :53 needs CAP_NET_BIND_SERVICE. nothing else.
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+KeyringMode=private
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RemoveIPC=yes
+# the beam jit maps code twice (rw and rx) and never asks for w+x memory, so this
+# holds. checked against the kernel's PR_SET_MDWE, which systemd uses when it can
+MemoryDenyWriteExecute=yes
+DevicePolicy=closed
+# netlink for nft, unix for timedatectl's d-bus call, inet for dns and the uplink
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

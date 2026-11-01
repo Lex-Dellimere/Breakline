@@ -1,0 +1,19 @@
+#!/usr/sbin/nft -f
+# /etc/nftables.conf for router mode, only when the site firewall can't route the
+# segment back to the box. masquerades the segment behind the box's lan address.
+#
+# never use `flush ruleset` here (debian's stock /etc/nftables.conf does): it would
+# also delete the gateway's own `table inet breakline`, and the gateway only puts it
+# back on its next change. this file touches its own table only.
+#
+# enable with: systemctl enable --now nftables
+
+table ip breakline_nat
+delete table ip breakline_nat
+
+table ip breakline_nat {
+    chain postrouting {
+        type nat hook postrouting priority srcnat; policy accept;
+        ip saddr 10.20.0.0/24 oifname "enp1s0" masquerade
+    }
+}

@@ -1,0 +1,7 @@
+# the dns-only lines of /etc/default/breakline-gateway (the rest as in that file)
+
+# the one nic
+BREAKLINE_LAN_INTERFACES=enp1s0
+# bind the resolver to the lan address dhcp hands out, not 0.0.0.0
+BREAKLINE_DNS_IP=192.168.1.53
+BREAKLINE_DEFAULT_MODE=monitor

@@ -1,0 +1,44 @@
+#!/bin/sh
+set -e
+
+service=breakline-gateway.service
+cookie=/etc/breakline-gateway/cookie
+
+if [ "$1" = "configure" ]; then
+  systemd-sysusers breakline-gateway.conf
+
+  install -d -o root -g breakline -m 0750 /etc/breakline-gateway
+  install -d -o breakline -g breakline -m 0700 /var/lib/breakline
+
+  # a per-box erlang cookie, made once and kept across upgrades. the release's
+  # build-time cookie is not in the package.
+  if [ ! -s "$cookie" ]; then
+    old_umask="$(umask)"
+    umask 077
+    tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 >"$cookie.new"
+    umask "$old_umask"
+    [ "$(wc -c <"$cookie.new")" -eq 48 ] || { echo "could not generate $cookie" >&2; exit 1; }
+    chown breakline:breakline "$cookie.new"
+    chmod 0400 "$cookie.new"
+    mv "$cookie.new" "$cookie"
+  fi
+
+  # was-enabled defaults to true, so a first install enables the unit. it is not
+  # started here: it needs /etc/default/breakline-gateway filled in first
+  deb-systemd-helper unmask "$service" >/dev/null || true
+  if deb-systemd-helper --quiet was-enabled "$service"; then
+    deb-systemd-helper enable "$service" >/dev/null || true
+  else
+    deb-systemd-helper update-state "$service" >/dev/null || true
+  fi
+
+  if [ -d /run/systemd/system ]; then
+    systemctl --system daemon-reload >/dev/null || true
+    # an upgrade restarts a running gateway on the new release
+    if [ -n "$2" ]; then
+      deb-systemd-invoke try-restart "$service" >/dev/null || true
+    fi
+  fi
+fi
+
+exit 0

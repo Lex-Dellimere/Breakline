@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+
+service=breakline-gateway.service
+
+if [ -d /run/systemd/system ]; then
+  systemctl --system daemon-reload >/dev/null || true
+fi
+
+case "$1" in
+  remove)
+    if command -v deb-systemd-helper >/dev/null; then
+      deb-systemd-helper mask "$service" >/dev/null || true
+    fi
+    ;;
+
+  purge)
+    if command -v deb-systemd-helper >/dev/null; then
+      deb-systemd-helper purge "$service" >/dev/null || true
+      deb-systemd-helper unmask "$service" >/dev/null || true
+    fi
+    rm -rf /etc/breakline-gateway
+    # the audit chain and signed policy stay: deleting them is a decision, not a side
+    # effect of removing the package. the breakline user stays too, as debian does.
+    if [ -d /var/lib/breakline ]; then
+      echo "breakline-gateway: kept /var/lib/breakline (audit chain and state); remove it by hand if you mean to" >&2
+    fi
+    ;;
+esac
+
+exit 0

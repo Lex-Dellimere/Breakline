@@ -1,0 +1,29 @@
+# /etc/network/interfaces for bridge mode (ifupdown, debian's default).
+#
+# the box sits inline between the site's firewall and its switch. br0 joins both
+# nics, so the lan keeps its addresses, gateway and dhcp exactly as they were.
+# br0 itself takes an address from the site's dhcp (or a static one) so the box can
+# reach the cloud and apt; the clients never see it as their gateway.
+#
+# needs: apt install bridge-utils (ifupdown's bridge_* options come from it), and
+# the br_netfilter module and sysctls in modules-load.conf and sysctl.conf next to
+# this file, so bridged traffic passes through the nftables hooks.
+#
+# check the nic names with `ip -br link`. enp1s0 to the site firewall, enp2s0 to
+# the switch (either way round works for a bridge, but label the cables).
+
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+iface enp1s0 inet manual
+iface enp2s0 inet manual
+
+auto br0
+iface br0 inet dhcp
+    bridge_ports enp1s0 enp2s0
+    # no spanning tree and no forwarding delay: the box is a two-port bump in the wire
+    bridge_stp off
+    bridge_fd 0
+    bridge_maxwait 0

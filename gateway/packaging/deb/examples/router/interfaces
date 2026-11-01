@@ -1,0 +1,30 @@
+# /etc/network/interfaces for router mode (ifupdown, debian's default).
+#
+# the box routes for one lan segment: enp1s0 faces the site firewall (an address on
+# the existing lan), enp2s0 is the protected segment with its own subnet. clients on
+# that segment use 10.20.0.1 as their gateway and dns.
+#
+# needs: ip forwarding (sysctl.conf next to this file), and a way back for return
+# traffic. best is a static route on the site firewall: 10.20.0.0/24 via
+# 192.168.1.2. if the firewall can't take one, masquerade on the box instead
+# (nat.nft next to this file).
+#
+# the segment needs addresses: static ones, the site's dhcp server relaying to it,
+# or a dhcp server on the box. a dhcp server on the box must not
+# take port 53, which belongs to the gateway (dnsmasq: port=0).
+#
+# check the nic names with `ip -br link`.
+
+source /etc/network/interfaces.d/*
+
+auto lo
+iface lo inet loopback
+
+auto enp1s0
+iface enp1s0 inet static
+    address 192.168.1.2/24
+    gateway 192.168.1.1
+
+auto enp2s0
+iface enp2s0 inet static
+    address 10.20.0.1/24

@@ -1,0 +1,5 @@
+# the bridge lines of /etc/default/breakline-gateway (the rest as in that file)
+
+# the bridge: client dns arriving on it is redirected to the box's resolver
+BREAKLINE_LAN_INTERFACES=br0
+BREAKLINE_DEFAULT_MODE=monitor

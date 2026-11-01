@@ -1,0 +1,7 @@
+# the router lines of /etc/default/breakline-gateway (the rest as in that file)
+
+# the nic facing the protected segment
+BREAKLINE_LAN_INTERFACES=enp2s0
+# clients on the segment use the box's segment address as dns
+BREAKLINE_DNS_IP=10.20.0.1
+BREAKLINE_DEFAULT_MODE=monitor
