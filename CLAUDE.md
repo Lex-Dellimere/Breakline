@@ -1,9 +1,9 @@
 # Breakline
 
 Client-owned site gateway that keeps an MSP's RMM / remote-control channel **closed unless a
-window is booked or a client approver approves**, and **auto-closes it** when that tool is under
-active exploitation (CISA KEV / ACSC). Target: Australian mid-sized, site-heavy businesses that
-use an MSP.
+window is booked or an approver approves**, and **auto-closes it** when that tool is under
+active exploitation (CISA KEV / ACSC). Sold to Australian MSPs as "a lock outside your RMM",
+deployed at their clients' sites (D46). How it makes money, and the validation gate: `docs/STRATEGY.md`.
 
 Demand is not validated. v1 exists to demo in customer interviews and run monitor-only pilots:
 optimise for a working, demo-able slice, not completeness.
