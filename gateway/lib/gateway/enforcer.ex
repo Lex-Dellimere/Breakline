@@ -24,7 +24,9 @@ defmodule Gateway.Enforcer do
 
   The state is evaluated at boot, on every tick (`:tick_ms`, default 15 s), at the
   schedule's next change when that is sooner, on every policy change, and when the
-  firewall server restarts. The channel is locked when the clock is not synchronised
+  firewall server restarts. Each evaluation also asks the firewall whether the applied
+  ruleset is still in place (`Gateway.Firewall.in_place?/1`) and applies it again
+  when it is gone, for example after a `flush ruleset`. The channel is locked when the clock is not synchronised
   (`{:locked, :clock_unsynced}`), when there is no policy (`{:locked, :no_policy}`),
   or when `Breakline.Schedule.explain/2` says so. Without a policy the mode is the
   configured `:default_mode` and every catalog tool is covered.
@@ -511,9 +513,19 @@ defmodule Gateway.Enforcer do
   end
 
   defp apply_firewall(%{fw_pid: nil} = s, _desired, _now), do: s
-  defp apply_firewall(%{applied: desired} = s, desired, _now), do: s
 
-  defp apply_firewall(s, desired, now) do
+  defp apply_firewall(%{applied: desired} = s, desired, now) do
+    if Firewall.in_place?(s.config.firewall) do
+      s
+    else
+      Logger.warning("firewall ruleset is gone, applying it again")
+      apply_now(s, desired, now)
+    end
+  end
+
+  defp apply_firewall(s, desired, now), do: apply_now(s, desired, now)
+
+  defp apply_now(s, desired, now) do
     result =
       try do
         Firewall.apply_desired(desired, s.config.firewall)
@@ -563,6 +575,7 @@ defmodule Gateway.Enforcer do
           in_sync?: s.applied != nil and snap.desired == s.applied,
           apply_count: Map.get(impl_state, :apply_count),
           resolved_count: resolved_count(impl_state),
+          host_problems: Map.get(impl_state, :host_problems, []),
           last_error: snap.last_error || s.last_apply_error
         }
 

@@ -378,6 +378,33 @@ defmodule Gateway.EnforcerTest do
     eventually(fn -> Enforcer.status().state == :open end, 3000)
   end
 
+  test "a ruleset removed behind the firewall's back is applied again" do
+    flag = start_supervised!({Agent, fn -> true end})
+    old = Process.whereis(Gateway.Firewall.Server)
+    stop_supervised!(Gateway.Firewall.Server)
+
+    start_supervised!(
+      {Gateway.Firewall.Server,
+       impl: Gateway.Firewall.FakeImpl, impl_opts: [in_place: fn -> Agent.get(flag, & &1) end]}
+    )
+
+    apply_count = fn -> Gateway.Firewall.snapshot().state.apply_count end
+
+    eventually(fn ->
+      pid = Process.whereis(Gateway.Firewall.Server)
+      pid != old and Enforcer.status().firewall.in_sync?
+    end)
+
+    count = apply_count.()
+    Enforcer.evaluate()
+    assert apply_count.() == count
+
+    Agent.update(flag, fn _ -> false end)
+    Enforcer.evaluate()
+    assert apply_count.() == count + 1
+    assert Enforcer.status().firewall.in_sync?
+  end
+
   test "a restarted firewall server gets the desired state again" do
     desired = fake_desired()
     old = Process.whereis(Gateway.Firewall.Server)

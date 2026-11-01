@@ -54,6 +54,14 @@ defmodule Gateway.Firewall.Server do
     end
   end
 
+  def handle_call(:in_place?, _from, s) do
+    in_place? =
+      s.desired == nil or not function_exported?(s.impl, :in_place?, 1) or
+        s.impl.in_place?(s.state)
+
+    {:reply, in_place?, s}
+  end
+
   def handle_call(:snapshot, _from, s) do
     snapshot = %{
       impl: s.impl,

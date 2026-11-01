@@ -18,7 +18,9 @@ MSP's RMM channel closed unless the client's signed policy says it is open right
    `Gateway.Uplink` under it, only when `config :gateway, :uplink` is set
 
 A DNS crash never touches the firewall. When the firewall server restarts, the enforcer
-notices and applies the desired state again. Should the uplink crash more than 10 times
+notices and applies the desired state again. It does the same when the table is gone
+(a `flush ruleset`, say from a restart of `nftables.service`), at its next evaluation,
+within 15 s. Should the uplink crash more than 10 times
 a minute, its supervisor gives up and the keeper starts it again after a cool-off
 (5 minutes, `cool_off_ms` in the uplink config). Each cool-off is logged at error level
 and counted in `Gateway.Uplink.status/0` (`cool_offs`). The keeper never crashes, so

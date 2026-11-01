@@ -49,6 +49,16 @@ defmodule Gateway.Firewall do
   @callback snapshot(state()) :: map()
 
   @doc """
+  Returns whether the last applied ruleset is still there. Something outside the
+  gateway can remove it: Debian's `/etc/nftables.conf` starts with `flush ruleset`, so
+  a restart of `nftables.service` drops the table. Optional; without it the ruleset
+  always counts as in place.
+  """
+  @callback in_place?(state()) :: boolean()
+
+  @optional_callbacks in_place?: 1
+
+  @doc """
   Applies a desired state through the running server. Returns `{:error, :not_running}`
   when the server is not started.
   """
@@ -57,6 +67,18 @@ defmodule Gateway.Firewall do
     GenServer.call(server, {:apply_desired, desired}, 30_000)
   catch
     :exit, {:noproc, _} -> {:error, :not_running}
+  end
+
+  @doc """
+  Returns whether the applied ruleset is still in place (see the `in_place?/1`
+  callback). True when nothing was applied yet, when the implementation cannot tell,
+  and when the server is not running, which the enforcer notices on its own.
+  """
+  @spec in_place?(GenServer.server()) :: boolean()
+  def in_place?(server \\ Server) do
+    GenServer.call(server, :in_place?, 30_000)
+  catch
+    :exit, _ -> true
   end
 
   @doc """

@@ -16,6 +16,8 @@ defmodule Gateway.Firewall.FakeImpl do
     * `ttl_floor:` and `ttl_cap:` - see `Gateway.Firewall.clamp_ttl/3`
     * `fail_apply:` - when set, every apply returns `{:error, value, state}`, to test
       callers' error handling
+    * `in_place:` - a zero-arity function answering `in_place?/1` (defaults to always
+      true), to test callers that re-apply a removed ruleset
   """
 
   @behaviour Gateway.Firewall
@@ -32,6 +34,7 @@ defmodule Gateway.Firewall.FakeImpl do
        floor: floor,
        cap: cap,
        fail_apply: Keyword.get(opts, :fail_apply),
+       in_place: Keyword.get(opts, :in_place, fn -> true end),
        desired: nil,
        apply_count: 0,
        resolved: %{}
@@ -67,6 +70,9 @@ defmodule Gateway.Firewall.FakeImpl do
 
     if invalid == [], do: {:ok, state}, else: {:error, {:invalid_entries, invalid}, state}
   end
+
+  @impl true
+  def in_place?(state), do: state.in_place.()
 
   @impl true
   def snapshot(state) do

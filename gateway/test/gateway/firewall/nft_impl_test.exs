@@ -56,8 +56,10 @@ defmodule Gateway.Firewall.NftImplTest do
     end
   end
 
+  # host_root points nowhere, so the host's own interfaces never leak into a test
   defp init(opts \\ []) do
-    {:ok, state} = NftImpl.init(Keyword.merge([runner: capture_runner()], opts))
+    defaults = [runner: capture_runner(), host_root: "/nonexistent/breakline"]
+    {:ok, state} = NftImpl.init(Keyword.merge(defaults, opts))
     state
   end
 
@@ -216,6 +218,29 @@ defmodule Gateway.Firewall.NftImplTest do
         assert redirects == [d.dns_port, d.dns_port]
       end
     end
+
+    test "the resolver port is dropped on every interface but loopback and the lan" do
+      for d <- random_desired(100) do
+        rules =
+          for %{"add" => %{"rule" => %{"chain" => "input", "expr" => expr}}} <-
+                Ruleset.build(d)["nftables"],
+              do: expr
+
+        assert length(rules) == 2
+
+        for {expr, proto} <- Enum.zip(rules, ["udp", "tcp"]) do
+          assert [
+                   %{"match" => %{"op" => "!=", "right" => %{"set" => ["lo" | lan]}}},
+                   %{"match" => %{"left" => %{"payload" => %{"protocol" => ^proto}}} = port},
+                   %{"counter" => nil},
+                   %{"drop" => nil}
+                 ] = expr
+
+          assert lan == d.lan_interfaces
+          assert port["right"] == d.dns_port
+        end
+      end
+    end
   end
 
 
@@ -288,6 +313,20 @@ defmodule Gateway.Firewall.NftImplTest do
       refute_received {:nft, _}
     end
 
+    test "in_place? lists the table and says whether it is there" do
+      test = self()
+
+      for {status, expected} <- [{0, true}, {1, false}] do
+        runner = fn args ->
+          send(test, {:args, args})
+          {"", status}
+        end
+
+        assert NftImpl.in_place?(init(runner: runner)) == expected
+        assert_received {:args, ["list", "table", "inet", "breakline"]}
+      end
+    end
+
     test "the default runner reports a missing nft binary instead of raising" do
       if System.find_executable("nft") do
         # never run nft on the host.
@@ -296,6 +335,71 @@ defmodule Gateway.Firewall.NftImplTest do
         {:ok, state} = NftImpl.init([])
         assert {:error, {:nft_failed, 127, _}, _} = NftImpl.apply_desired(desired([]), state)
       end
+    end
+  end
+
+  describe "host checks" do
+    # a fake sys and proc tree: lan0 and wan0 are ports of br0, eth1 is a plain nic
+    setup do
+      root =
+        Path.join(System.tmp_dir!(), "breakline-host-#{System.unique_integer([:positive])}")
+
+      net = Path.join(root, "sys/class/net")
+
+      for port <- ["lan0", "wan0"] do
+        File.mkdir_p!(Path.join([net, port, "brport"]))
+        File.ln_s!("../br0", Path.join([net, port, "master"]))
+      end
+
+      File.mkdir_p!(Path.join([net, "br0", "bridge"]))
+      File.mkdir_p!(Path.join(net, "eth1"))
+      File.mkdir_p!(Path.join(root, "proc/sys/net/bridge"))
+      on_exit(fn -> File.rm_rf!(root) end)
+      %{root: root}
+    end
+
+    defp sysctls(root, ipt, ip6t) do
+      dir = Path.join(root, "proc/sys/net/bridge")
+      File.write!(Path.join(dir, "bridge-nf-call-iptables"), ipt <> "\n")
+      File.write!(Path.join(dir, "bridge-nf-call-ip6tables"), ip6t <> "\n")
+    end
+
+    test "a plain interface and a bridge with br_netfilter on are fine", %{root: root} do
+      sysctls(root, "1", "1")
+      assert NftImpl.host_problems(["eth1", "br0"], root) == []
+      assert NftImpl.host_problems(["missing0"], root) == []
+    end
+
+    test "a bridge port as lan interface is a problem", %{root: root} do
+      sysctls(root, "1", "1")
+      assert NftImpl.host_problems(["lan0"], root) == [{:bridge_port, "lan0", "br0"}]
+    end
+
+    test "a bridge without br_netfilter's sysctls on is a problem", %{root: root} do
+      sysctls(root, "1", "0")
+
+      assert NftImpl.host_problems(["br0"], root) ==
+               [{:bridge_netfilter_off, "br0", "bridge-nf-call-ip6tables"}]
+
+      File.rm_rf!(Path.join(root, "proc/sys/net/bridge"))
+
+      assert NftImpl.host_problems(["br0"], root) == [
+               {:bridge_netfilter_off, "br0", "bridge-nf-call-iptables"},
+               {:bridge_netfilter_off, "br0", "bridge-nf-call-ip6tables"}
+             ]
+    end
+
+    test "an apply still loads the ruleset and keeps the problems in the snapshot",
+         %{root: root} do
+      sysctls(root, "0", "0")
+      state = init(host_root: root)
+
+      {:ok, state} = NftImpl.apply_desired(desired(lan_interfaces: ["lan0"]), state)
+      assert_received {:nft, _}
+      assert NftImpl.snapshot(state).host_problems == [{:bridge_port, "lan0", "br0"}]
+
+      {:ok, state} = NftImpl.apply_desired(desired(lan_interfaces: ["eth1"]), state)
+      assert NftImpl.snapshot(state).host_problems == []
     end
   end
 
