@@ -4,6 +4,9 @@ Documentation=file:///usr/share/doc/breakline-gateway/PILOT.md
 # the enforcer locks rmm while the clock is unsynced, so start once ntp is up if it can
 Wants=network-online.target time-sync.target
 After=network-online.target time-sync.target
+# never stop restarting: while the vm is down clients get no dns (an open window still
+# closes on time, the kernel holds its end), so a crash loop must keep trying, 5 s apart
+StartLimitIntervalSec=0
 
 [Service]
 Type=exec
