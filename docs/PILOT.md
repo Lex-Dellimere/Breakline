@@ -41,9 +41,15 @@ Agree on these in writing before the box goes on site.
 
 | item | example | price (AUD) |
 |---|---|---|
-| 2 × i226-V fanless mini PC | _TBD_ | _TBD: being researched_ |
-| RAM and SSD, if not included | _TBD_ | _TBD_ |
-| small UPS, for the inline modes | _TBD_ | _TBD_ |
+| two-port fanless mini PC | HUNSN RJ63: N100, 2 × 2.5 GbE plus 2 × SFP+, 8 GB RAM and 256 GB SSD included | 567.60 inc GST, Newegg AU, ships from Hong Kong or China |
+| cheaper alternative | HUNSN RX11: J4125, 4 Intel ports | 433.40 inc GST, Newegg AU, same shipping |
+| RAM and SSD, if not included | | not priced yet |
+| small UPS, for the inline modes | | not priced yet |
+
+Prices are from the market scan of 31 Oct 2026 and will move. Neither listing names the NIC
+chip, so check with the seller that the ports are i226-V (or another `igc` part) before
+you buy. No plain two-port N100 box with an AUD price turned up; one would likely be
+cheaper.
 
 In the BIOS, before you install:
 - set **restore on AC power loss** to **power on**, so the box comes back by itself after
