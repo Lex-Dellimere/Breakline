@@ -30,7 +30,7 @@ defmodule Cloud.Accounts.StepUps do
   @ttl_seconds 120
   # trusted writes inside a transaction; these resources have no notifiers
   @quiet [authorize?: false, return_notifications?: true]
-  @site_purposes [:open_window, :approve_window, :break_glass, :lift_lock]
+  @site_purposes [:open_window, :approve_window, :break_glass, :lift_lock, :enroll_gateway]
   @account_purposes [:remove_passkey, :register_passkey]
 
   @doc "How long a step-up stays valid, in seconds."

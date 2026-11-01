@@ -1,9 +1,10 @@
 defmodule Mix.Tasks.Cloud.Dev.GatewayCert do
-  @shortdoc "Issues a dev gateway client certificate and pins it on a site"
+  @shortdoc "Makes a dev gateway client certificate and pins it on a site"
 
   @moduledoc """
-  Issues a client certificate for a site's gateway, signed by the dev CA of
-  `mix cloud.dev.pki`, and wires a local gateway checkout up to this cloud:
+  Makes a self-signed client certificate for a site's gateway (as a box does
+  when it enrols, see `Breakline.GatewayIdentity`) and wires a local gateway
+  checkout up to this cloud, without the enrolment handshake:
 
       mix cloud.dev.gateway_cert <site_id> [--gateway-dir ../gateway]
 
@@ -11,7 +12,8 @@ defmodule Mix.Tasks.Cloud.Dev.GatewayCert do
 
     * `gateway_cert.pem` and `gateway_key.pem`: the client certificate (common
       name = the site id) and its key
-    * `ca_cert.pem`: the dev CA, which signed the cloud's server certificate
+    * `ca_cert.pem`: the dev CA of `mix cloud.dev.pki`, which signed the
+      cloud's server certificate
     * `site.json`: `{"site_id": ...}`
     * `cloud_signer.public.json`: the public half of the cloud signer key
       (`mix cloud.signer.keygen`), for the gateway to trust
@@ -19,7 +21,8 @@ defmodule Mix.Tasks.Cloud.Dev.GatewayCert do
   and pins the certificate's sha256 fingerprint on the site through the
   site's `:assign_gateway` action, which replaces any earlier certificate.
   `gateway/config/dev.exs` picks these files up and enables the uplink. For
-  dev only.
+  dev only; the real flow is "Enrol gateway" on the site page (see
+  "Gateway enrolment" in the README).
   """
 
   use Mix.Task
@@ -56,10 +59,13 @@ defmodule Mix.Tasks.Cloud.Dev.GatewayCert do
     cert = Path.join(out, "gateway_cert.pem")
 
     fingerprint =
-      case Cloud.DevPKI.issue_client(ca_dir, site.id, cert, Path.join(out, "gateway_key.pem")) do
-        {:ok, fingerprint} -> fingerprint
-        {:error, :no_ca} -> Mix.raise("no dev ca in #{ca_dir}, run `mix cloud.dev.pki` first")
-        {:error, reason} -> Mix.raise("could not issue the certificate: #{inspect(reason)}")
+      if File.exists?(Cloud.DevPKI.paths(ca_dir).ca_cert) do
+        {:ok, fingerprint} =
+          Cloud.DevPKI.self_signed_client(site.id, cert, Path.join(out, "gateway_key.pem"))
+
+        fingerprint
+      else
+        Mix.raise("no dev ca in #{ca_dir}, run `mix cloud.dev.pki` first")
       end
 
     File.cp!(Cloud.DevPKI.paths(ca_dir).ca_cert, Path.join(out, "ca_cert.pem"))
@@ -70,7 +76,7 @@ defmodule Mix.Tasks.Cloud.Dev.GatewayCert do
     Cloud.Sites.assign_gateway!(site, fingerprint, authorize?: false)
 
     Mix.shell().info("""
-    issued a gateway certificate for #{site.name} (#{site.id})
+    made a gateway certificate for #{site.name} (#{site.id})
     fingerprint #{fingerprint}
     wrote gateway_cert.pem, gateway_key.pem, ca_cert.pem, site.json and
     cloud_signer.public.json to #{out}

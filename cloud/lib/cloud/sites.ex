@@ -1,8 +1,8 @@
 defmodule Cloud.Sites do
   @moduledoc """
   Sites and everything that decides whether their RMM channel is open:
-  windows, advisory locks, break-glass, MSP contacts, their request links and
-  the published policy versions.
+  windows, advisory locks, break-glass, MSP contacts, their request links,
+  gateway enrolment codes and the published policy versions.
 
   All resources are tenant-scoped (attribute multitenancy on `tenant_id`).
   Pass `actor:` and `tenant:` (a `Cloud.Accounts.Tenant` or its id), or a
@@ -79,6 +79,19 @@ defmodule Cloud.Sites do
       define :get_request_link_by_token_hash, action: :by_token_hash, args: [:token_hash]
       define :lock_request_link, action: :lock, args: [:id]
       define :touch_request_link, action: :touch
+    end
+
+    resource Cloud.Sites.GatewayEnrollment do
+      define :issue_gateway_enrollment, action: :issue
+      define :list_gateway_enrollments, action: :read
+      define :pending_gateway_enrollments, action: :pending, args: [:site_id, :now]
+      define :cancel_gateway_enrollment, action: :cancel
+
+      define :lock_gateway_enrollment_by_code_hash,
+        action: :lock_by_code_hash,
+        args: [:code_hash]
+
+      define :use_gateway_enrollment, action: :use
     end
 
     resource Cloud.Sites.PolicyVersion do

@@ -118,6 +118,28 @@ defmodule Cloud.Fixtures do
     })
   end
 
+  @doc """
+  Issues a gateway enrolment code for `site` as `admin` with a seeded
+  step-up. Returns `{code, enrollment}`.
+  """
+  def enrollment!(site, admin) do
+    step_up =
+      verified_step_up!(admin, :enroll_gateway, site.id, %{site_id: site.id},
+        tenant: site.tenant_id
+      )
+
+    {:ok, enrollment} = Cloud.Sites.GatewayEnrollments.issue(site, admin, step_up.id)
+    {enrollment.__metadata__.code, enrollment}
+  end
+
+  @doc "Moves an enrolment code's expiry into the past."
+  def expire_enrollment!(enrollment) do
+    Cloud.Repo.query!(
+      "update gateway_enrollments set expires_at = now() - interval '1 second' where id = $1",
+      [Ecto.UUID.dump!(enrollment.id)]
+    )
+  end
+
   @doc "The id of a seeded verified step-up for opening `site` for `minutes`."
   def open_step_up!(user, site, minutes) do
     params = Cloud.Access.step_up_params(site.id, {:open, minutes})

@@ -1,7 +1,8 @@
 defmodule CloudWeb.GatewayEndpointTLSTest do
   # runs CloudWeb.GatewayEndpoint behind a real Bandit https listener with the
-  # dev pki (openssl), to prove the client certificate reaches the socket's
-  # connect_info.peer_data.ssl_cert, then joins a channel over the wire
+  # dev pki (openssl) and self-signed gateway certificates, to prove the client
+  # certificate reaches the socket's connect_info.peer_data.ssl_cert, then joins
+  # a channel over the wire
   use CloudWeb.ChannelCase, async: false
 
   import Cloud.Fixtures
@@ -14,13 +15,25 @@ defmodule CloudWeb.GatewayEndpointTLSTest do
     site = site!(tenant, admin)
 
     {:ok, fingerprint} =
-      Cloud.DevPKI.issue_client(dir, site.id, Path.join(dir, "gw.pem"), Path.join(dir, "gw.key"))
+      Cloud.DevPKI.self_signed_client(site.id, Path.join(dir, "gw.pem"), Path.join(dir, "gw.key"))
 
     site = Cloud.Sites.assign_gateway!(site, fingerprint, authorize?: false)
 
-    # a certificate from the same ca that no site has pinned
+    # a self-signed certificate that no site has pinned, and one the ca signed
     {:ok, _} =
-      Cloud.DevPKI.issue_client(dir, "stranger", Path.join(dir, "x.pem"), Path.join(dir, "x.key"))
+      Cloud.DevPKI.self_signed_client(
+        "stranger",
+        Path.join(dir, "x.pem"),
+        Path.join(dir, "x.key")
+      )
+
+    {:ok, _} =
+      Cloud.DevPKI.issue_client(
+        dir,
+        "ca-signed",
+        Path.join(dir, "c.pem"),
+        Path.join(dir, "c.key")
+      )
 
     # the same tls options as config/runtime.exs
     server =
@@ -34,13 +47,7 @@ defmodule CloudWeb.GatewayEndpointTLSTest do
          keyfile: pki.server_key,
          startup_log: false,
          thousand_island_options: [
-           transport_options: [
-             cacertfile: pki.ca_cert,
-             verify: :verify_peer,
-             fail_if_no_peer_cert: true,
-             versions: [:"tlsv1.3", :"tlsv1.2"],
-             depth: 4
-           ]
+           transport_options: CloudWeb.GatewayTLS.transport_options(pki.ca_cert)
          ]}
       )
 
@@ -157,8 +164,14 @@ defmodule CloudWeb.GatewayEndpointTLSTest do
     :ssl.close(socket)
   end
 
-  test "a certificate from the ca that no site pins is refused at connect", ctx do
+  test "a self-signed certificate that no site pins is refused at connect", ctx do
     assert {:ok, socket} = tls_connect(ctx, client_cert(ctx, "x"))
+    assert {:ok, "HTTP/1.1 403" <> _, _} = upgrade(socket)
+    :ssl.close(socket)
+  end
+
+  test "a certificate the ca signed still needs a pin", ctx do
+    assert {:ok, socket} = tls_connect(ctx, client_cert(ctx, "c"))
     assert {:ok, "HTTP/1.1 403" <> _, _} = upgrade(socket)
     :ssl.close(socket)
   end

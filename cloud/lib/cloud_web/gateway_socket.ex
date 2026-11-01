@@ -3,12 +3,13 @@ defmodule CloudWeb.GatewaySocket do
   The socket a site gateway connects to, through `CloudWeb.GatewayEndpoint`.
 
   A gateway authenticates with its TLS client certificate only: the TLS layer
-  has already checked that the certificate chains to the configured CA, and
-  `connect/3` takes the certificate DER from `connect_info.peer_data.ssl_cert`,
+  has already checked that the client holds the key of its (self-signed)
+  certificate, and `connect/3` takes the certificate DER from `connect_info.peer_data.ssl_cert`,
   fingerprints it (sha256, lowercase hex) and looks up the site that pinned
   that fingerprint (`Cloud.Sites.Site` `:by_gateway_fingerprint`, a trusted
   read). No certificate, or a certificate no site has pinned, refuses the
-  connection. Socket params are ignored, so nothing the gateway sends can
+  connection; an unpinned certificate can only enrol
+  (`CloudWeb.GatewayEnroll`). Socket params are ignored, so nothing the gateway sends can
   choose its site or tenant.
 
   The socket's id is `"gateway_socket:<site_id>"`, so a site's gateway can be

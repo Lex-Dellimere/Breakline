@@ -28,8 +28,10 @@ case {config_env(), System.get_env("PORT")} do
   {_, port} -> config :cloud, CloudWeb.Endpoint, http: [port: String.to_integer(port)]
 end
 
-# the gateway endpoint's mutual tls listener. both sides must present a certificate: the
-# server's own, and a gateway client certificate signed by the client ca
+# the gateway endpoint's mutual tls listener. both sides present a certificate: the server
+# its own, signed by `cacertfile` (sent along so a box can pin it with --ca-sha256), and the
+# gateway its self-signed one, which verify_client/3 accepts. what a gateway certificate may
+# do is decided by its pin, see CloudWeb.GatewayTLS (the same options as transport_options/1)
 gateway_tls = fn port, certfile, keyfile, cacertfile, ip ->
   [
     ip: ip,
@@ -41,6 +43,7 @@ gateway_tls = fn port, certfile, keyfile, cacertfile, ip ->
         cacertfile: cacertfile,
         verify: :verify_peer,
         fail_if_no_peer_cert: true,
+        verify_fun: {&CloudWeb.GatewayTLS.verify_client/3, nil},
         versions: [:"tlsv1.3", :"tlsv1.2"],
         depth: 4
       ]
@@ -64,6 +67,11 @@ if config_env() == :dev do
 
     config :cloud, CloudWeb.GatewayEndpoint,
       https: gateway_tls.(port, cert, key, ca, {127, 0, 0, 1})
+
+    config :cloud, :gateway_enrollment,
+      url: "https://localhost:#{port}",
+      ca_certfile: ca,
+      server_name: "localhost"
   else
     config :cloud, CloudWeb.GatewayEndpoint, server: false
   end
@@ -142,10 +150,15 @@ if config_env() == :prod do
   config :cloud, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   # the gateway endpoint: GATEWAY_TLS_CERT and GATEWAY_TLS_KEY are its server certificate,
-  # GATEWAY_CLIENT_CA the ca that signs gateway client certificates
+  # GATEWAY_TLS_CA the offline ca that signed it (public, its key never on this host).
+  # GATEWAY_URL is the https url boxes enrol at, e.g. https://gw.example.com:4011, and
+  # GATEWAY_SERVER_NAME the name in the server certificate when it is not the url's host.
+  # gateway client certificates are self-signed and pinned per site, no ca signs them
   fetch_env! = fn name ->
     System.get_env(name) || raise "environment variable #{name} is missing"
   end
+
+  gateway_ca = fetch_env!.("GATEWAY_TLS_CA")
 
   config :cloud, CloudWeb.GatewayEndpoint,
     server: System.get_env("PHX_SERVER") != nil,
@@ -154,9 +167,18 @@ if config_env() == :prod do
         String.to_integer(System.get_env("GATEWAY_PORT") || "4011"),
         fetch_env!.("GATEWAY_TLS_CERT"),
         fetch_env!.("GATEWAY_TLS_KEY"),
-        fetch_env!.("GATEWAY_CLIENT_CA"),
+        gateway_ca,
         {0, 0, 0, 0, 0, 0, 0, 0}
       )
+
+  config :cloud, :gateway_enrollment,
+    url: fetch_env!.("GATEWAY_URL"),
+    ca_certfile: gateway_ca,
+    server_name: System.get_env("GATEWAY_SERVER_NAME")
+
+  # the cloud's ed25519 signing key file (mix cloud.signer.keygen), mode 0600, readable
+  # only by the service user. a kms or hsm backed Cloud.Signer replaces it later (T8)
+  config :cloud, Cloud.Signer.File, path: fetch_env!.("SIGNER_KEY_PATH")
 
   config :cloud, CloudWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

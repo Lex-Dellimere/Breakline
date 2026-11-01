@@ -32,6 +32,7 @@ defmodule Cloud.Accounts.StepUp do
     :approve_window,
     :break_glass,
     :lift_lock,
+    :enroll_gateway,
     :remove_passkey,
     :register_passkey
   ]

@@ -1,8 +1,10 @@
 defmodule Cloud.DevPKI do
   @moduledoc """
   A throwaway certificate authority for dev and tests, built with the `openssl`
-  command line tool: a CA, a server certificate for the gateway endpoint and
-  client certificates for gateways.
+  command line tool: a CA and a server certificate for the gateway endpoint.
+  Gateway client certificates are self-signed (`self_signed_client/4`, the
+  same `Breakline.GatewayIdentity` a real box makes when it enrols); the CA
+  can still sign one with `issue_client/5`, which the endpoint accepts too.
 
   Every key is ECDSA P-256 and every certificate is signed with SHA-256, which TLS
   1.3 in OTP accepts. Private keys are written with mode 0600. Nothing here is fit
@@ -97,6 +99,25 @@ defmodule Cloud.DevPKI do
     else
       {:error, :no_ca}
     end
+  end
+
+  @doc """
+  Makes a self-signed gateway client certificate with common name `cn` (a site
+  id), the way `Gateway.Enroll` does on a box, and writes the certificate and
+  key (mode 0600) to `cert_path` and `key_path`. Returns `{:ok, fingerprint}`.
+  Options go to `Breakline.GatewayIdentity.new/2`.
+  """
+  @spec self_signed_client(String.t(), Path.t(), Path.t(), keyword()) :: {:ok, String.t()}
+  def self_signed_client(cn, cert_path, key_path, opts \\ []) do
+    identity = Breakline.GatewayIdentity.new(cn, opts)
+    File.mkdir_p!(Path.dirname(cert_path))
+    File.mkdir_p!(Path.dirname(key_path))
+    # restrict the file before the key goes in
+    File.write!(key_path, "")
+    File.chmod!(key_path, 0o600)
+    File.write!(key_path, Breakline.GatewayIdentity.key_pem(identity))
+    File.write!(cert_path, Breakline.GatewayIdentity.cert_pem(identity))
+    {:ok, Breakline.GatewayIdentity.fingerprint(identity)}
   end
 
   @doc """
