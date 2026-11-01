@@ -8,7 +8,19 @@ defmodule Gateway.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
-      deps: deps()
+      deps: deps(),
+      releases: releases()
+    ]
+  end
+
+  # `MIX_ENV=prod mix release` builds _build/prod/rel/gateway. it is built on debian 13
+  # and runs on debian 13 (the pilot box), with erts bundled, so the box needs no erlang
+  defp releases do
+    [
+      gateway: [
+        include_executables_for: [:unix],
+        applications: [runtime_tools: :permanent]
+      ]
     ]
   end
 
