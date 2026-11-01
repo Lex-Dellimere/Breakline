@@ -454,3 +454,20 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
 ### D39. TOTP QR code with eqrcode
 - **What:** during TOTP setup, `/account/security` shows the `otpauth://` uri as a QR code. It is an inline SVG drawn on the server by eqrcode 0.2.1 (MIT, no dependencies; it was already an optional dependency of ash_authentication_phoenix). There is no client JS. The uri and the base32 key stay as text below it as a fallback.
 - **Safety:** `CloudWeb.TotpQr.svg/1` takes only the uri that `Totp.begin_setup/1` returns, accepts nothing but `otpauth://` uris, and passes fixed colours, size and id. eqrcode's SVG holds only `<rect>` modules, never the encoded text. The output is checked to be exactly an `<svg>` of self-closing `<rect>`s before `Phoenix.HTML.raw/1`, and anything else renders no QR code.
+
+## 2026-11-01 — phase 6 (real traffic, pilot box, enrolment)
+
+### D40. Pilot box: Debian 13 and a `.deb`
+- **What:** pilots run Debian 13 amd64 with the `breakline-gateway` package, built by `mix gateway.package.deb` with `dpkg-deb`. The release goes in `/opt/breakline-gateway`, its state in `/var/lib/breakline` (`StateDirectory=`). `/etc/default/breakline-gateway` is a conffile, and `breakline-gateway status|enroll` is the admin command. Nerves stays deferred (D9).
+- **Service:** `User=breakline` (made by systemd-sysusers). Only `CAP_NET_ADMIN` (nft runs as a child and inherits it as an ambient cap) and `CAP_NET_BIND_SERVICE` (:53). Also `NoNewPrivileges`, `ProtectSystem=strict`, `@system-service` minus `@privileged @resources`, and `MemoryDenyWriteExecute=yes`. The BEAM JIT maps its code twice, read-write and read-execute, so it runs under the kernel's `PR_SET_MDWE` (tested). `systemd-analyze security` scores it 1.6. The unit is enabled on install but not started, because the env file needs filling in first.
+- **Distribution:** kept, only so `status` can use the stock `bin/gateway rpc`. There is no epmd: the node is `gateway@127.0.0.1` on 127.0.0.1:4370, and rpc clients run with `-dist_listen false`. The build-time cookie is removed from the package. `postinst` writes a per-box cookie to `/etc/breakline-gateway/cookie` (0400, `breakline`), once, and keeps it on upgrade. `env.sh` refuses to start without it.
+- **Network config:** ifupdown, which is what a netinst install sets up. Time comes from systemd-timesyncd. There are three install modes, with examples under `/usr/share/doc/breakline-gateway/examples/`:
+  - dns-only monitor: the first pilots. The box is an ordinary LAN host and DHCP option 6 points at it. It is not inline.
+  - bridge: `br0` over both ports, with `br_netfilter`.
+  - router.
+- **Validation:** `mix test --only deb_docker` installs the package with apt in `debian:trixie-slim`. It runs the release as `breakline` with only the two caps, `no_new_privs` and MDWE, and checks:
+  - :53 is bound and the nft table is present;
+  - `dig` answers;
+  - distribution can't be reached from off-box;
+  - the cookie is per box.
+- **Not verified:** the unit under real systemd as PID 1 (that needs host cgroup access), the syscall filter, and `timedatectl` over D-Bus from inside the sandbox. The first real box needs `journalctl -u breakline-gateway` read.
