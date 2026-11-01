@@ -540,3 +540,9 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   - `breaklinesecurity.com.au` was free on 1 Nov 2026 and is the pick.
 - **Spending (budget AUD 300 to the 2026-12-29 gate):** buy nothing until an MSP agrees to a pilot. Then buy the domain and a small Sydney VM, and set up Postmark. Each spend needs the owner's yes, with an exact price. Until then, the research interviews go out from the owner's own email, which is honest for a conversation that isn't a pitch.
 - **First targets:** `docs/sales/targets.md` has five MSPs from the research, each with a first email built on something true and public about them.
+
+### D49. A demo video recorded from the real thing
+- **What:** `e2e/` holds the full-stack check in the repo: setup, the browser flow, the box scripts, seed and teardown. Before this it lived in scratch space, and a restart wiped it. `VIDEO=1 e2e/run.sh` records the run with Chromium's screencast and encodes it with the system ffmpeg. The result is a video of about 1 minute: sign-in, passkey, enrol the box, locked, open 15 minutes, lock now cutting a live session, and the timeline.
+- **Honesty rules for the video:** the "Clinic PC" panel shows only the output of the probes run during that recording. While the page and the box change state, it hides and says "checking", so it never shows results older than the page. Captions describe what is happening, and the opening card says it's the real cloud and box, not a mock-up.
+- **Why:** the owner won't approach contacts without something to show. The product works, but there was no way to show it in two minutes on a phone. A video costs nothing. A hosted live demo waits until someone wants to click around (D48).
+- **Recording:** Playwright's own recorder needs an ffmpeg build this machine doesn't have, so the screencast route avoids it. Playwright stays a local tool, passed in through `PLAYWRIGHT_CORE`, not a project dependency.

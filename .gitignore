@@ -22,3 +22,6 @@ node_modules/
 
 # agent worktrees
 .claude/worktrees/
+
+# full-stack check: generated pki, secrets, ids and recordings (e2e/README.md)
+/e2e/.run/
