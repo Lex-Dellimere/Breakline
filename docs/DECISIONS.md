@@ -471,3 +471,24 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   - distribution can't be reached from off-box;
   - the cookie is per box.
 - **Not verified:** the unit under real systemd as PID 1 (that needs host cgroup access), the syscall filter, and `timedatectl` over D-Bus from inside the sandbox. The first real box needs `journalctl -u breakline-gateway` read.
+
+### D41. Gateway enrolment replaces the gateway client CA
+- **Identity:** still the sha256 of the gateway certificate's DER, pinned on the site (D25). The certificate is now self-signed (EC P-256, valid to 9999-12-31), made on the box by `Breakline.GatewayIdentity` with OTP `:public_key` only. No CA signs gateway certificates, so there is no client CA key to steal; unpinning a box revokes it.
+- **Port 4011:** asks for a client certificate and accepts a self-signed one (`CloudWeb.GatewayTLS.verify_client/3`). OTP still checks the certificate's signature and dates (an expired one fails the handshake, tested), and CertificateVerify proves the client holds the key. An unpinned certificate can do one thing, `POST /gateway/enroll`; the socket refuses it.
+- **Codes:** 160 bits, shown once as 8 groups of 4 base32 characters. Only the sha256 is stored. Valid 30 minutes, single use, cancellable, and a new code cancels the site's pending one. Issuing one needs the admin role and a passkey step-up with purpose `:enroll_gateway` bound to the site. Issue, use and cancel are audited, and the use entry carries the new and replaced fingerprints and the ip. Bad, used, cancelled and expired codes get one identical 403. Rate limit: 20 tries per ip per 10 minutes.
+- **The box trusts the cloud through a pin, not a CA file:** the enrol command carries `--ca-sha256`, the sha256 of the 4011 CA's SubjectPublicKeyInfo (kubeadm's discovery hash). The box connects with `cacerts: []` and a `partial_chain` that accepts only the chain certificate with that hash, checks the host name, and checks the CA pem in the answer against the pin before writing `server_ca.pem`.
+- **The pin comes from the TLS session,** never from the request body. A certificate pinned on another site gets a 409. Re-enrolling moves the pin and disconnects the old box's socket.
+- **Why a plug route and not a socket topic:** the socket stays pinned-only, an unpinned box gets one request and one answer, and it works under `bin/gateway eval`, where slipstream isn't started.
+- **Gateway config:** with `BREAKLINE_SITE_ID` set, the environment alone configures the box, as before. Otherwise `enrollment.json`, `server_ca.pem` and `identity/` do, and any variable that is set wins. An unenrolled box boots without raising: no site, no trusted key and no uplink, so it stays locked. The default data dir is `/var/lib/breakline`.
+- **Cloud prod env:** `GATEWAY_CLIENT_CA` is replaced by `GATEWAY_TLS_CA` (the server's own CA) and `GATEWAY_URL` (shown in the enrol command), with optional `GATEWAY_SERVER_NAME`. `SIGNER_KEY_PATH` is now required in prod; before, prod silently used a build-time path.
+
+### D42. Cloud release and hosting
+- **Release:** `mix phx.gen.release` without docker. `bin/migrate` runs `Cloud.Release.migrate/0` over `Cloud.Repo` (the AshPostgres extension migration needs the role to own the database), and `bin/server` starts it. The Windows `.bat` files are removed. Typst ships in the release's `priv/bin` from `mix cloud.typst.install`, or comes from `TYPST_PATH`.
+- **ash_admin** stays a prod dependency, because every domain uses its `admin do` DSL. It is only routed in dev.
+- **Hosting (`docs/DEPLOY.md`):** one VM in an Australian (Sydney) region, provider-neutral. Debian 13, Postgres 17, the release under systemd. Caddy terminates 443 for browsers only. Port 4011 goes straight to the app (T10), with its server certificate from an offline private CA whose key never touches the server.
+- **Smoke test:** the prod release against a throwaway database:
+  - migrated, and `/` returned 200;
+  - with the right pin, a box enrolled and joined its site's channel; with the wrong one it was refused;
+  - after a re-enrol, the old box got a 403;
+  - the audit chain verified.
+- **Not done yet:** outbound email in prod. The release still uses Swoosh's local adapter, so request links and password resets send nothing until an adapter is configured.
