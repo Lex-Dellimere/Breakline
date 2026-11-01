@@ -170,3 +170,64 @@ Tests tagged `:typst` render real PDFs. They run when `priv/bin/typst` exists an
 excluded otherwise; `test/test_helper.exs` prints a note when that happens. The no-network
 render uses `unshare -rn` when the host allows it, and the PDF text check uses `pdftotext`
 when it is installed.
+
+## Gateway enrolment
+
+Gateway client certificates are self-signed and no CA signs them. A gateway is the sha256
+of its certificate, pinned on its site (D25), and a box gets that pin by enrolling with a
+one-time code. `mix cloud.dev.gateway_cert` in the end-to-end demo is the dev shortcut: it
+makes a self-signed certificate and pins it directly. The real flow, against the dev cloud
+from step 2 of the demo:
+
+1. On the site page (admins), **Gateway box** → **Enrol gateway**, then confirm with your
+   passkey. The page shows the code once (160 bits, grouped base32, valid 30 minutes,
+   single use) and the command for the box:
+
+   ```sh
+   sudo breakline-gateway enroll https://localhost:4011 ABCD-...-WXYZ --ca-sha256 <hex>
+   ```
+
+   A pending code can be cancelled; issuing a new one cancels the old one. On a site that
+   already has a box the card says that enrolling replaces it.
+
+2. In dev, run the same thing from `gateway/` (it writes to `gateway/tmp/dev_enrolled/`,
+   which `config/dev.exs` then prefers over `priv/keys/`):
+
+   ```sh
+   cd gateway
+   mix gateway.enroll https://localhost:4011 <code> --ca-sha256 <hex>
+   elixir --sname gw -S mix run --no-halt
+   ```
+
+How it works:
+
+- `--ca-sha256` is the sha256 of the DER SubjectPublicKeyInfo of the CA that signed port
+  4011's server certificate (`Cloud.Sites.GatewayEnrollments.ca_sha256/0`; the same value
+  as `openssl x509 -in ca.pem -pubkey -noout | openssl pkey -pubin -outform der | sha256sum`).
+  The box trusts the server chain only through it, and checks the host name.
+- The box presents its self-signed certificate in the TLS handshake and posts the code to
+  `POST /gateway/enroll` on 4011 (`CloudWeb.GatewayEnroll`). The cloud looks the code up by
+  its sha256, rate-limited to 20 tries per ip per 10 minutes, pins the fingerprint of that
+  session's certificate (never one from the body), marks the code used, disconnects the
+  box it replaced and answers the site id, the signer public keys, the CA pem, the uplink
+  url and the server name.
+- Issue, use and cancel each write an audit entry (`gateway_enrollment.issued`, `.used`,
+  `.cancelled`). The used entry has the new and the replaced fingerprint and the client ip.
+- An unpinned certificate gets through the TLS handshake on 4011 but can do nothing else:
+  the gateway socket refuses it with a 403.
+
+Enrolment needs `config :cloud, :gateway_enrollment` (url and CA file). Dev sets it from
+`mix cloud.dev.pki`; production from `GATEWAY_URL` and `GATEWAY_TLS_CA` (see
+`docs/DEPLOY.md`). Without it the card says enrolment is not set up.
+
+## Release
+
+```sh
+MIX_ENV=prod mix assets.deploy
+MIX_ENV=prod mix cloud.typst.install
+MIX_ENV=prod mix release
+_build/prod/rel/cloud/bin/migrate    # runs the AshPostgres repo's migrations
+_build/prod/rel/cloud/bin/server     # PHX_SERVER=true bin/cloud start
+```
+
+The environment it needs, and how to host it, is in `docs/DEPLOY.md`.
