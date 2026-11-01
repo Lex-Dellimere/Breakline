@@ -3,7 +3,31 @@ defmodule CloudWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Remote access stays closed until you open it."
+    assert html_response(conn, 200) =~ "A lock outside your RMM."
+  end
+
+  describe "pilot contact" do
+    setup do
+      previous = Application.get_env(:cloud, :contact_email)
+      on_exit(fn -> Application.put_env(:cloud, :contact_email, previous) end)
+    end
+
+    test "without a configured address it says pilots are by invitation", %{conn: conn} do
+      Application.delete_env(:cloud, :contact_email)
+      doc = conn |> get(~p"/") |> html_response(200) |> LazyHTML.from_document()
+      contact = LazyHTML.query(doc, "#pilot-contact")
+
+      assert LazyHTML.text(contact) =~ "by invitation"
+      assert Enum.empty?(LazyHTML.query(contact, "a"))
+    end
+
+    test "with an address it offers a walkthrough by email", %{conn: conn} do
+      Application.put_env(:cloud, :contact_email, "pilots@breakline.test")
+      doc = conn |> get(~p"/") |> html_response(200) |> LazyHTML.from_document()
+
+      assert LazyHTML.attribute(LazyHTML.query(doc, "#pilot-contact a"), "href") ==
+               ["mailto:pilots@breakline.test"]
+    end
   end
 
   describe "landing page background" do
@@ -28,9 +52,9 @@ defmodule CloudWeb.PageControllerTest do
       copy = LazyHTML.query(doc, "#hero-copy")
 
       assert Enum.count(copy) == 1
-      assert LazyHTML.text(LazyHTML.query(copy, "h1")) =~ "Remote access stays closed"
+      assert LazyHTML.text(LazyHTML.query(copy, "h1")) =~ "A lock outside your RMM"
       # mishka button_link renders anchors with its default button classes
-      links = LazyHTML.query(copy, "a[href='/register'], a[href='/sign-in']")
+      links = LazyHTML.query(copy, "a[href='#pilot'], a[href='/sign-in']")
       assert Enum.count(links) == 2
 
       for class <- LazyHTML.attribute(links, "class") do

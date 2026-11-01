@@ -238,6 +238,9 @@ if config_env() == :prod do
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
 
+  # the pilot contact shown on the landing page, only when set
+  config :cloud, :contact_email, System.get_env("CONTACT_EMAIL")
+
   # outbound email (D45). postmark when POSTMARK_API_KEY is set: its adapter only needs
   # the Req api client set in prod.exs. MAIL_FROM is then required and must be a sender
   # postmark has verified. without a key, Cloud.Mailer.NotConfigured sends nothing and

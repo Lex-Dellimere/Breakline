@@ -10,28 +10,31 @@
     ></canvas>
     <div id="hero-copy" class="space-y-6">
       <.badge color="primary" variant="bordered" rounded="full" size="small">
-        control plane
+        for Australian MSPs
       </.badge>
       <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-        Remote access stays closed until you open it.
+        A lock outside your RMM.
       </h1>
       <p class="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
-        Breakline is a client-owned gateway in front of your MSP's remote-access channel.
-        The channel opens only inside a booked window or after a client approver says yes.
+        When an RMM is compromised, every control inside it goes too: consent prompts,
+        allowlists, your own admin settings. Breakline sits at each client site, outside
+        your RMM, and keeps remote access closed until a booked window or a passkey
+        approval opens it.
       </p>
       <div class="flex flex-wrap gap-3">
         <%= if assigns[:current_user] do %>
-          <.button_link href={~p"/sign-out"} variant="bordered" color="natural">
-            Sign out
+          <.button_link href={~p"/dashboard"} variant="default" color="primary">
+            Dashboard
           </.button_link>
         <% else %>
           <.button_link
-            href={~p"/register"}
+            id="hero-pilot"
+            href="#pilot"
             variant="default"
             color="primary"
-            icon="hero-arrow-right"
+            icon="hero-arrow-down"
           >
-            Create an account
+            How a pilot works
           </.button_link>
           <.button_link href={~p"/sign-in"} variant="bordered" color="natural">
             Sign in
@@ -45,12 +48,12 @@
     <.card
       :for={
         {icon, title, body} <- [
-          {"hero-calendar-days", "Booked windows",
-           "Schedule maintenance windows ahead of time; access opens and closes on the clock."},
-          {"hero-hand-raised", "Approver in the loop",
-           "Ad-hoc sessions wait for an explicit yes from a client approver."},
-          {"hero-lock-closed", "Closed by default",
-           "Outside a window or approval, the remote-access channel stays shut."}
+          {"hero-bolt", "Locks itself when your RMM is attacked",
+           "Breakline checks CISA's exploited-vulnerabilities list and ACSC alerts every 30 minutes. When your tool appears, remote access closes at every client site that uses it, and only a passkey reopens it."},
+          {"hero-finger-print", "Just-in-time remote access",
+           "Sessions open inside a booked maintenance window or after a passkey approval, from your senior staff or from the client. Outside those times the channel stays shut."},
+          {"hero-document-check", "Proof for clients and insurers",
+           "Every open, close, approval and lockdown goes into a tamper-evident log. Export it as a PDF that can be checked offline."}
         ]
       }
       variant="bordered"
@@ -63,5 +66,46 @@
         <p class="text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
       </.card_content>
     </.card>
+  </section>
+
+  <section id="why" class="max-w-3xl space-y-4 pt-12">
+    <h2 class="text-2xl font-semibold tracking-tight">Why it has to sit outside the RMM</h2>
+    <p class="text-zinc-700 dark:text-zinc-300">
+      In August 2026 the ACSC warned that N-able N-central was being exploited in Australia.
+      Attackers used the RMM's own remote-control feature to reach client machines, then set
+      up tunnels to keep their access.
+    </p>
+    <p class="text-zinc-700 dark:text-zinc-300">
+      Anything configured inside the RMM falls with it. Breakline takes its orders only from
+      policies signed in its own cloud, so someone holding your RMM console can't open it.
+    </p>
+    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+      What it doesn't do: it closes the door your RMM uses. It doesn't replace your endpoint
+      protection, and it can't remove an attacker who is already inside a network.
+    </p>
+  </section>
+
+  <section id="pilot" class="max-w-3xl space-y-4 pt-12 pb-8">
+    <h2 class="text-2xl font-semibold tracking-tight">A free pilot, monitor mode first</h2>
+    <ol class="list-decimal space-y-2 pl-5 text-zinc-700 dark:text-zinc-300">
+      <li>
+        Install the Breakline package on a small Linux box or VM at one client site, or at
+        your own office. DNS-only mode needs no rewiring.
+      </li>
+      <li>Enrol it from the dashboard with a one-time code.</li>
+      <li>
+        For a few weeks it blocks nothing. It records when your RMM and remote tools reach
+        the site, so you see your own traffic before anything changes.
+      </li>
+      <li>Then you decide, client by client, whether to enforce.</li>
+    </ol>
+    <p class="text-zinc-700 dark:text-zinc-300">The first five sites are free during a pilot.</p>
+    <p :if={@contact_email} id="pilot-contact" class="font-medium">
+      Email <a class="underline" href={"mailto:" <> @contact_email}>{@contact_email}</a>
+      to book a 20 minute walkthrough.
+    </p>
+    <p :if={!@contact_email} id="pilot-contact" class="text-zinc-600 dark:text-zinc-400">
+      Pilot places are by invitation while Breakline is in early testing.
+    </p>
   </section>
 </Layouts.app>
