@@ -6,7 +6,10 @@ defmodule Mix.Tasks.Cloud.Signer.Keygen do
   configured path (default `priv/keys/signer_ed25519.json`, git-ignored, mode
   0600), then prints the key id and public key.
 
-      mix cloud.signer.keygen [--force]
+      mix cloud.signer.keygen [--force] [--path FILE]
+
+  `--path` writes somewhere else, for example the key a production host reads
+  through `SIGNER_KEY_PATH` (see `docs/DEPLOY.md`).
 
   An existing key is kept unless `--force` is given. It also writes the public
   half alone next to it (`signer_ed25519.public.json`), in the same format
@@ -20,9 +23,9 @@ defmodule Mix.Tasks.Cloud.Signer.Keygen do
 
   @impl true
   def run(args) do
-    {opts, _} = OptionParser.parse!(args, strict: [force: :boolean])
+    {opts, _} = OptionParser.parse!(args, strict: [force: :boolean, path: :string])
     Mix.Task.run("app.config")
-    path = Cloud.Signer.File.path()
+    path = if opts[:path], do: Path.expand(opts[:path]), else: Cloud.Signer.File.path()
 
     if File.exists?(path) and not Keyword.get(opts, :force, false) do
       Mix.raise("#{path} already exists, pass --force to replace it")
