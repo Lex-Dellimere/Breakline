@@ -114,6 +114,14 @@ defmodule CloudWeb.SitesLive.Data do
     )
   end
 
+  @doc "The site's newest gateway enrolment code that can still be used, or nil (admins only)."
+  @spec pending_enrollment(User.t(), Sites.Site.t()) :: Sites.GatewayEnrollment.t() | nil
+  def pending_enrollment(%User{} = user, site) do
+    site.id
+    |> Sites.pending_gateway_enrollments!(DateTime.utc_now(), actor: user, tenant: site.tenant_id)
+    |> List.first()
+  end
+
   @doc "The tenant's MSP contacts, by name."
   @spec msp_contacts(User.t(), String.t()) :: [Sites.MspContact.t()]
   def msp_contacts(%User{} = user, tenant_id) do

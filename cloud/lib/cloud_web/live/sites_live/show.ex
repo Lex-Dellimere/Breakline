@@ -22,6 +22,14 @@ defmodule CloudWeb.SitesLive.Show do
   send a link (emailed to the contact), and revoke links
   (`Cloud.Sites.RequestLink`).
 
+  Admins enrol the site's gateway box here too: "Enrol gateway" runs an
+  `:enroll_gateway` step-up for the site, then issues a one-time code
+  (`Cloud.Sites.GatewayEnrollments`) and shows it once, with the command to
+  run on the box. The raw code lives only in this LiveView's assigns; after a
+  reload the page shows that a code is pending and lets the admin cancel it.
+  When the site already has a gateway the card says plainly that enrolling
+  replaces it.
+
   The full history (gateway events, audit entries, policy versions and
   notifications) is on the site's timeline page (`CloudWeb.SitesLive.Timeline`).
 
@@ -35,6 +43,7 @@ defmodule CloudWeb.SitesLive.Show do
 
   alias Cloud.Accounts.Passkeys
   alias Cloud.{Gateways, Sites}
+  alias Cloud.Sites.GatewayEnrollments
   alias CloudWeb.{GatewayPresence, StepUp}
   alias CloudWeb.SitesLive.{Data, Presenter}
 
@@ -69,7 +78,9 @@ defmodule CloudWeb.SitesLive.Show do
          |> assign(:role, Data.role(user, site.tenant_id))
          |> assign(:break_glass_minutes, @break_glass_minutes)
          |> assign(:break_glass, Data.current_break_glass(user, site))
+         |> assign(:enrollment_code, nil)
          |> assign_links()
+         |> assign_enrollment()
          |> stream(:events, events, limit: @events)}
 
       {:error, :not_found} ->
@@ -175,6 +186,53 @@ defmodule CloudWeb.SitesLive.Show do
     end
   end
 
+  # gateway enrolment (admins)
+
+  def handle_event("enroll_gateway", _params, socket) do
+    site = socket.assigns.site
+
+    {:noreply,
+     StepUp.start(
+       socket,
+       :enroll_gateway,
+       site.id,
+       %{site_id: site.id},
+       [tenant: site.tenant_id],
+       :enroll_gateway
+     )}
+  end
+
+  def handle_event("cancel_enrollment", _params, socket) do
+    case socket.assigns.enrollment do
+      nil ->
+        {:noreply,
+         socket |> put_flash(:error, "There is no code to cancel") |> assign_enrollment()}
+
+      enrollment ->
+        case Sites.cancel_gateway_enrollment(enrollment,
+               actor: socket.assigns.current_user,
+               tenant: enrollment.tenant_id
+             ) do
+          {:ok, _} ->
+            {:noreply,
+             socket
+             |> assign(:enrollment_code, nil)
+             |> put_flash(:info, "Enrolment code cancelled")
+             |> assign_enrollment()}
+
+          {:error, %Ash.Error.Forbidden{}} ->
+            {:noreply, put_flash(socket, :error, "Your role does not allow that")}
+
+          {:error, _} ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "That code was already used or cancelled")
+             |> assign(:enrollment_code, nil)
+             |> assign_enrollment()}
+        end
+    end
+  end
+
   # the passkey ceremony hook
 
   def handle_event("passkey_assertion", params, socket) do
@@ -219,6 +277,40 @@ defmodule CloudWeb.SitesLive.Show do
     socket.assigns.site.id
     |> Cloud.Access.unlock(socket.assigns.current_user, step_up_id)
     |> action_result(socket, "Manual locks lifted")
+  end
+
+  defp run(:enroll_gateway, step_up_id, socket) do
+    case GatewayEnrollments.issue(socket.assigns.site, socket.assigns.current_user, step_up_id) do
+      {:ok, enrollment} ->
+        {:noreply,
+         socket
+         |> assign(:enrollment_code, enrollment.__metadata__.code)
+         |> put_flash(:info, "Enrolment code ready, valid for 30 minutes")
+         |> assign_enrollment()}
+
+      {:error, %Ash.Error.Forbidden{}} ->
+        {:noreply, put_flash(socket, :error, "Your role does not allow that")}
+
+      {:error, error} ->
+        message = StepUp.action_error(error) || "That did not work, see the server log"
+        {:noreply, put_flash(socket, :error, message)}
+    end
+  end
+
+  defp assign_enrollment(socket) do
+    if socket.assigns.role == :admin do
+      enrollment = Data.pending_enrollment(socket.assigns.current_user, socket.assigns.site)
+      # the raw code is only shown for the pending code it belongs to
+      code = if enrollment, do: socket.assigns.enrollment_code
+
+      assign(socket,
+        enrollment: enrollment,
+        enrollment_code: code,
+        enrollment_ready?: GatewayEnrollments.configured?()
+      )
+    else
+      assign(socket, enrollment: nil, enrollment_code: nil, enrollment_ready?: false)
+    end
   end
 
   defp revoke_link(link, socket) do
@@ -301,8 +393,13 @@ defmodule CloudWeb.SitesLive.Show do
     {:noreply, reload_site(socket)}
   end
 
+  # a gateway coming or going may be a box that just enrolled: refresh its pin and code too
   def handle_info(%Phoenix.Socket.Broadcast{event: "presence_diff"}, socket) do
-    {:noreply, assign(socket, :connected, GatewayPresence.connected?(socket.assigns.site.id))}
+    {:noreply,
+     socket
+     |> assign(:connected, GatewayPresence.connected?(socket.assigns.site.id))
+     |> reload_site()
+     |> assign_enrollment()}
   end
 
   def handle_info(_msg, socket), do: {:noreply, socket}
@@ -556,6 +653,106 @@ defmodule CloudWeb.SitesLive.Show do
             </.link>
           </p>
           <CloudWeb.PasskeyCeremony.hook id="passkey-ceremony" />
+        </.card_content>
+      </.card>
+
+      <.card
+        :if={@role == :admin}
+        id="gateway-enrollment"
+        variant="bordered"
+        color="natural"
+        rounded="large"
+        padding="large"
+      >
+        <.card_title title="Gateway box" size="small" font_weight="font-semibold" />
+        <.card_content>
+          <p id="gateway-pin" class="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <%= if @site.gateway_cert_fingerprint do %>
+              Enrolled box, certificate
+              <code class="font-mono text-xs text-zinc-800 dark:text-zinc-200">
+                {String.slice(@site.gateway_cert_fingerprint, 0, 16)}…
+              </code>
+            <% else %>
+              No gateway box is enrolled for this site yet.
+            <% end %>
+          </p>
+
+          <.alert
+            :if={@site.gateway_cert_fingerprint}
+            id="enroll-replaces"
+            kind={:warning}
+            variant="bordered"
+            size="small"
+            class="mb-3"
+          >
+            Enrolling a gateway replaces the current box. Once the new box uses its code, the
+            current one is disconnected and can never connect again.
+          </.alert>
+
+          <%= cond do %>
+            <% not @enrollment_ready? -> %>
+              <p id="enroll-unavailable" class="text-sm text-zinc-500">
+                Enrolment is not set up on this server (no gateway url or CA certificate).
+              </p>
+            <% not @has_passkey -> %>
+              <p id="enroll-passkey-needed" class="text-sm text-zinc-600 dark:text-zinc-400">
+                Enrolling a gateway needs a passkey.
+                <.link
+                  navigate={~p"/account/security"}
+                  class="text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  Add one on the security page
+                </.link>
+              </p>
+            <% true -> %>
+              <.button
+                id="enroll-gateway"
+                phx-click="enroll_gateway"
+                disabled={@step_up != nil}
+                color={if(@site.gateway_cert_fingerprint, do: "warning", else: "primary")}
+                variant="default"
+                size="small"
+                icon="hero-cpu-chip"
+              >
+                <%= if @site.gateway_cert_fingerprint do %>
+                  Enrol a replacement gateway
+                <% else %>
+                  Enrol gateway
+                <% end %>
+              </.button>
+          <% end %>
+
+          <div :if={@enrollment_code} id="enroll-code" class="mt-4 space-y-2">
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+              Run this on the gateway box within 30 minutes. The code works once and is shown only
+              now.
+            </p>
+            <pre
+              id="enroll-command"
+              class="select-all overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-zinc-900 p-3 font-mono text-xs text-zinc-100"
+            >{GatewayEnrollments.command(@enrollment_code)}</pre>
+          </div>
+
+          <div
+            :if={@enrollment}
+            id="enroll-pending"
+            class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+          >
+            <.badge color="info" variant="bordered" size="extra_small">code pending</.badge>
+            <span class="text-xs text-zinc-500">
+              expires {Presenter.local_time(@enrollment.expires_at, @tz, "%H:%M")}
+            </span>
+            <.button
+              id="cancel-enrollment"
+              phx-click="cancel_enrollment"
+              color="danger"
+              variant="transparent"
+              size="extra_small"
+              class="ms-auto"
+            >
+              Cancel code
+            </.button>
+          </div>
         </.card_content>
       </.card>
 
