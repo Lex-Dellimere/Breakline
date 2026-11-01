@@ -9,11 +9,17 @@
 # see /usr/share/doc/breakline-gateway/PILOT.md for the install modes, and
 # examples/ next to it for each mode's network config.
 
-# required. the site this box enforces for, exactly as the cloud names it.
+# an enrolled box (`breakline-gateway enroll ...`) gets its site, the cloud's signing
+# keys and its uplink from /var/lib/breakline/enrollment.json. leave BREAKLINE_SITE_ID,
+# BREAKLINE_PUBLIC_KEYS and the BREAKLINE_UPLINK_* lines commented out on such a box:
+# any of them that is set wins over the enrolment, and BREAKLINE_SITE_ID switches the box
+# to configuration from this file alone.
+
+# only without enrolment. the site this box enforces for, exactly as the cloud names it.
 #BREAKLINE_SITE_ID=
 
-# required. the cloud's policy signing keys the box trusts, comma separated
-# key_id=public_key pairs (base64url ed25519), e.g. cloud-1=AbCd...
+# only without enrolment, then required. the cloud's policy signing keys the box trusts,
+# comma separated key_id=public_key pairs (base64url ed25519), e.g. cloud-1=AbCd...
 #BREAKLINE_PUBLIC_KEYS=
 
 # required. the lan-side interfaces whose clients get their dns redirected to this
@@ -34,13 +40,13 @@ BREAKLINE_DEFAULT_MODE=monitor
 # dns-only: set it to the box's lan address (the one dhcp hands out as dns).
 #BREAKLINE_DNS_IP=192.168.1.53
 
-# optional. the cloud uplink. without BREAKLINE_UPLINK_URL the box runs offline and
-# only enforces what it already has. with it, the three pem paths are required.
-# the paths below are examples: use the ones `breakline-gateway enroll` reports.
+# only without enrolment. the cloud uplink: without BREAKLINE_UPLINK_URL the box runs
+# offline and only enforces what it already has; with it, the three pem paths are
+# required. an enrolled box uses these files on its own, shown here for reference.
 #BREAKLINE_UPLINK_URL=wss://cloud.example/gateway/socket/websocket
-#BREAKLINE_UPLINK_CERT=/var/lib/breakline/uplink/cert.pem
-#BREAKLINE_UPLINK_KEY=/var/lib/breakline/uplink/key.pem
-#BREAKLINE_UPLINK_CA=/var/lib/breakline/uplink/ca.pem
+#BREAKLINE_UPLINK_CERT=/var/lib/breakline/identity/gateway_cert.pem
+#BREAKLINE_UPLINK_KEY=/var/lib/breakline/identity/gateway_key.pem
+#BREAKLINE_UPLINK_CA=/var/lib/breakline/server_ca.pem
 # optional. the name the cloud's certificate carries, when it isn't the url's host.
 #BREAKLINE_UPLINK_SERVER_NAME=
 
