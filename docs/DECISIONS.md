@@ -569,3 +569,28 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   - Measure it in the monitor pilots.
 - **Kept on purpose:** KEV locks don't expire. A lock lifted by a person after the patch is the point. Alarm fatigue is a risk to test in the pilots.
 - **Deferred:** an external security review waits for revenue.
+### D52. Tag catalogue domains by channel, record only
+- **What:** every domain in `tools.json` has a `channel` of `control`, `management` or `both`
+  (missing means `both`, anything else fails the build). `Breakline.Catalog.match_domain_channel/2`
+  returns it, the most specific matching pattern winning. The gateway adds `channel` to every DNS
+  event (nil for site hosts and DoH). Blocking is unchanged: the pilots measure the split first (D51).
+- **Tags (56 domains):**
+  - `control` (26): anydesk 3, teamviewer 4, splashtop 5, screenconnect 4, take_control 10. Pure
+    remote-control tools.
+  - `management` (13): all of n_central. The LOLRMM n-able-n-central record describes them as
+    software distribution, updates, agent configuration and event delivery, and agent IoT endpoints.
+  - `both` (17): ninjaone 14, datto_rmm 3.
+- **Why both for NinjaOne and Datto:**
+  - Datto's allowlist page (`channel_source`,
+    rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm) puts the web
+    UI, agent web services, updates and Web Remote (`tunnel.`, `webrtc.`) all under `*.rmm.datto.com`.
+    It lists "control channel" hosts (`02cc.centrastage.net` and so on) without saying whether they
+    carry agent or remote-control traffic, and they don't match our `cc.centrastage.net` patterns anyway.
+    Remote takeover runs through `ts.centrastage.net` and `tunnel-ips.centrastage.net`, which are not in
+    the catalogue.
+  - NinjaOne's allowlist article (ninjarmm.zendesk.com/hc/articles/211406886) returned 403, and its
+    public docs only say that remote sessions use 443, with 7075 as a fallback, and relay through
+    NinjaOne. The wildcards cover agent, console and relay hosts alike. `ninja-backup.com` is plainly
+    backup, but no vendor doc confirmed it, so it stays `both`.
+- **Next:** if pilots show the data is worth it, split Datto by adding the tunnel hosts as `control` and
+  the agent web-service hosts as `management`, and retag NinjaOne from its allowlist article.

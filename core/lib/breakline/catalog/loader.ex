@@ -5,9 +5,10 @@ defmodule Breakline.Catalog.Loader do
 
   `Breakline.Catalog` calls this at compile time, so a malformed
   `tools.json` (an invalid domain pattern, port, protocol or CIDR, or a KEV
-  key that is not already normalised, or a port scope other than `"any"` or
-  `"tool_ips"`) fails the build instead of reaching a
-  gateway.
+  key that is not already normalised, a port scope other than `"any"` or
+  `"tool_ips"`, or a domain channel other than `"control"`, `"management"` or
+  `"both"`) fails the build instead of reaching a gateway. A domain without a
+  channel is `:both`.
   """
 
   alias Breakline.Catalog.{DomainPattern, Tool}
@@ -56,9 +57,17 @@ defmodule Breakline.Catalog.Loader do
     %{
       pattern: pattern,
       source: Map.fetch!(d, "source"),
+      channel: channel!(pattern, Map.get(d, "channel", "both")),
       compiled: DomainPattern.compile!(pattern)
     }
   end
+
+  defp channel!(_pattern, "control"), do: :control
+  defp channel!(_pattern, "management"), do: :management
+  defp channel!(_pattern, "both"), do: :both
+
+  defp channel!(pattern, other),
+    do: raise(ArgumentError, "invalid channel #{inspect(other)} for #{pattern}")
 
   defp port!(id, p) do
     port = Map.fetch!(p, "port")

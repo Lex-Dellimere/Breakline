@@ -177,6 +177,35 @@ defmodule Breakline.CatalogTest do
     end
   end
 
+  describe "match_domain_channel/2" do
+    test "returns the tool and the matched domain's channel" do
+      assert Catalog.match_domain_channel("router15.teamviewer.com") ==
+               {:ok, {"teamviewer", :control}}
+
+      assert Catalog.match_domain_channel("eb.us-west-2.prd.davinci.system-monitor.com") ==
+               {:ok, {"n_central", :management}}
+
+      assert Catalog.match_domain_channel("app.ninjarmm.com") == {:ok, {"ninjaone", :both}}
+      assert Catalog.match_domain_channel("x.cc.centrastage.net") == {:ok, {"datto_rmm", :both}}
+    end
+
+    test "agrees with match_domain/2 and respects the tool id filter" do
+      assert Catalog.match_domain_channel("router15.teamviewer.com", ["anydesk"]) == :nomatch
+      assert Catalog.match_domain_channel("teamviewer.com") == :nomatch
+      assert Catalog.match_domain_channel("") == :nomatch
+    end
+
+    test "pure remote-control tools are control and n-central is management throughout" do
+      for id <- ~w(anydesk teamviewer splashtop screenconnect take_control) do
+        {:ok, tool} = Catalog.get(id)
+        assert Enum.all?(tool.domains, &(&1.channel == :control)), id
+      end
+
+      {:ok, n_central} = Catalog.get("n_central")
+      assert Enum.all?(n_central.domains, &(&1.channel == :management))
+    end
+  end
+
   describe "kev_match/1" do
     defp kev(vendor, product),
       do: %{"cveID" => "CVE-2026-0001", "vendorProject" => vendor, "product" => product}
@@ -303,6 +332,17 @@ defmodule Breakline.CatalogTest do
                Loader.parse!(json(base()))
     end
 
+    test "a domain without a channel is :both and a valid one is kept" do
+      assert [%Tool{domains: [%{channel: :both}]}] = Loader.parse!(json(base()))
+
+      tool =
+        put_in(base()["domains"], [
+          %{"pattern" => "a.example.com", "source" => "x", "channel" => "control"}
+        ])
+
+      assert [%Tool{domains: [%{channel: :control}]}] = Loader.parse!(json(tool))
+    end
+
     test "rejects invalid entries" do
       bad = [
         put_in(base()["domains"], [%{"pattern" => "*", "source" => "x"}]),
@@ -318,7 +358,13 @@ defmodule Breakline.CatalogTest do
         put_in(base()["ports"], [%{"port" => 443, "proto" => "tcp", "source" => "x"}]),
         put_in(base()["cidrs"], ["192.0.2.1/33"]),
         put_in(base()["cidrs"], ["not-an-ip/32"]),
-        put_in(base()["kev_keys"], [%{"vendor" => "N-able", "product" => "*"}])
+        put_in(base()["kev_keys"], [%{"vendor" => "N-able", "product" => "*"}]),
+        put_in(base()["domains"], [
+          %{"pattern" => "a.example.com", "source" => "x", "channel" => "remote"}
+        ]),
+        put_in(base()["domains"], [
+          %{"pattern" => "a.example.com", "source" => "x", "channel" => nil}
+        ])
       ]
 
       for tool <- bad do

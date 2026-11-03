@@ -76,6 +76,42 @@ defmodule Breakline.Catalog do
   end
 
   @doc """
+  Like `match_domain/2`, but also returns the channel of the matched domain:
+  `:control`, `:management` or `:both`.
+
+  When several of the tool's patterns match, the most specific wins: an exact
+  name (which may hold a mid-label `*`) over a leading `*.`, then the longer
+  pattern. If equally specific patterns disagree the channel is `:both`.
+
+      iex> Breakline.Catalog.match_domain_channel("relay-1a2b.net.anydesk.com")
+      {:ok, {"anydesk", :control}}
+      iex> Breakline.Catalog.match_domain_channel("sis.n-able.com", ["n_central"])
+      {:ok, {"n_central", :management}}
+      iex> Breakline.Catalog.match_domain_channel("example.com")
+      :nomatch
+  """
+  @spec match_domain_channel(String.t(), [tool_id()]) ::
+          {:ok, {tool_id(), Tool.channel()}} | :nomatch
+  def match_domain_channel(qname, tool_ids \\ @ids) when is_binary(qname) do
+    with {:ok, id} <- match_domain(qname, tool_ids) do
+      {:ok, tool} = get(id)
+
+      channels =
+        tool.domains
+        |> Enum.filter(&DomainPattern.match?(&1.compiled, qname))
+        |> Enum.group_by(&specificity(&1.compiled), & &1.channel)
+        |> Enum.max_by(fn {rank, _} -> rank end)
+        |> elem(1)
+        |> Enum.uniq()
+
+      {:ok, {id, if(match?([_], channels), do: hd(channels), else: :both)}}
+    end
+  end
+
+  defp specificity(%DomainPattern{kind: kind, labels: labels}),
+    do: {if(kind == :exact, do: 1, else: 0), length(labels)}
+
+  @doc """
   Returns the ids of the tools a CISA KEV record applies to, in sorted order.
 
   `vendorProject` and `product` are normalised by trimming, collapsing inner

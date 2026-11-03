@@ -1,23 +1,23 @@
 {
-  "comment": "Breakline curated RMM catalog. Domains sourced 'lolrmm:<slug>' come from lolrmm_snapshot.json (LOLRMM, Apache-2.0, see NOTICE); URL sources are vendor documentation. Ports are the tool's service ports. A port with scope 'tool_ips' is shared with ordinary traffic (80, 443, 8443 and so on) and only matters towards the tool's own resolved IPs and CIDRs. A port with scope 'any' is used only by RMM tools, so the gateway drops it towards any destination while locked, which also stops direct peer-to-peer sessions.",
+  "comment": "Breakline curated RMM catalog. Domains sourced 'lolrmm:<slug>' come from lolrmm_snapshot.json (LOLRMM, Apache-2.0, see NOTICE); URL sources are vendor documentation. Ports are the tool's service ports. A port with scope 'tool_ips' is shared with ordinary traffic (80, 443, 8443 and so on) and only matters towards the tool's own resolved IPs and CIDRs. A port with scope 'any' is used only by RMM tools, so the gateway drops it towards any destination while locked, which also stops direct peer-to-peer sessions. Each domain has a 'channel': 'control' for remote-control traffic, 'management' for agent check-in, patching and monitoring, or 'both' where the sources do not say which (the default when missing). It is recorded only, never used to block, so pilot data can show whether the two can be told apart (D51, D52); 'channel_source' names the doc used to decide when it differs from 'source'.",
   "tools": {
     "n_central": {
       "name": "N-able N-central",
       "vendor": "N-able",
       "domains": [
-        {"pattern": "sis.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "update.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "releases.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "feeds.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "*.prd.cdo.system-monitor.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "eb.eu-west-1.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "eb.us-west-2.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "eb.ap-southeast-2.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "eb.eu-central-1.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "a33d8yamkwy4nx-ats.iot.eu-west-1.amazonaws.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "a33d8yamkwy4nx-ats.iot.us-west-2.amazonaws.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "a33d8yamkwy4nx-ats.iot.eu-central-1.amazonaws.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "a33d8yamkwy4nx-ats.iot.ap-southeast-2.amazonaws.com", "source": "lolrmm:n-able-n-central"}
+        {"pattern": "sis.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "update.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "releases.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "feeds.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "*.prd.cdo.system-monitor.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "eb.eu-west-1.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "eb.us-west-2.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "eb.ap-southeast-2.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "eb.eu-central-1.prd.davinci.system-monitor.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.eu-west-1.amazonaws.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.us-west-2.amazonaws.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.eu-central-1.amazonaws.com", "source": "lolrmm:n-able-n-central", "channel": "management"},
+        {"pattern": "a33d8yamkwy4nx-ats.iot.ap-southeast-2.amazonaws.com", "source": "lolrmm:n-able-n-central", "channel": "management"}
       ],
       "ports": [
         {"port": 80, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:n-able-n-central"},
@@ -52,16 +52,16 @@
       "name": "N-able Take Control",
       "vendor": "N-able",
       "domains": [
-        {"pattern": "beanywhere.com", "source": "lolrmm:beanywhere"},
-        {"pattern": "*.beanywhere.com", "source": "lolrmm:n-able-advanced-monitoring-agent"},
-        {"pattern": "*.swi-tc.com", "source": "lolrmm:n-able-advanced-monitoring-agent"},
-        {"pattern": "swi-rc.cdn-sw.net", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "comserver.global.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "comserver.us1.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "comserver.us2.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "comserver.eu1.mspa.n-able.com", "source": "lolrmm:n-able-n-central"},
-        {"pattern": "*.mspa.n-able.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"},
-        {"pattern": "*.swi-rc.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"}
+        {"pattern": "beanywhere.com", "source": "lolrmm:beanywhere", "channel": "control"},
+        {"pattern": "*.beanywhere.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "channel": "control"},
+        {"pattern": "*.swi-tc.com", "source": "lolrmm:n-able-advanced-monitoring-agent", "channel": "control"},
+        {"pattern": "swi-rc.cdn-sw.net", "source": "lolrmm:n-able-n-central", "channel": "control"},
+        {"pattern": "comserver.global.mspa.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "control"},
+        {"pattern": "comserver.us1.mspa.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "control"},
+        {"pattern": "comserver.us2.mspa.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "control"},
+        {"pattern": "comserver.eu1.mspa.n-able.com", "source": "lolrmm:n-able-n-central", "channel": "control"},
+        {"pattern": "*.mspa.n-able.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm", "channel": "control"},
+        {"pattern": "*.swi-rc.com", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm", "channel": "control"}
       ],
       "ports": [
         {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "https://documentation.n-able.com/takecontrol/userguide/Content/system-requirements/communication-requirements.htm"},
@@ -79,10 +79,10 @@
       "name": "ConnectWise ScreenConnect",
       "vendor": "ConnectWise",
       "domains": [
-        {"pattern": "control.connectwise.com", "source": "lolrmm:screenconnect"},
-        {"pattern": "*.screenconnect.com", "source": "lolrmm:screenconnect"},
-        {"pattern": "instance-*-relay.screenconnect.com", "source": "lolrmm:screenconnect"},
-        {"pattern": "live.screenconnect.com", "source": "lolrmm:connectwise-control"}
+        {"pattern": "control.connectwise.com", "source": "lolrmm:screenconnect", "channel": "control"},
+        {"pattern": "*.screenconnect.com", "source": "lolrmm:screenconnect", "channel": "control"},
+        {"pattern": "instance-*-relay.screenconnect.com", "source": "lolrmm:screenconnect", "channel": "control"},
+        {"pattern": "live.screenconnect.com", "source": "lolrmm:connectwise-control", "channel": "control"}
       ],
       "ports": [
         {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:screenconnect"},
@@ -101,20 +101,20 @@
       "name": "NinjaOne",
       "vendor": "NinjaOne",
       "domains": [
-        {"pattern": "*.ninjarmm.com", "source": "lolrmm:ninjarmm"},
-        {"pattern": "*.ninjaone.com", "source": "lolrmm:ninjarmm"},
-        {"pattern": "resources.ninjarmm.com", "source": "lolrmm:ninjarmm"},
-        {"pattern": "ninjaone.com", "source": "lolrmm:ninjarmm"},
-        {"pattern": "ninjarmm.net", "source": "lolrmm:ninjarmm"},
-        {"pattern": "*.ninjarmm.net", "source": "lolrmm:ninjarmm"},
-        {"pattern": "rmmservice.eu", "source": "lolrmm:ninjarmm"},
-        {"pattern": "*.rmmservice.eu", "source": "lolrmm:ninjarmm"},
-        {"pattern": "rmmservice.com.au", "source": "lolrmm:ninjarmm"},
-        {"pattern": "*.rmmservice.com.au", "source": "lolrmm:ninjarmm"},
-        {"pattern": "rmmservice.ca", "source": "lolrmm:ninjarmm"},
-        {"pattern": "*.rmmservice.ca", "source": "lolrmm:ninjarmm"},
-        {"pattern": "ninja-backup.com", "source": "lolrmm:ninjarmm"},
-        {"pattern": "*.ninja-backup.com", "source": "lolrmm:ninjarmm"}
+        {"pattern": "*.ninjarmm.com", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "*.ninjaone.com", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "resources.ninjarmm.com", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "ninjaone.com", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "ninjarmm.net", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "*.ninjarmm.net", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "rmmservice.eu", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "*.rmmservice.eu", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "rmmservice.com.au", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "*.rmmservice.com.au", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "rmmservice.ca", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "*.rmmservice.ca", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "ninja-backup.com", "source": "lolrmm:ninjarmm", "channel": "both"},
+        {"pattern": "*.ninja-backup.com", "source": "lolrmm:ninjarmm", "channel": "both"}
       ],
       "ports": [],
       "cidrs": [],
@@ -128,9 +128,9 @@
       "name": "Datto RMM",
       "vendor": "Datto",
       "domains": [
-        {"pattern": "*.rmm.datto.com", "source": "lolrmm:centrastage-now-datto"},
-        {"pattern": "cc.centrastage.net", "source": "lolrmm:centrastage-now-datto"},
-        {"pattern": "*.cc.centrastage.net", "source": "lolrmm:centrastage-now-datto"}
+        {"pattern": "*.rmm.datto.com", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"},
+        {"pattern": "cc.centrastage.net", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"},
+        {"pattern": "*.cc.centrastage.net", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"}
       ],
       "ports": [],
       "cidrs": [],
@@ -145,9 +145,9 @@
       "name": "AnyDesk",
       "vendor": "AnyDesk",
       "domains": [
-        {"pattern": "boot.net.anydesk.com", "source": "lolrmm:anydesk"},
-        {"pattern": "relay-*.net.anydesk.com", "source": "lolrmm:anydesk"},
-        {"pattern": "*.net.anydesk.com", "source": "lolrmm:anydesk"}
+        {"pattern": "boot.net.anydesk.com", "source": "lolrmm:anydesk", "channel": "control"},
+        {"pattern": "relay-*.net.anydesk.com", "source": "lolrmm:anydesk", "channel": "control"},
+        {"pattern": "*.net.anydesk.com", "source": "lolrmm:anydesk", "channel": "control"}
       ],
       "ports": [
         {"port": 80, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:anydesk"},
@@ -165,10 +165,10 @@
       "name": "TeamViewer",
       "vendor": "TeamViewer",
       "domains": [
-        {"pattern": "*.teamviewer.com", "source": "lolrmm:teamviewer"},
-        {"pattern": "router15.teamviewer.com", "source": "lolrmm:teamviewer"},
-        {"pattern": "client.teamviewer.com", "source": "lolrmm:teamviewer"},
-        {"pattern": "taf.teamviewer.com", "source": "lolrmm:teamviewer"}
+        {"pattern": "*.teamviewer.com", "source": "lolrmm:teamviewer", "channel": "control"},
+        {"pattern": "router15.teamviewer.com", "source": "lolrmm:teamviewer", "channel": "control"},
+        {"pattern": "client.teamviewer.com", "source": "lolrmm:teamviewer", "channel": "control"},
+        {"pattern": "taf.teamviewer.com", "source": "lolrmm:teamviewer", "channel": "control"}
       ],
       "ports": [
         {"port": 443, "proto": "tcp", "scope": "tool_ips", "source": "lolrmm:teamviewer"},
@@ -186,11 +186,11 @@
       "name": "Splashtop",
       "vendor": "Splashtop",
       "domains": [
-        {"pattern": "*.splashtop.com", "source": "lolrmm:splashtop"},
-        {"pattern": "splashtop.com", "source": "lolrmm:splashtop-remote"},
-        {"pattern": "*.api.splashtop.com", "source": "lolrmm:splashtop-remote"},
-        {"pattern": "*.relay.splashtop.com", "source": "lolrmm:splashtop-remote"},
-        {"pattern": "*.api.splashtop.eu", "source": "lolrmm:splashtop-remote"}
+        {"pattern": "*.splashtop.com", "source": "lolrmm:splashtop", "channel": "control"},
+        {"pattern": "splashtop.com", "source": "lolrmm:splashtop-remote", "channel": "control"},
+        {"pattern": "*.api.splashtop.com", "source": "lolrmm:splashtop-remote", "channel": "control"},
+        {"pattern": "*.relay.splashtop.com", "source": "lolrmm:splashtop-remote", "channel": "control"},
+        {"pattern": "*.api.splashtop.eu", "source": "lolrmm:splashtop-remote", "channel": "control"}
       ],
       "ports": [],
       "cidrs": [],

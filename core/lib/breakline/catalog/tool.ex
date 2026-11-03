@@ -4,7 +4,10 @@ defmodule Breakline.Catalog.Tool do
 
   `domains` are the names the gateway answers NXDOMAIN for while the tool is
   locked, each with the source it was taken from and its compiled
-  `Breakline.Catalog.DomainPattern`. `ports` are the tool's service ports and
+  `Breakline.Catalog.DomainPattern`, and its `channel`: `:control` for
+  remote-control traffic, `:management` for agent check-in, patching and
+  monitoring, or `:both` when the sources do not say. The channel is recorded
+  in DNS events only and never changes what is blocked. `ports` are the tool's service ports and
   `cidrs` any fixed address ranges. Each port has a `scope`: `:tool_ips` for a
   port shared with ordinary traffic (80, 443, 8443 and so on), which only
   matters towards the tool's own resolved IPs and CIDRs, and `:any` for a port
@@ -21,7 +24,13 @@ defmodule Breakline.Catalog.Tool do
   @enforce_keys [:id, :name, :vendor, :domains, :ports, :cidrs, :kev_keys, :excluded]
   defstruct @enforce_keys
 
-  @type domain :: %{pattern: String.t(), source: String.t(), compiled: DomainPattern.t()}
+  @type channel :: :control | :management | :both
+  @type domain :: %{
+          pattern: String.t(),
+          source: String.t(),
+          channel: channel(),
+          compiled: DomainPattern.t()
+        }
   @type port_scope :: :any | :tool_ips
   @type port_spec :: %{
           port: 1..65_535,
