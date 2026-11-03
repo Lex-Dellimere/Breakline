@@ -35,12 +35,14 @@ both.
 
 ## The offer (hypothesis, to test)
 
-1. **Automatic lockdown:** when the MSP's RMM appears in CISA KEV or an ACSC advisory,
-   remote access closes at every client site at once. It reopens when the MSP confirms
-   the patch, with a passkey. This works even if the RMM console is owned by an attacker.
-2. **Just-in-time remote access:** remote-control sessions need a booked window or a
-   passkey approval. The approver is the MSP's own senior staff (MSP-held), the client
-   (client-held), or both.
+1. **Emergency lockdown (the lead, D51):** within 30 minutes of the MSP's RMM appearing in
+   CISA KEV, remote access closes at every client site that uses it (an ACSC alert asks
+   first). It reopens when an admin lifts the lock with a passkey after patching. This
+   works even if the RMM console is owned by an attacker.
+2. **Windows and approvals, optional per client:** remote-control sessions need a booked
+   window or a passkey approval from the MSP's senior staff or the client. This fits pure
+   remote-control tools (AnyDesk, TeamViewer, Splashtop, ScreenConnect, Take Control). For
+   NinjaOne and Datto a lock may also pause patching; the pilots measure it (D52).
 3. **An access report per client:** a tamper-evident PDF of every open, close, approval
    and lockdown. It is for the client, for the MSP's and the client's insurers, and for
    accreditation evidence (RACGP F8 asks for remote access obligations in IT contracts).
@@ -105,6 +107,11 @@ is built from the advisory polling and tool catalogue Breakline already runs.
 - calls and meetings;
 - signing agreements, after a lawyer reads anything binding;
 - anything physical.
+
+**The salesperson (a friend of the owner, unpaid for now, from 3 Nov 2026):** finds MSPs,
+sends the emails and makes the calls, working from the "Breakline sales starter" doc
+(script, objections, target list, call log). He isn't technical: technical questions come
+back to the owner and Claude.
 
 Revenue belongs to the owner. Claude can't hold money.
 

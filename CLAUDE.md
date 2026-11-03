@@ -8,6 +8,7 @@ deployed at their clients' sites (D46). How it makes money, and the validation g
 Demand is not validated. v1 exists to demo in customer interviews and run monitor-only pilots:
 optimise for a working, demo-able slice, not completeness.
 
+- **Resuming? Read `docs/HANDOFF.md` first:** current state, what waits on whom, what's next.
 - Brief (source of truth for scope): `docs/BRIEF.md`
 - Phases and status: `docs/ROADMAP.md`
 - Every decision and why: `docs/DECISIONS.md`
