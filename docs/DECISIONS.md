@@ -594,3 +594,4 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
     backup, but no vendor doc confirmed it, so it stays `both`.
 - **Next:** if pilots show the data is worth it, split Datto by adding the tunnel hosts as `control` and
   the agent web-service hosts as `management`, and retag NinjaOne from its allowlist article.
+- **Datto remote takeover added (3 Nov 2026):** Datto's allowlist page puts remote takeover on `ts.centrastage.net` (shared with agent-to-agent traffic, so `both`) and `tunnel-ips.centrastage.net` (`control`), and Web Remote on `tunnel.rmm.datto.com` and `webrtc.rmm.datto.com` (`control`). None of these were in the catalogue, so a Datto lock didn't block remote takeover. All four are listed now. Web Remote's ports (3478, and 49152–65535) are left out: the range is too broad to drop safely.

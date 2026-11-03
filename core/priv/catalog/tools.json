@@ -130,7 +130,11 @@
       "domains": [
         {"pattern": "*.rmm.datto.com", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"},
         {"pattern": "cc.centrastage.net", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"},
-        {"pattern": "*.cc.centrastage.net", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"}
+        {"pattern": "*.cc.centrastage.net", "source": "lolrmm:centrastage-now-datto", "channel": "both", "channel_source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm"},
+        {"pattern": "ts.centrastage.net", "source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm", "channel": "both"},
+        {"pattern": "tunnel-ips.centrastage.net", "source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm", "channel": "control"},
+        {"pattern": "tunnel.rmm.datto.com", "source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm", "channel": "control"},
+        {"pattern": "webrtc.rmm.datto.com", "source": "https://rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm", "channel": "control"}
       ],
       "ports": [],
       "cidrs": [],
