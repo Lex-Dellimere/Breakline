@@ -18,8 +18,8 @@
       <p class="max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
         When an RMM is compromised, every control inside it goes too: consent prompts,
         allowlists, your own admin settings. Breakline sits at each client site, outside
-        your RMM, and keeps remote access closed until a booked window or a passkey
-        approval opens it.
+        your RMM, and shuts remote access at every site the moment your tool is listed as
+        exploited. Only a passkey reopens it.
       </p>
       <div class="flex flex-wrap gap-3">
         <%= if assigns[:current_user] do %>
@@ -48,10 +48,10 @@
     <.card
       :for={
         {icon, title, body} <- [
-          {"hero-bolt", "Locks itself when your RMM is attacked",
-           "Breakline checks CISA's exploited-vulnerabilities list and ACSC alerts every 30 minutes. When your tool appears, remote access closes at every client site that uses it, and only a passkey reopens it."},
-          {"hero-finger-print", "Just-in-time remote access",
-           "Sessions open inside a booked maintenance window or after a passkey approval, from your senior staff or from the client. Outside those times the channel stays shut."},
+          {"hero-bolt", "Emergency lockdown",
+           "Breakline checks CISA's exploited-vulnerabilities list every 30 minutes. When your tool appears, remote access closes at every client site that uses it, even if your RMM console is in someone else's hands. Once you've patched, a passkey reopens it."},
+          {"hero-finger-print", "Windows and approvals, if a client wants them",
+           "For remote-control tools such as AnyDesk, TeamViewer or ScreenConnect, a client can ask that sessions open only in a booked window or after a passkey approval."},
           {"hero-document-check", "Proof for clients and insurers",
            "Every open, close, approval and lockdown goes into a tamper-evident log. Export it as a PDF that can be checked offline."}
         ]

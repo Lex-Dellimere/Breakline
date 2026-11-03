@@ -27,8 +27,9 @@
 #v(2pt)
 #block(width: 94%, text(size: 10.8pt, fill: muted)[
   When an RMM is compromised, every control inside it goes too: consent prompts, allowlists,
-  your own admin settings. Breakline sits at each client site, outside your RMM, and keeps
-  remote access closed until a booked window or a passkey approval opens it.
+  your own admin settings. Breakline sits at each client site, outside your RMM, and shuts
+  remote access at every site the moment your tool is listed as exploited. Only a passkey
+  reopens it.
 ])
 
 #v(8pt)
@@ -45,16 +46,16 @@
   columns: (1fr, 1fr, 1fr),
   column-gutter: 14pt,
   [
-    #h[Locks itself when your RMM is attacked]
-    Breakline checks CISA's exploited-vulnerabilities list and ACSC alerts every 30 minutes.
-    When your tool appears, remote access closes at every client site that uses it, and only a
-    passkey reopens it.
+    #h[Emergency lockdown]
+    Breakline checks CISA's exploited-vulnerabilities list every 30 minutes. When your tool
+    appears, remote access closes at every client site that uses it, even if your RMM console
+    is in someone else's hands. Once you've patched, a passkey reopens it.
   ],
   [
-    #h[Just-in-time remote access]
-    Sessions open inside a booked maintenance window or after a passkey approval, from your
-    senior staff or from the client. Outside those times the channel stays shut, and a lock
-    cuts live sessions on the spot.
+    #h[Windows and approvals, if wanted]
+    For remote-control tools such as AnyDesk, TeamViewer or ScreenConnect, a client can ask
+    that sessions open only in a booked window or after a passkey approval. A lock cuts live
+    sessions on the spot.
   ],
   [
     #h[Proof for clients and insurers]
@@ -101,7 +102,7 @@
 #v(10pt)
 #let shot(path, caption) = stack(
   spacing: 5pt,
-  box(stroke: 0.6pt + line-c, radius: 4pt, clip: true, image(path, height: 43mm)),
+  box(stroke: 0.6pt + line-c, radius: 4pt, clip: true, image(path, height: 38mm)),
   text(size: 8.5pt, fill: muted, caption),
 )
 #grid(
