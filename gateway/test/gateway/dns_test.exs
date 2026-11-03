@@ -93,7 +93,12 @@ defmodule Gateway.DNSTest do
       assert answers(reply) == []
 
       assert_receive {:event,
-                      %{type: :blocked, qname: "relay-1.net.anydesk.com", match: "anydesk"} = ev}
+                      %{
+                        type: :blocked,
+                        qname: "relay-1.net.anydesk.com",
+                        match: "anydesk",
+                        channel: :control
+                      } = ev}
 
       assert %DateTime{} = ev.at
 
@@ -108,9 +113,21 @@ defmodule Gateway.DNSTest do
 
       assert_receive {:upstream_sent, sent}
       assert reply == sent
-      assert_receive {:event, %{type: :would_block, match: "anydesk"}}
+      assert_receive {:event, %{type: :would_block, match: "anydesk", channel: :control}}
       assert_receive {:resolved, entries}
       assert {{10, 0, 0, 1}, 60, "anydesk"} in entries
+    end
+
+    test "events carry the matched domain's channel", %{port: port} do
+      put(locked?: true, mode: :monitor)
+
+      for {name, tool, channel} <- [
+            {"sis.n-able.com", "n_central", :management},
+            {"app.ninjarmm.com", "ninjaone", :both}
+          ] do
+        udp_query(port, name, :a, 4)
+        assert_receive {:event, %{type: :would_block, match: ^tool, channel: ^channel}}
+      end
     end
 
     test "open forwards, records ips and emits nothing", %{port: port} do
@@ -170,7 +187,10 @@ defmodule Gateway.DNSTest do
       reply = udp_query(port, "rmm.client.example", :a, 9)
 
       assert rcode(reply) == 3
-      assert_receive {:event, %{type: :blocked, match: {:site_host, "rmm.client.example"}}}
+
+      assert_receive {:event,
+                      %{type: :blocked, match: {:site_host, "rmm.client.example"}, channel: nil}}
+
       assert_receive {:resolved, [{{10, 0, 0, 3}, 120, {:site_host, "rmm.client.example"}}]}
     end
 
@@ -200,7 +220,8 @@ defmodule Gateway.DNSTest do
                       %{
                         type: :blocked,
                         qname: "support.msp.example",
-                        match: {:cname, "instance-x.screenconnect.com", "screenconnect"}
+                        match: {:cname, "instance-x.screenconnect.com", "screenconnect"},
+                        channel: :control
                       }}
 
       assert_receive {:resolved, [{{10, 0, 0, 2}, 30, "screenconnect"}]}
@@ -245,7 +266,7 @@ defmodule Gateway.DNSTest do
         for name <- ["dns.google", "Cloudflare-DNS.com.", "abc123.dns.nextdns.io"] do
           reply = udp_query(port, name, :a, 5)
           assert rcode(reply) == 3, name
-          assert_receive {:event, %{type: :doh_blocked, match: {:doh, _}}}
+          assert_receive {:event, %{type: :doh_blocked, match: {:doh, _}, channel: nil}}
         end
 
         for name <- ["use-application-dns.net", "mask.icloud.com", "mask-h2.icloud.com"] do

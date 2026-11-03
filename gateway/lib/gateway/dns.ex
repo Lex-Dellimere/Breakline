@@ -25,7 +25,9 @@ defmodule Gateway.DNS do
       A/AAAA records of every catalog or site-host answer, where `tag` is the
       tool id or `{:site_host, host}`
     * `:on_event` - called with an event map for `:blocked`, `:would_block`
-      and `:doh_blocked`
+      and `:doh_blocked`. `:channel` is the catalog channel of the matched
+      name (the cname target for a cname match), and nil for site hosts and
+      DoH
 
   Both callbacks run in query tasks. Exceptions in them are logged and
   swallowed, and a slow callback only delays its own query.
@@ -60,6 +62,7 @@ defmodule Gateway.DNS do
             | {:cname, String.t(), String.t() | {:site_host, String.t()}}
             | {:doh, String.t()}
             | {:canary, String.t()},
+          channel: :control | :management | :both | nil,
           client: :inet.ip_address() | nil,
           at: DateTime.t()
         }

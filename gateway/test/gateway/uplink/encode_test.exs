@@ -48,6 +48,7 @@ defmodule Gateway.Uplink.EncodeTest do
         qname: "boot.net.anydesk.com",
         qtype: :aaaa,
         match: "anydesk",
+        channel: :control,
         client: {0xFD00, 0, 0, 0, 0, 0, 0, 1},
         at: @at
       }
@@ -58,6 +59,7 @@ defmodule Gateway.Uplink.EncodeTest do
                "qname" => "boot.net.anydesk.com",
                "qtype" => "aaaa",
                "match" => %{"kind" => "tool", "tag" => "anydesk"},
+               "channel" => "control",
                "client" => "fd00::1",
                "at" => "2026-11-02T00:00:00.123456Z"
              }

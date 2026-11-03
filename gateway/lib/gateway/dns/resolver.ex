@@ -247,10 +247,25 @@ defmodule Gateway.DNS.Resolver do
       qname: name,
       qtype: qtype,
       match: match,
+      channel: channel(name, match),
       client: ctx.client,
       at: DateTime.utc_now()
     })
   end
+
+  # the catalog channel of the matched name (the cname target for a cname match),
+  # recorded for the pilots only; nil for site hosts and doh
+  defp channel(_name, {:cname, target, tool_id}) when is_binary(tool_id),
+    do: channel(target, tool_id)
+
+  defp channel(name, tool_id) when is_binary(tool_id) do
+    case Breakline.Catalog.match_domain_channel(name, [tool_id]) do
+      {:ok, {_, channel}} -> channel
+      :nomatch -> nil
+    end
+  end
+
+  defp channel(_name, _match), do: nil
 
   defp safe(fun, arg) do
     fun.(arg)
