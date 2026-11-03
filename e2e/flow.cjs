@@ -1,6 +1,7 @@
 // full-stack check, driven from one headless chromium with a cdp virtual passkey: sign in,
-// register a passkey, enrol the box (step-up), then open and lock the site while gw.sh
-// probes real traffic from the clinic pc. with VIDEO=1 it records the browser and overlays
+// register a passkey, enrol the box (step-up), open the site, then inject a test cisa kev
+// entry for anydesk (kev.exs) so the site locks on its own, and lift that lock with a
+// passkey, while gw.sh probes real traffic from the clinic pc. with VIDEO=1 it records the browser and overlays
 // a caption bar and a "clinic pc" panel. the panel only ever shows the probes' real output.
 //
 // env: PLAYWRIGHT_CORE (path to playwright-core), CHROME_BIN, VIDEO (optional)
@@ -23,6 +24,16 @@ const step = (m) => console.log(`[${((Date.now() - t0) / 1000).toFixed(1).padSta
 const gw = (...args) => {
   const out = execFileSync(path.join(E, "box/gw.sh"), args, { encoding: "utf8", timeout: 240000 });
   out.trim().split("\n").filter(Boolean).forEach((l) => console.log(`         gw ${args[0]}: ${l}`));
+  return out;
+};
+// runs an .exs file inside the cloud release, the way up.sh runs seed.exs
+const CLOUD = fs.readFileSync(path.join(RUN, "cloud.id"), "utf8").trim();
+const cloudEval = (file) => {
+  execFileSync("docker", ["cp", path.join(E, file), `${CLOUD}:/tmp/${file}`]);
+  const out = execFileSync("docker", ["exec", CLOUD, "sh", "-c",
+    `RELEASE_TMP=/tmp/cloud /opt/cloud/bin/cloud rpc 'Code.eval_file("/tmp/${file}")'`],
+    { encoding: "utf8", timeout: 60000 });
+  out.trim().split("\n").filter(Boolean).forEach((l) => console.log(`         cloud ${file}: ${l}`));
   return out;
 };
 
@@ -114,6 +125,8 @@ function probeRows(line) {
   // the site's state badge and status card are in the shot
   const go = async (url) => {
     await page.goto(url);
+    // liveview restores the old scroll position when it connects, so wait for that first
+    await page.waitForSelector(".phx-connected", { timeout: 10000 }).catch(() => {});
     await page.evaluate(() => window.scrollTo(0, 0));
     await draw();
   };
@@ -185,26 +198,53 @@ function probeRows(line) {
   await page.screenshot({ path: `${SHOTS}/3-open.png` });
   await pause(5000);
 
-  step("hold a live rmm session, then lock now");
+  step("hold a live rmm session");
   gw("session-start");
-  await say("A technician is connected right now", "Watch what happens to that live session when the lock lands.");
-  await pause(2500);
-  await page.click("#lock-now");
-  await page.waitForFunction(() => /locked/i.test(document.querySelector("#site-state")?.textContent || ""),
-    null, { timeout: 30000 });
-  await say("Locked: checking the live session and the clinic PC", "Sending real traffic through the box now", null);
+  // the open click scrolled to the access panel; the state badge and the lock belong in the shot
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await say("A technician is connected right now", "A live AnyDesk session through the box, inside the open window.");
+  await pause(4000);
+
+  step("inject a test cisa kev entry for anydesk");
+  await say("Now AnyDesk shows up on CISA's exploited list",
+    "A test entry (CVE-2099-0001) injected for this demo. It goes through the same code as a real CISA listing.");
+  await pause(3000);
+  const kev = cloudEval("kev.exs");
+  if (!/acted=.*:locked/.test(kev)) throw new Error(`kev injection did not lock: ${kev}`);
+
+  step("the site locks on its own");
+  await page.waitForFunction(() => document.querySelector('[id^="feed-lock-"]') &&
+    /locked/i.test(document.querySelector("#site-state")?.textContent || ""), null, { timeout: 60000 });
+  await say("Locked automatically: checking the live session and the clinic PC", "Nobody clicked anything. Sending real traffic through the box now", null);
   gw("wait-state", "locked");
   gw("session-cut");
   probe = gw("probe", "locked");
   await go(`${BASE}/sites/${SITE}`);
-  await say("Locked again: the live session was cut", "The same happens automatically when your RMM shows up on CISA's exploited list.", probeRows(probe));
-  await page.screenshot({ path: `${SHOTS}/4-locked-again.png` });
+  await say("Locked on its own, and the live session was cut",
+    "The open window doesn't override it. Every site that uses AnyDesk locks the same way.", probeRows(probe));
+  await page.screenshot({ path: `${SHOTS}/4-kev-locked.png` });
+  step(`site: ${(await page.textContent("#site-state")).trim()}`);
+  await pause(6000);
+
+  step("lift the lock (passkey step-up)");
+  await say("Patched? Lift the lock with a passkey", "It holds until an admin lifts it. Nobody holding your RMM console can.", null);
+  await pause(3000);
+  await page.click('[id^="lift-feed-lock-"]');
+  await page.waitForFunction(() => !document.querySelector('[id^="feed-lock-"]') &&
+    /open/i.test(document.querySelector("#site-state")?.textContent || ""), null, { timeout: 60000 });
+  await say("Lifted: testing from the clinic PC", "Sending real traffic through the box now", null);
+  gw("wait-state", "open");
+  probe = gw("probe", "open");
+  await go(`${BASE}/sites/${SITE}`);
+  await say("Open again, inside the same 15 minute window", "The window still closes when it was due to.", probeRows(probe));
+  await page.screenshot({ path: `${SHOTS}/5-lifted.png` });
+  step(`site: ${(await page.textContent("#site-state")).trim()}`);
   await pause(5000);
 
   step("the record");
   await go(`${BASE}/sites/${SITE}/timeline`);
   await say("Every step is on the record", "A tamper-evident log, exportable as a PDF for clients and insurers.", null);
-  await page.screenshot({ path: `${SHOTS}/5-timeline.png` });
+  await page.screenshot({ path: `${SHOTS}/6-timeline.png` });
   await pause(5000);
   await go(`${BASE}/audit`);
   step(`audit: ${(await page.textContent("main")).replace(/\s+/g, " ").match(/(intact|verified|broken)[^.]{0,80}/i)?.[0] || "?"}`);

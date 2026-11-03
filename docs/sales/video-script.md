@@ -1,6 +1,6 @@
 # Demo video voice-over
 
-About 180 words, a little over a minute. Read one line, pause for about 2 seconds, then read the
+About 300 words, under two minutes. Read one line, pause for about 2 seconds, then read the
 next. Claude splits the recording at the pauses and times each scene of the video to its line.
 The video is re-recorded to fit, so nothing is stretched (D50).
 
@@ -24,10 +24,15 @@ word, change it here first, so the claims stay accurate.
 5. *(open)* Need to work on the site? Open a window: fifteen minutes, approved with a passkey.
    Now the remote tools connect, and the box already knows when the window ends, so it closes
    on time even if it crashes.
-6. *(lock now)* Here a technician is connected. Hit lock now, and the live session is cut on
-   the spot. That's exactly what happens at every site, automatically, when your RMM lands on
-   CISA's list of exploited vulnerabilities. You reopen with a passkey once you've patched.
-7. *(record)* Every open, close and approval goes on a tamper-evident record you can export
-   for clients and insurers.
-8. *(pilot)* If you're an Australian MSP, we're running free monitor-only pilots. Nothing is
-   blocked for the first few weeks. You just see when your remote tools reach a site.
+6. *(session)* Here a technician is connected to the clinic through AnyDesk, inside that window.
+7. *(kev)* Now AnyDesk shows up on CISA's list of exploited vulnerabilities. This entry is a test
+   we inject for the demo, but it goes through the same code as a real listing.
+8. *(auto-lock)* Nobody clicks anything. The site locks on its own, the live session is cut, and
+   the open window doesn't override it. Every site that uses AnyDesk locks the same way.
+9. *(lift)* Once you've patched, an admin lifts the lock with a passkey. Someone holding your
+   RMM console can't.
+10. *(reopened)* The clinic is open again, inside the same fifteen-minute window.
+11. *(record)* Every open, close and approval goes on a tamper-evident record you can export
+    for clients and insurers.
+12. *(pilot)* If you're an Australian MSP, we're running free monitor-only pilots. Nothing is
+    blocked for the first few weeks. You just see when your remote tools reach a site.

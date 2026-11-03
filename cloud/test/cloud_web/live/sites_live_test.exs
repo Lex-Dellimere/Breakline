@@ -163,6 +163,49 @@ defmodule CloudWeb.SitesLiveTest do
     assert Sites.get_site!(site_id, authorize?: false).policy_version == 3
   end
 
+  test "a threat-feed lock is shown and an admin lifts it with a passkey", ctx do
+    {authenticator, _} = passkey!(ctx.admin)
+    site_id = ctx.site.id
+
+    lock =
+      Sites.create_advisory_lock!(
+        %{site_id: site_id, source: "kev:CVE-2099-0001", reason: "CISA KEV CVE-2099-0001: test"},
+        tenant: ctx.tenant,
+        authorize?: false
+      )
+
+    Phoenix.PubSub.subscribe(Cloud.PubSub, Cloud.Policies.topic(site_id))
+    {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{site_id}")
+    assert has_element?(view, "#feed-lock-#{lock.id}", "CISA KEV CVE-2099-0001: test")
+
+    # unlock only lifts manual locks
+    view |> element("#unlock") |> render_click()
+    assert render(view) =~ "There is no manual lock to lift"
+
+    view |> element("#lift-feed-lock-#{lock.id}") |> render_click()
+    assert has_element?(view, "#step-up-waiting")
+    _authenticator = answer(view, authenticator)
+    assert_receive {:policy_published, ^site_id, 2}
+    assert render(view) =~ "Lock lifted: published policy v2"
+    refute has_element?(view, "#feed-lock-#{lock.id}")
+    assert Ash.get!(Sites.AdvisoryLock, lock.id, authorize?: false, tenant: ctx.tenant).lifted_at
+  end
+
+  test "an approver sees a threat-feed lock but cannot lift it", ctx do
+    lock =
+      Sites.create_advisory_lock!(
+        %{site_id: ctx.site.id, source: "kev:CVE-2099-0001", reason: "CISA KEV CVE-2099-0001"},
+        tenant: ctx.tenant,
+        authorize?: false
+      )
+
+    passkey!(ctx.approver)
+    conn = log_in_user(build_conn(), ctx.approver)
+    {:ok, view, _html} = live(conn, ~p"/sites/#{ctx.site.id}")
+    assert has_element?(view, "#feed-lock-#{lock.id}")
+    refute has_element?(view, "#lift-feed-lock-#{lock.id}")
+  end
+
   test "a bad assertion or a cancelled prompt opens nothing", ctx do
     {authenticator, _} = passkey!(ctx.admin)
     {:ok, view, _html} = live(ctx.conn, ~p"/sites/#{ctx.site.id}")

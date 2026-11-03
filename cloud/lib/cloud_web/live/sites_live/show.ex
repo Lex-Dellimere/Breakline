@@ -18,6 +18,10 @@ defmodule CloudWeb.SitesLive.Show do
   and when it ends, and can be revoked without a step-up (that closes
   access).
 
+  Active threat-feed locks (a KEV or ACSC match) are listed with their
+  reason, and an admin lifts one with a `:lift_lock` step-up bound to that
+  lock (`Cloud.Sites.AdvisoryLock` `:lift`), once the tool is patched.
+
   Admins also manage the site's MSP request links here: pick a contact and
   send a link (emailed to the contact), and revoke links
   (`Cloud.Sites.RequestLink`).
@@ -78,6 +82,7 @@ defmodule CloudWeb.SitesLive.Show do
          |> assign(:role, Data.role(user, site.tenant_id))
          |> assign(:break_glass_minutes, @break_glass_minutes)
          |> assign(:break_glass, Data.current_break_glass(user, site))
+         |> assign(:feed_locks, Data.feed_locks(user, site))
          |> assign(:enrollment_code, nil)
          |> assign_links()
          |> assign_enrollment()
@@ -115,6 +120,24 @@ defmodule CloudWeb.SitesLive.Show do
       {:noreply, start_step_up(socket, :lift_lock, :unlock)}
     else
       {:noreply, put_flash(socket, :error, "There is no manual lock to lift")}
+    end
+  end
+
+  def handle_event("lift_feed_lock", %{"id" => id}, socket) do
+    case Enum.find(socket.assigns.feed_locks, &(&1.id == id)) do
+      nil ->
+        {:noreply, put_flash(socket, :error, "That lock is already lifted")}
+
+      lock ->
+        {:noreply,
+         StepUp.start(
+           socket,
+           :lift_lock,
+           lock.id,
+           %{id: lock.id},
+           [tenant: lock.tenant_id],
+           {:lift_feed_lock, lock}
+         )}
     end
   end
 
@@ -279,6 +302,15 @@ defmodule CloudWeb.SitesLive.Show do
     |> action_result(socket, "Manual locks lifted")
   end
 
+  defp run({:lift_feed_lock, lock}, step_up_id, socket) do
+    lock
+    |> Sites.lift_advisory_lock(%{step_up_id: step_up_id},
+      actor: socket.assigns.current_user,
+      tenant: lock.tenant_id
+    )
+    |> record_result(socket, "Lock lifted")
+  end
+
   defp run(:enroll_gateway, step_up_id, socket) do
     case GatewayEnrollments.issue(socket.assigns.site, socket.assigns.current_user, step_up_id) do
       {:ok, enrollment} ->
@@ -412,7 +444,8 @@ defmodule CloudWeb.SitesLive.Show do
         assign(socket,
           site: site,
           windows: Data.windows(user, site),
-          break_glass: Data.current_break_glass(user, site)
+          break_glass: Data.current_break_glass(user, site),
+          feed_locks: Data.feed_locks(user, site)
         )
 
       {:error, _} ->
@@ -518,6 +551,43 @@ defmodule CloudWeb.SitesLive.Show do
               </dd>
             </div>
           </dl>
+        </.card_content>
+      </.card>
+
+      <.card
+        :for={lock <- @feed_locks}
+        id={"feed-lock-#{lock.id}"}
+        variant="bordered"
+        color="danger"
+        rounded="large"
+        padding="large"
+      >
+        <.card_content>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-lg font-semibold text-red-700 dark:text-red-400">
+                <.icon name="hero-shield-exclamation" class="size-5 align-text-bottom" />
+                Locked by a threat feed since {Presenter.local_time(lock.inserted_at, @tz)}
+              </p>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">{lock.reason}</p>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                It holds until an admin lifts it. Lift it once the tool is patched.
+              </p>
+            </div>
+            <.button
+              :if={@role == :admin and @has_passkey}
+              id={"lift-feed-lock-#{lock.id}"}
+              phx-click="lift_feed_lock"
+              phx-value-id={lock.id}
+              disabled={@step_up != nil}
+              color="danger"
+              variant="bordered"
+              size="small"
+              icon="hero-finger-print"
+            >
+              Lift lock
+            </.button>
+          </div>
         </.card_content>
       </.card>
 

@@ -11,7 +11,9 @@ A headless browser with a virtual passkey drives the real flow:
 3. enrol the box with the printed command;
 4. locked: AnyDesk is blocked from the clinic pc and the web works;
 5. open 15 minutes: everything passes, and the window end is loaded into the kernel's rules;
-6. lock now: a live session is cut.
+6. a technician session is live, and a test CISA KEV entry for AnyDesk (`kev.exs`, run in the
+   cloud release through the real poller) locks the site on its own and cuts the session;
+7. the advisory lock is lifted with a passkey, and the site is open again inside its window.
 
 With `VIDEO=1` it also records the run as `e2e/.run/breakline-demo.mp4`, with captions and a
 panel that shows the clinic pc's real probe results. This is the demo video (D49).

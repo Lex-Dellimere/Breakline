@@ -104,6 +104,17 @@ defmodule CloudWeb.SitesLive.Data do
     end
   end
 
+  @doc """
+  The site's active threat-feed locks (KEV or ACSC), oldest first. Manual
+  locks are left out: "Unlock" lifts those.
+  """
+  @spec feed_locks(User.t(), Sites.Site.t()) :: [Sites.AdvisoryLock.t()]
+  def feed_locks(%User{} = user, site) do
+    site.id
+    |> Sites.active_advisory_locks!(DateTime.utc_now(), actor: user, tenant: site.tenant_id)
+    |> Enum.reject(&(&1.source == "manual"))
+  end
+
   @doc "The site's MSP request links, newest first, with their contacts (admins only)."
   @spec request_links(User.t(), Sites.Site.t()) :: [Sites.RequestLink.t()]
   def request_links(%User{} = user, site) do
