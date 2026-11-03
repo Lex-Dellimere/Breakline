@@ -18,6 +18,8 @@ At most 5 emails a week.
 - What would happen to your service if remote access closed the day your RMM appeared in
   CISA's exploited list?
 - Who at the client would approve a session?
+- How much of your remote traffic could we tell apart: technicians' remote control versus
+  agent check-in, patching and monitoring? Would you run a monitor-only trial to measure it?
 - Who do you know that runs N-central? None of these five is known to use it, and N-central is
   the case that started this.
 

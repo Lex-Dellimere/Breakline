@@ -1,3 +1,6 @@
+> Positioning has moved on since this brief: Breakline is sold to MSPs and leads with the
+> emergency lockdown (D46, D51, `docs/STRATEGY.md`). The scope and non-goals below still hold.
+
 # Breakline — v1 build brief
 
 > Saved verbatim from the original brief on 2026-10-31. The brief as received ends mid-sentence

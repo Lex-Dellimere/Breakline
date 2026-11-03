@@ -28,7 +28,7 @@
 #block(width: 94%, text(size: 10.8pt, fill: muted)[
   When an RMM is compromised, every control inside it goes too: consent prompts, allowlists,
   your own admin settings. Breakline sits at each client site, outside your RMM, and shuts
-  remote access at every site the moment your tool is listed as exploited. Only a passkey
+  remote access at every site within 30 minutes of your tool being listed as exploited. Only a passkey
   reopens it.
 ])
 

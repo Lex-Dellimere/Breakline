@@ -187,6 +187,22 @@ defmodule Breakline.CatalogTest do
 
       assert Catalog.match_domain_channel("app.ninjarmm.com") == {:ok, {"ninjaone", :both}}
       assert Catalog.match_domain_channel("x.cc.centrastage.net") == {:ok, {"datto_rmm", :both}}
+      # datto's remote takeover and web remote hosts, and its numbered control-channel hosts
+      # (02cc, 01syrahcc, ...) under the legacy centrastage name
+      assert Catalog.match_domain_channel("tunnel-ips.centrastage.net") ==
+               {:ok, {"datto_rmm", :control}}
+
+      assert Catalog.match_domain_channel("tunnel.rmm.datto.com") ==
+               {:ok, {"datto_rmm", :control}}
+
+      assert Catalog.match_domain_channel("webrtc.rmm.datto.com") ==
+               {:ok, {"datto_rmm", :control}}
+
+      assert Catalog.match_domain_channel("ts.centrastage.net") == {:ok, {"datto_rmm", :both}}
+      assert Catalog.match_domain_channel("02cc.centrastage.net") == {:ok, {"datto_rmm", :both}}
+
+      assert Catalog.match_domain_channel("01syrahcc.centrastage.net") ==
+               {:ok, {"datto_rmm", :both}}
     end
 
     test "agrees with match_domain/2 and respects the tool id filter" do

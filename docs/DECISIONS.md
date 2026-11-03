@@ -574,12 +574,13 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
   (missing means `both`, anything else fails the build). `Breakline.Catalog.match_domain_channel/2`
   returns it, the most specific matching pattern winning. The gateway adds `channel` to every DNS
   event (nil for site hosts and DoH). Blocking is unchanged: the pilots measure the split first (D51).
-- **Tags (56 domains):**
-  - `control` (26): anydesk 3, teamviewer 4, splashtop 5, screenconnect 4, take_control 10. Pure
-    remote-control tools.
+- **Tags (61 domains, as of 4 Nov 2026):**
+  - `control` (29): anydesk 3, teamviewer 4, splashtop 5, screenconnect 4, take_control 10, plus
+    datto_rmm 3 (its remote takeover and web remote hosts).
   - `management` (13): all of n_central. The LOLRMM n-able-n-central record describes them as
     software distribution, updates, agent configuration and event delivery, and agent IoT endpoints.
-  - `both` (17): ninjaone 14, datto_rmm 3.
+  - `both` (19): ninjaone 14, datto_rmm 5 (`*.centrastage.net` covers its numbered control-channel
+    hosts such as `02cc` and `01syrahcc`, which an outside audit found unmatched).
 - **Why both for NinjaOne and Datto:**
   - Datto's allowlist page (`channel_source`,
     rmm.datto.com/help/en/Content/1INTRODUCTION/Requirements/AllowListRequirements.htm) puts the web
