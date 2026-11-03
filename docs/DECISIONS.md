@@ -552,3 +552,20 @@ Every decision and why. Newest at the bottom. Reference them as D1, D2, ...
 - **Why a voice:** a real person behind a new security vendor is part of what makes an MSP take the call. The owner offered to record it.
 - **One-pager:** `docs/sales/one-pager.typ`, rendered with the pinned Typst to `docs/sales/breakline-one-pager.pdf`. It is A4, has the same claims as the landing page, and shows two frames from the real run (locked, and open for 15 minutes). There is no contact block: the email that carries it gives the contact.
 - **Working agreement:** the owner asked not to be asked questions. Claude decides, logs the decision here, and gives the owner only to-dos for the steps that need a person.
+
+### D51. Lead with the emergency lockdown, not just-in-time access
+- **Trigger:** an outside AI audit of the repo (3 Nov 2026), checked against the code. These points held:
+  - **Whole-tool gating:** the catalogue blocks whole tool domains (`*.ninjarmm.com`, `*.rmm.datto.com`, `*.teamviewer.com`, ...). For NinjaOne and Datto RMM that almost certainly stops agent check-in and patching as well as remote control. So "closed by default, open per session" conflicts with a 24/7 managed service.
+  - **KEV locks have no `expires_at`:** they hold until someone lifts them with a passkey.
+  - **No external security review:** none has been done.
+  - **Already documented:** bypass (T1/T2), cloud signing-key concentration (T8/T9) and the inline-box friction are already recorded.
+- **Decision:**
+  - **Lead with the emergency lockdown:** remote access closes at every client site when the MSP's own tool is listed as exploited, and reopens with a passkey once the MSP confirms the patch. That is a full-channel lock used for days in a crisis, which is what N-central shops did by hand in August. It needs no client approvals and doesn't fight the MSP's daily automation.
+  - **Windows and approvals become an option per client**, mainly for pure remote-control tools (AnyDesk, TeamViewer, Splashtop, ScreenConnect, Take Control), where blocking the tool means blocking remote control and nothing else.
+- **Next:**
+  - Split the catalogue by channel (remote control vs management) wherever vendor docs allow.
+  - Reword the landing page, brief, one-pager and video script to this order before any outreach goes out.
+  - Add the separation question to the MSP interviews.
+  - Measure it in the monitor pilots.
+- **Kept on purpose:** KEV locks don't expire. A lock lifted by a person after the patch is the point. Alarm fatigue is a risk to test in the pilots.
+- **Deferred:** an external security review waits for revenue.
