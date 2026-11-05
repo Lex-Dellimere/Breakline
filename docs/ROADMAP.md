@@ -11,7 +11,7 @@ Each phase starts with a proposed plan and needs approval before work begins.
 | 4 | flows: msp magic-link window request → approver passkey approval → signed push; break-glass; kev/acsc polling via ash_oban; teams/slack/sms link-only notifications | done 2026-11-01 |
 | 5 | dashboard (site state + why, windows, timeline), audit export json + pdf with chain verification | done 2026-11-01 (pdf with the typst cli, D38) |
 | 6 | real nftables runs, pilot box, then nerves firmware (custom x86_64 system with nic drivers) | done 2026-11-01 without nerves: real traffic suite (D43), debian pilot box `.deb` (D40), gateway enrolment (D41), cloud release and hosting guide (D42), full-stack check (D44) |
-| v | validation (business, not a build phase): sell to msps (D46), lead with the emergency lockdown (D51), channel tags (D52), demo of the automatic lockdown (D53), outreach by the salesperson | in progress; gate 2026-12-29 (`docs/STRATEGY.md`) |
+| v | validation (business, not a build phase): sell to msps (D46), lead with the emergency lockdown (D51), channel tags (D52), demo of the automatic lockdown (D53), outreach by the salesperson | parked 2026-11-06 (D54): no pivot passed the money test (`docs/research/pivot.md`) |
 | 7 | nerves firmware: custom x86_64 system with the pilot box's nic drivers, read-only rootfs, secure boot | after the pilots settle the hardware |
 
 Open decisions parked for later phases:

@@ -1,5 +1,9 @@
 # Handoff
 
+> **Parked on 6 Nov 2026 (D54).** Breakline is no longer being built or sold. It stays as a
+> portfolio piece. Outreach with the security pitch has stopped. Read D54 and
+> `docs/research/pivot.md` before restarting anything. The rest of this file is the state at parking.
+
 Where Breakline stands on 4 Nov 2026 and how to pick it up. Read this first, then
 `docs/STRATEGY.md`. Every decision and its reason is in `docs/DECISIONS.md` (D1–D53).
 

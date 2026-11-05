@@ -1,5 +1,7 @@
 # Strategy
 
+> **Parked on 6 Nov 2026 (D54).** This plan is on hold; see D54 in `docs/DECISIONS.md`.
+
 Plan of record for how Breakline makes money. Decided 2026-11-01 (D46). Replaces the
 "sell to clinics" target in `docs/BRIEF.md`. The product scope in the brief still holds.
 
