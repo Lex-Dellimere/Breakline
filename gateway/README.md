@@ -160,6 +160,22 @@ On disk in `tmp/dev/`:
 Restart the gateway and it comes back with the same policy. To start over, stop it and
 `rm -rf tmp/dev`.
 
+## Simulation
+
+A narrated, one-command run of the whole story: a clinic, its MSP and an attacker, a
+booked window, a CISA KEV emergency lock and the audit trail. It drives the real
+enforcer, resolver, fake firewall and `core` (signed commands, schedule, catalog, audit
+chain); the cloud, the people, the upstream dns and the clock are simulated.
+
+```sh
+mix run --no-start sim/breakline_sim.exs
+```
+
+`--no-start` keeps the dev tree (port 5300, the inbox) from booting, so it is safe next
+to a running dev gateway. It needs no cloud, root or `nft`, and takes about 25 s;
+`SIM_FAST=1` skips the pauses and `NO_COLOR=1` turns colours off (they are also off when
+piped). Source: `sim/breakline_sim.exs`.
+
 ## Tests
 
 ```sh
