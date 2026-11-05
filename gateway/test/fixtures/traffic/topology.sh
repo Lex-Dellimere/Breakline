@@ -115,7 +115,8 @@ at upstream dnsmasq --conf-file=/dev/null --no-resolv --no-hosts --bind-interfac
   --host-record=live.screenconnect.com,198.51.100.20,2001:db8::20 \
   --host-record=instance-abc-relay.screenconnect.com,198.51.100.21,2001:db8::21 \
   --cname=remote.vanity.test,instance-abc-relay.screenconnect.com \
-  --host-record=shop.example.test,203.0.113.80,2001:db8::80
+  --host-record=shop.example.test,203.0.113.80,2001:db8::80 \
+  --host-record=rd.selfhosted.test,192.0.2.77
 
 # the rogue resolver answers everything with 192.0.2.66, so any answer from it
 # means a query got past the gateway

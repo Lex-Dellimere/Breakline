@@ -52,7 +52,8 @@ defmodule Gateway.Traffic do
   @doc """
   starts a container, builds `topology` in it and starts the gateway with no
   policy. returns the context map the other helpers take. `bridge_nf: false`
-  leaves br_netfilter's sysctls off in the container's namespace.
+  leaves br_netfilter's sysctls off in the container's namespace. `on_exit: fun`
+  takes the cleanup function in place of `ExUnit.Callbacks.on_exit/1`.
   """
   def start!(topology, opts \\ []) do
     unless System.find_executable("docker"), do: raise("docker is required for traffic tests")
@@ -89,7 +90,9 @@ defmodule Gateway.Traffic do
 
     {out, 0} = System.cmd("docker", args, stderr_to_stdout: true)
     cid = String.trim(out)
-    ExUnit.Callbacks.on_exit(fn -> stop!(cid, dir) end)
+    # a script outside exunit (gateway/sim/attack.exs) passes its own `:on_exit`
+    on_exit = Keyword.get(opts, :on_exit, &ExUnit.Callbacks.on_exit/1)
+    on_exit.(fn -> stop!(cid, dir) end)
 
     {out, status} = exec(cid, ["/traffic/setup.sh", Atom.to_string(topology)])
     assert status == 0, "setup failed (exit #{status}):\n#{out}"
@@ -155,7 +158,10 @@ defmodule Gateway.Traffic do
   def rpc(ctx, expr) do
     wrapped = "IO.write(Base.encode64(:erlang.term_to_binary((#{expr}))))"
 
-    case exec(ctx, ["/traffic/gateway.sh", "rpc", wrapped]) do
+    # stderr stays out of the way: while the node boots, rpc says "noconnection" on it
+    args = ["exec", ctx.cid, "/traffic/gateway.sh", "rpc", wrapped]
+
+    case System.cmd("docker", args, stderr_to_stdout: true) do
       {out, 0} ->
         case out |> String.split("\n", trim: true) |> List.last() |> decode() do
           {:ok, term} -> {:ok, term}

@@ -176,6 +176,26 @@ to a running dev gateway. It needs no cloud, root or `nft`, and takes about 25 s
 `SIM_FAST=1` skips the pauses and `NO_COLOR=1` turns colours off (they are also off when
 piped). Source: `sim/breakline_sim.exs`.
 
+### Attack demo
+
+A red team run with real packets, not the in-process fake: a compromised MSP account and
+a hostile internet against the prod release in a throwaway `debian:trixie-slim`
+container (real nftables, a client namespace as the clinic pc, an upstream namespace as
+the internet; never host networking). The attacker resolves AnyDesk's relay, dials relay
+ips and ports with no dns, bypasses the resolver via 8.8.8.8, tries DNS-over-HTTPS, rides
+a booked window until a KEV lock cuts the session, and pushes forged and replayed
+commands. It ends on two honest gaps (a hardcoded relay ip on 443, an uncatalogued tool
+such as RustDesk; threat model T1 and T2) and a scoreboard of attack, result and verdict
+(BLOCKED, ALLOWED, GAP). A beat that does not behave as documented fails the run.
+
+```sh
+mix run --no-start sim/attack.exs
+```
+
+It needs docker and takes about a minute once the release is built (the first run builds
+it); `SIM_FAST=1` and `NO_COLOR=1` work as above. It reuses the helpers behind
+`mix test --only traffic`. Source: `sim/attack.exs`.
+
 ## Tests
 
 ```sh
